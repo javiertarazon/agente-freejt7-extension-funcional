@@ -1,0 +1,89 @@
+{
+  "name": "agente-freejt7-extension-funcional",
+  "displayName": "Agente Free JT7 Extension",
+  "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local.",
+  "version": "4.0.0",
+  "publisher": "javiertarazon",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "freejt7",
+    "copilot",
+    "agent",
+    "skills",
+    "automation"
+  ],
+  "activationEvents": [
+    "onCommand:freejt7.installWorkspace",
+    "onCommand:freejt7.runtimeDoctor",
+    "onCommand:freejt7.openRuntimeDocs"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "freejt7.installWorkspace",
+        "title": "Free JT7: Instalar en workspace actual"
+      },
+      {
+        "command": "freejt7.runtimeDoctor",
+        "title": "Free JT7: Validar runtime"
+      },
+      {
+        "command": "freejt7.openRuntimeDocs",
+        "title": "Free JT7: Abrir documentacion"
+      }
+    ],
+    "configuration": {
+      "title": "Free JT7",
+      "properties": {
+        "freejt7.install.ide": {
+          "type": "string",
+          "enum": [
+            "vscode",
+            "all",
+            "auto",
+            "cursor",
+            "kiro",
+            "antigravity",
+            "codex",
+            "claude-code",
+            "gemini-cli"
+          ],
+          "default": "vscode",
+          "description": "IDE objetivo para la instalacion ejecutada por la extension."
+        },
+        "freejt7.install.updateUserSettings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Actualiza settings de usuario del IDE durante la instalacion."
+        },
+        "freejt7.install.force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sobrescribe archivos de integracion existentes."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "npx.cmd @vscode/vsce package --allow-missing-repository",
+    "package:local": "npx.cmd @vscode/vsce package --no-yarn --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/javiertarazon/agente-freejt7-extension-funcional.git"
+  },
+  "homepage": "https://github.com/javiertarazon/agente-freejt7-extension-funcional",
+  "bugs": {
+    "url": "https://github.com/javiertarazon/agente-freejt7-extension-funcional/issues"
+  }
+}

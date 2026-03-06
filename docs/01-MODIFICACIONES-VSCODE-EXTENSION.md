@@ -1,41 +1,45 @@
-# Modificaciones para VS Code Extension/Integración
+﻿# Modificaciones para VS Code Extension/Integracion
 
-Este documento lista los cambios clave heredados de la línea v3.x para operar Free JT7 como integración funcional en VS Code.
+Este documento lista los cambios clave heredados de la linea v3.x para operar Free JT7 como integracion funcional en VS Code.
 
-## Núcleo de integración
+## Nucleo de integracion
 
 1. Instrucciones de Copilot:
    - Archivo: `.github/copilot-instructions.md`
-   - Función: protocolo operativo, comandos canónicos y reglas de ejecución.
+   - Funcion: protocolo operativo, comandos canonicos y reglas de ejecucion.
 
-2. Definición de agente:
+2. Definicion de agente:
    - Archivo: `.github/agents/free-jt7.agent.md`
-   - Función: agente invocable en chat con flujo de plan, ejecución y reporte.
+   - Funcion: agente invocable en chat con flujo de plan, ejecucion y reporte.
 
-3. Política de ejecución:
+3. Politica de ejecucion:
    - Archivo: `.github/free-jt7-policy.yaml`
-   - Función: control de autonomía, riesgo, privilegios y checklist de salida.
+   - Funcion: control de autonomia, riesgo, privilegios y checklist de salida.
 
 4. Ruteo de modelos:
    - Archivo: `.github/free-jt7-model-routing.json`
-   - Función: resolución de modelo por IDE/perfil.
+   - Funcion: resolucion de modelo por IDE/perfil.
 
-5. Configuración VS Code:
+5. Configuracion VS Code:
    - Archivo: `.vscode/settings.json`
-   - Función: activar `chat.agent.enabled`, ubicación de agentes y archivo de instrucciones.
+   - Funcion: activar `chat.agent.enabled`, ubicacion de agentes y archivo de instrucciones con rutas relativas.
 
-## Runtime y automatización
+## Runtime y automatizacion
 
 1. Gestor principal:
    - Archivo: `skills_manager.py`
-   - Función: instalación, activación de skills, operación autónoma y utilidades admin.
+   - Funcion: instalacion, activacion de skills, operacion autonoma y utilidades admin.
 
-2. Instalación rápida por proyecto:
+2. Instalacion rapida por proyecto:
    - Scripts: `setup-project.ps1`, `add-free-jt7-agent.ps1`
-   - Función: bootstrap de integración en proyectos de usuario.
+   - Funcion: bootstrap de integracion en proyectos de usuario.
+
+3. Extension instalable:
+   - Archivos: `package.json`, `extension.js`, `.vscodeignore`
+   - Funcion: empaquetar `.vsix` y exponer comandos para instalar/validar Free JT7 desde VS Code.
 
 ## Estado de v4.0
 
-- Documentación consolidada: completada.
-- Importación de runtime/código desde v3.1: pendiente (siguiente sprint técnico).
-
+- Documentacion consolidada: completada.
+- Importacion de runtime/codigo desde v3.1: completada.
+- Extension VS Code instalable: completada.

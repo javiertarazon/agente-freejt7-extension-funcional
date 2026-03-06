@@ -1,0 +1,21 @@
+{
+    "github.copilot.chat.codeGeneration.instructions": [
+        {
+            "file": "${workspaceFolder}/.github/copilot-instructions.md"
+        }
+    ],
+    "chat.agentFilesLocations": {
+        "${workspaceFolder}/.github/agents": true
+    },
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "github.copilot.chat.customInstructionsInSystemMessage": true,
+    "chat.agent.enabled": true,
+    "freejt7.enabled": true,
+    "freejt7.integrations.vscode.enabled": true,
+    "freejt7.skills.index": "${workspaceFolder}/.github/skills/.skills_index.json",
+    "freejt7.policy.file": "${workspaceFolder}/.github/free-jt7-policy.yaml",
+    "freejt7.models.routing": "${workspaceFolder}/.github/free-jt7-model-routing.json",
+    "freejt7.models.ide": "vscode",
+    "github.copilot.chat.cli.customAgents.enabled": true,
+    "github.copilot.chat.switchAgent.enabled": true
+}

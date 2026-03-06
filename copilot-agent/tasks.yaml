@@ -1,0 +1,16 @@
+﻿# copilot-agent - Registro de Tareas
+# Actualizado automaticamente por skills_manager.py
+
+tareas:
+  - id: "20260305-v4-bootstrap"
+    fecha: "2026-03-05"
+    titulo: "Bootstrap v4.0 en repositorio dedicado"
+    descripcion: >
+      Migracion del runtime Free JT7, documentacion de origen,
+      extension VS Code empaquetable y validacion operativa.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["runtime", "vscode-extension", "docs"]
+    resultado: >
+      Repositorio v4.0 funcional, instalable en proyectos y
+      con paquete VSIX generado localmente.

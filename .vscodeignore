@@ -1,0 +1,11 @@
+.git/**
+.venv/**
+__pycache__/**
+**/__pycache__/**
+*.pyc
+.tmp-test/**
+docs/**
+copilot-agent/runs/**
+tests/**
+open-claw-multiroot.code-workspace
+free-jt7-multiroot.code-workspace

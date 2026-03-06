@@ -1,0 +1,41 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+*.log
+
+# Node
+node_modules/
+.pnpm-store/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+# .vscode/settings.json  <- incluido intencionalmente (config free-jt7)
+*.code-workspace
+
+# Secrets / keys
+*.pem
+*.key
+.secrets
+.openclaw/
+.env.free-jt7
+
+# Temporal / compilados grandes
+*.bin
+*.dat
+
+# VSIX artifacts
+*.vsix
+
+# Runtime artifacts
+copilot-agent/runs/
+copilot-agent/admin-runs/
+copilot-agent/phase7/

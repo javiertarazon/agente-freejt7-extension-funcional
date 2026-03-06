@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "default": {
+    "profile": "default",
+    "preferIdeProfile": true,
+    "allowApiFallback": true,
+    "apiFallback": {
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "env": [
+        "OPENAI_API_KEY"
+      ]
+    }
+  },
+  "apiEnvByProvider": {
+    "openai": [
+      "OPENAI_API_KEY"
+    ],
+    "anthropic": [
+      "ANTHROPIC_API_KEY"
+    ],
+    "google": [
+      "GEMINI_API_KEY",
+      "GOOGLE_API_KEY",
+      "GOOGLE_GENERATIVE_AI_API_KEY"
+    ]
+  },
+  "ideProfiles": {
+    "codex": {
+      "provider": "codex",
+      "model": "codex-default",
+      "apiFallback": {
+        "provider": "openai",
+        "model": "gpt-5-codex",
+        "env": [
+          "OPENAI_API_KEY"
+        ]
+      },
+      "profiles": {
+        "default": {}
+      }
+    },
+    "claude-code": {
+      "provider": "claude-code",
+      "model": "claude-default",
+      "apiFallback": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "env": [
+          "ANTHROPIC_API_KEY"
+        ]
+      },
+      "profiles": {
+        "default": {}
+      }
+    },
+    "gemini-cli": {
+      "provider": "gemini-cli",
+      "model": "gemini-default",
+      "apiFallback": {
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "env": [
+          "GEMINI_API_KEY",
+          "GOOGLE_API_KEY"
+        ]
+      },
+      "profiles": {
+        "default": {}
+      }
+    },
+    "vscode": {
+      "provider": "github-copilot",
+      "model": "copilot-default",
+      "apiFallback": {
+        "provider": "openai",
+        "model": "gpt-5-mini",
+        "env": [
+          "OPENAI_API_KEY"
+        ]
+      },
+      "profiles": {
+        "default": {}
+      }
+    },
+    "cursor": {
+      "provider": "cursor",
+      "model": "cursor-default",
+      "apiFallback": {
+        "provider": "openai",
+        "model": "gpt-5-mini",
+        "env": [
+          "OPENAI_API_KEY"
+        ]
+      },
+      "profiles": {
+        "default": {}
+      }
+    },
+    "kiro": {
+      "provider": "kiro",
+      "model": "kiro-default",
+      "apiFallback": {
+        "provider": "openai",
+        "model": "gpt-5-mini",
+        "env": [
+          "OPENAI_API_KEY"
+        ]
+      },
+      "profiles": {
+        "default": {}
+      }
+    },
+    "antigravity": {
+      "provider": "antigravity",
+      "model": "antigravity-default",
+      "apiFallback": {
+        "provider": "openai",
+        "model": "gpt-5-mini",
+        "env": [
+          "OPENAI_API_KEY"
+        ]
+      },
+      "profiles": {
+        "default": {}
+      }
+    }
+  }
+}

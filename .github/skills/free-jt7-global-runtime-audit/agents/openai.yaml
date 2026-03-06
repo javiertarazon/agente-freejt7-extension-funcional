@@ -1,0 +1,4 @@
+interface:
+  display_name: "Free JT7 Global Runtime"
+  short_description: "Audit and enforce Free JT7 runtime behavior"
+  default_prompt: "Audit and enforce Free JT7 global runtime compliance."

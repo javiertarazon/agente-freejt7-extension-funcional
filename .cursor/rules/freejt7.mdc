@@ -1,0 +1,7 @@
+---
+description: Free JT7 runtime policy
+alwaysApply: true
+---
+
+Use .github/copilot-instructions.md and .github/skills as canonical source.
+Respect .github/free-jt7-policy.yaml and task quality gate before closing work.
