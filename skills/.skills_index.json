@@ -13186,7 +13186,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "systems-programming-rust-project",
@@ -14134,7 +14134,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "uv-package-manager",
@@ -14259,7 +14259,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "vexor",

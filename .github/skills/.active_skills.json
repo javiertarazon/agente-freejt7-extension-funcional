@@ -1,7 +1,10 @@
 {
   "active": [
-    "free-jt7-global-runtime-audit"
+    "free-jt7-global-runtime-audit",
+    "using-superpowers",
+    "systematic-debugging",
+    "verification-before-completion"
   ],
   "auto_detect": true,
-  "last_changed": "2026-02-27T00:20:43"
+  "last_changed": "2026-03-06T14:08:35"
 }
