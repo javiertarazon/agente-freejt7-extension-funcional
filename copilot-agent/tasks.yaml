@@ -14,3 +14,56 @@ tareas:
     resultado: >
       Repositorio v4.0 funcional, instalable en proyectos y
       con paquete VSIX generado localmente.
+  - id: "20260306-agent-hardening-debug-method"
+    fecha: "2026-03-06"
+    titulo: "Hardening del agente Free JT7 para diagnostico y verificacion"
+    descripcion: >
+      Refuerzo del prompt base del agente para imponer diagnostico por capas,
+      falsacion de hipotesis, uso de causa raiz y verificacion fresca antes
+      de declarar exito. Se activaron skills de debugging y cierre confiable.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["using-superpowers", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      El agente base ahora fuerza un metodo mas riguroso para investigar bugs,
+      evita parches por intuicion y exige evidencia ejecutada antes del cierre.
+  - id: "20260311T042518Z-16902937"
+    fecha: "2026-03-11"
+    titulo: "runtime-audit"
+    descripcion: >
+      runtime-audit
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["free-jt7-global-runtime-audit", "production-code-audit", "seo-audit"]
+    resultado: >
+      Run finalizado con 2 steps
+  - id: "20260311T044213Z-3c3c6c9f"
+    fecha: "2026-03-11"
+    titulo: "Asumir atributos del agente free-jt7"
+    descripcion: >
+      Asumir atributos del agente free-jt7
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["threat-modeling-expert", "brand-guidelines-anthropic", "avalonia-viewmodels-zafiro"]
+    resultado: >
+      Run finalizado con 4 steps
+  - id: "20260312T160135Z-ac6476a1"
+    fecha: "2026-03-12"
+    titulo: "smoke autonomia antigravity"
+    descripcion: >
+      smoke autonomia antigravity
+    estado: "en_progreso"
+    riesgo: "low"
+    skills_usados: ["antigravity-workflows", "make-automation", "segment-automation"]
+    resultado: >
+      status=running
+  - id: "20260312T160203Z-403510d1"
+    fecha: "2026-03-12"
+    titulo: "smoke autonomia antigravity"
+    descripcion: >
+      smoke autonomia antigravity
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["antigravity-workflows", "make-automation", "segment-automation"]
+    resultado: >
+      Smoke antigravity autonomy verificado

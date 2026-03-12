@@ -1,8 +1,8 @@
-﻿{
-  "_description": "Proyecto activo donde se aplican cambios. Edita 'path' o usa: python skills_manager.py set-project <ruta>",
-  "path": "",
-  "name": "",
-  "set_at": "",
+{
+  "_description": "Proyecto activo donde se aplican los cambios. Edita 'path' o usa: python skills_manager.py set-project <ruta>",
+  "path": "E:\\javie\\agente-freejt7-extension-funcional",
+  "name": "agente-freejt7-extension-funcional",
+  "set_at": "2026-03-11T04:25:18Z",
   "notes": "",
   "history": []
 }

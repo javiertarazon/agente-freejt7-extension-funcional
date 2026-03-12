@@ -1,3 +1,30 @@
 ﻿
 {"ts": "2026-03-06T01:14:02Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-03-06T01:14:10Z", "action": "install", "detail": "E:\\javie\\tmp-freejt7-install-test3"}
+{"ts": "2026-03-06T14:08:35Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-06T14:08:35Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-06T14:08:35Z", "action": "sync-claude", "detail": "4 activas de 964"}
+{"ts": "2026-03-06T14:10:46Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-06T14:10:46Z", "action": "sync-claude", "detail": "4 activas de 964"}
+{"ts": "2026-03-11T04:25:09Z", "action": "doctor", "detail": "errors=0 warnings=1 strict=True"}
+{"ts": "2026-03-11T04:25:18Z", "action": "set-project", "detail": "E:\\javie\\agente-freejt7-extension-funcional"}
+{"ts": "2026-03-11T04:25:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-11T04:25:23Z", "action": "task-close", "detail": "20260311T042518Z-16902937:succeeded"}
+{"ts": "2026-03-11T04:27:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-11T04:27:26Z", "action": "install", "detail": "E:\\javie\\agente-freejt7-extension-funcional"}
+{"ts": "2026-03-11T04:27:48Z", "action": "host-mode", "detail": "full project=E:\\javie\\agente-freejt7-extension-funcional"}
+{"ts": "2026-03-11T04:27:49Z", "action": "rollout-mode", "detail": "autonomous"}
+{"ts": "2026-03-11T04:28:06Z", "action": "model-resolve", "detail": "codex:default:ide-profile"}
+{"ts": "2026-03-11T04:28:22Z", "action": "gateway-bootstrap", "detail": "E:\\javie\\agente-freejt7-extension-funcional ide=codex profile=default"}
+{"ts": "2026-03-11T04:36:29Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-11T04:42:13Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-11T04:42:24Z", "action": "task-close", "detail": "20260311T044213Z-3c3c6c9f:succeeded"}
+{"ts": "2026-03-12T14:44:35Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-12T15:54:48Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-12T15:55:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-12T15:55:22Z", "action": "install", "detail": "E:\\javie\\agente-freejt7-extension-funcional"}
+{"ts": "2026-03-12T15:57:01Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-12T15:57:01Z", "action": "install", "detail": "E:\\javie\\agente-freejt7-extension-funcional"}
+{"ts": "2026-03-12T16:01:35Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-12T16:02:03Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-12T16:02:17Z", "action": "task-close", "detail": "20260312T160203Z-403510d1:succeeded"}
