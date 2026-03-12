@@ -39,3 +39,10 @@ desktop.ini
 copilot-agent/runs/
 copilot-agent/admin-runs/
 copilot-agent/phase7/
+
+# Local-only runtime/state
+.agent-learning/
+.antigravity/
+.codex-agent/
+OPEN CLAW/
+out.txt
