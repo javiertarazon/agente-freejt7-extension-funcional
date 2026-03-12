@@ -1,7 +1,12 @@
 ﻿# Instala Agente Free JT7 en un proyecto existente
+# (ubicado ahora en scripts/ para mantener todos los helpers juntos)
+#
+# NOTE: esta variante es funcionalmente equivalente a setup-project.ps1 y
+# está considerada <Deprecated>; prefiere `scripts\setup-project.ps1` para
+# nuevas instalaciones.
 #
 # Uso:
-#   .\add-free-jt7-agent.ps1 [-Path <ruta>] [-Ide <auto|all|vscode|cursor|kiro|antigravity|codex|claude-code|gemini-cli>] [-UpdateUserSettings] [-Force]
+#   .\scripts\add-free-jt7-agent.ps1 [-Path <ruta>] [-Ide <auto|all|vscode|cursor|kiro|antigravity|codex|claude-code|gemini-cli>] [-UpdateUserSettings] [-Force]
 #
 # Si no se especifica Path, se toma el directorio de trabajo actual.
 # El script invoca el gestor de skills (skills_manager.py) y crea

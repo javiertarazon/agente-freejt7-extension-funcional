@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local.",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -21,7 +21,14 @@
   "activationEvents": [
     "onCommand:freejt7.installWorkspace",
     "onCommand:freejt7.runtimeDoctor",
-    "onCommand:freejt7.openRuntimeDocs"
+    "onCommand:freejt7.openRuntimeDocs",
+    "onCommand:freejt7.openClawGatewayStatus",
+    "onCommand:freejt7.openClawCLI",
+    "onCommand:freejt7.openClawStartGateway",
+    "onCommand:freejt7.editOpenClawConfig",
+    "onCommand:freejt7.openClawInstallService",
+    "onCommand:freejt7.openClawACP",
+    "onCommand:freejt7.openClawChannelsLogin"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -37,6 +44,34 @@
       {
         "command": "freejt7.openRuntimeDocs",
         "title": "Free JT7: Abrir documentacion"
+      },
+      {
+        "command": "freejt7.openClawGatewayStatus",
+        "title": "Free JT7: OpenClaw Gateway Status"
+      },
+      {
+        "command": "freejt7.openClawCLI",
+        "title": "Free JT7: Run OpenClaw CLI"
+      },
+      {
+        "command": "freejt7.openClawStartGateway",
+        "title": "Free JT7: Start OpenClaw Gateway"
+      },
+      {
+        "command": "freejt7.editOpenClawConfig",
+        "title": "Free JT7: Edit OpenClaw Config"
+      },
+      {
+        "command": "freejt7.openClawInstallService",
+        "title": "Free JT7: Install OpenClaw Service"
+      },
+      {
+        "command": "freejt7.openClawACP",
+        "title": "Free JT7: OpenClaw ACP"
+      },
+      {
+        "command": "freejt7.openClawChannelsLogin",
+        "title": "Free JT7: OpenClaw Channels Login"
       }
     ],
     "configuration": {
@@ -76,7 +111,8 @@
     "package:local": "npx.cmd @vscode/vsce package --no-yarn --allow-missing-repository"
   },
   "devDependencies": {
-    "@vscode/vsce": "^3.6.2"
+    "@vscode/vsce": "^3.7.1",
+    "vscode": "^1.1.37"
   },
   "repository": {
     "type": "git",
@@ -85,5 +121,8 @@
   "homepage": "https://github.com/javiertarazon/agente-freejt7-extension-funcional",
   "bugs": {
     "url": "https://github.com/javiertarazon/agente-freejt7-extension-funcional/issues"
+  },
+  "dependencies": {
+    "xml2js": "^0.4.23"
   }
 }

@@ -9,3 +9,9 @@ copilot-agent/runs/**
 tests/**
 open-claw-multiroot.code-workspace
 free-jt7-multiroot.code-workspace
+OPEN CLAW/**
+legacy-vscode-free-jt7-agent/**
+.agent-learning/**
+.codex-agent/**
+.openclaw/**
+out.txt

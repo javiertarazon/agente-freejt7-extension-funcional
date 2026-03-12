@@ -1,4 +1,23 @@
-﻿const vscode = require("vscode");
+﻿let vscode;
+try {
+  vscode = require("vscode");
+} catch (e) {
+  // running outside of VSCode (test environment); provide minimal stubs
+  vscode = {
+    window: {
+      showErrorMessage: () => {},
+      showInformationMessage: () => {},
+      createOutputChannel: () => ({append:()=>{},appendLine:()=>{},show:()=>{}}),
+    },
+    commands: {
+      registerCommand: () => ({dispose:()=>{}}),
+    },
+    workspace: {
+      workspaceFolders: [{uri:{fsPath:process.cwd()}}],
+      getConfiguration: () => ({get:()=>null}),
+    },
+  };
+}
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -47,7 +66,7 @@ async function installWorkspace(context, output) {
   }
 
   const workspacePath = folders[0].uri.fsPath;
-  const scriptPath = path.join(context.extensionPath, "add-free-jt7-agent.ps1");
+  const scriptPath = path.join(context.extensionPath, "scripts", "add-free-jt7-agent.ps1");
   if (!fs.existsSync(scriptPath)) {
     vscode.window.showErrorMessage(`Free JT7: no se encontro ${scriptPath}.`);
     return;
@@ -117,21 +136,80 @@ function openRuntimeDocs(context) {
   });
 }
 
+// helpers for OpenClaw CLI detection and invocation
+function findOpenClawBinary(workspacePath) {
+  // prefer local workspace package
+  const localBin = path.join(workspacePath, "OPEN CLAW", "node_modules", ".bin", "openclaw");
+  if (fs.existsSync(localBin)) {
+    return localBin;
+  }
+  // global fallback - assume in PATH
+  return "openclaw";
+}
+
+async function runOpenClaw(args, output) {
+  const folders = vscode.workspace.workspaceFolders;
+  const workspacePath = folders && folders.length ? folders[0].uri.fsPath : process.cwd();
+  const bin = findOpenClawBinary(workspacePath);
+  output.appendLine(`[freejt7] invoking ${bin} ${args.join(" ")}`);
+  const res = await runCommand(bin, args, { cwd: workspacePath }, output);
+  if (res.code !== 0) {
+    vscode.window.showErrorMessage(`Free JT7: openclaw CLI failed (code ${res.code}). See output.`);
+  }
+}
+
 function activate(context) {
   const output = vscode.window.createOutputChannel("Free JT7");
+
 
   context.subscriptions.push(
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
     vscode.commands.registerCommand("freejt7.openRuntimeDocs", () => openRuntimeDocs(context)),
+
+    // new commands exposing OpenClaw CLI
+    vscode.commands.registerCommand("freejt7.openClawGatewayStatus", () => runOpenClaw(["gateway", "status"], output)),
+    vscode.commands.registerCommand("freejt7.openClawCLI", async () => {
+      const argStr = await vscode.window.showInputBox({ prompt: "Args for openclaw", value: "" });
+      if (argStr !== undefined) {
+        const args = argStr.match(/(?:[^\"\s]|\"[^\"]*\")+/g) || [];
+        await runOpenClaw(args, output);
+      }
+    }),
+    // new helper to start gateway if user wants
+    vscode.commands.registerCommand("freejt7.openClawStartGateway", () => runOpenClaw(["gateway","--port","18789"], output)),
+    // helper for editing config file in user's home
+    vscode.commands.registerCommand("freejt7.editOpenClawConfig", async () => {
+      const home = process.env.HOME || process.env.USERPROFILE;
+      const cfg = path.join(home, ".openclaw", "openclaw.json");
+      if (!fs.existsSync(cfg)) {
+        vscode.window.showErrorMessage(`Free JT7: no existe el archivo de configuracion ${cfg}`);
+        return;
+      }
+      const doc = await vscode.workspace.openTextDocument(cfg);
+      vscode.window.showTextDocument(doc, { preview: false });
+    }),
+    // additional wrappers for common OpenClaw actions
+    vscode.commands.registerCommand("freejt7.openClawInstallService", () => runOpenClaw(["onboard","--install-daemon"], output)),
+    vscode.commands.registerCommand("freejt7.openClawACP", async () => {
+      const argStr = await vscode.window.showInputBox({ prompt: "Args for openclaw acp", value: "" });
+      if (argStr !== undefined) {
+        const args = ["acp", ... (argStr.match(/(?:[^\"\s]|\"[^\"]*\")+/g) || [])];
+        await runOpenClaw(args, output);
+      }
+    }),
+    vscode.commands.registerCommand("freejt7.openClawChannelsLogin", () => runOpenClaw(["channels","login"], output)),
+
     output
   );
 }
 
 function deactivate() {}
 
+// expose helper for external tests
 module.exports = {
   activate,
-  deactivate
+  deactivate,
+  runOpenClaw // available for scripts
 };
 

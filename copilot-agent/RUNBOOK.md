@@ -19,6 +19,29 @@
    - `copilot-agent/runs/<run_id>.json`
    - `copilot-agent/runs/<run_id>.events.jsonl`
 
+8. Aprendizaje automático:
+   - **Siempre** que el agente ejecute una tarea (autónoma o guiada), se
+     crea un ejemplo de entrenamiento: el prompt es el `user_goal` y la
+     respuesta el `summary`. Un campo `score` marca éxito (1.0) o fallo
+     (0.0).
+   - La recolección ocurre automáticamente a través de `collect_from_runs.py`.
+   - El entrenamiento LoRA **debe ser autorizado** por el usuario o bien
+     ejecutarse exclusivamente en horas de inactividad (el script
+     `nightly_train.ps1` está diseñado para correr cuando no hay tareas
+     activas).
+   - Para forzar la recolección manual:
+     ```powershell
+     python tools\agent_autolearn\collect_from_runs.py
+     ```
+   - Para entrenar manualmente en cualquier momento:
+     ```powershell
+     python tools\agent_autolearn\auto_trainer.py --config tools\agent_autolearn\config.json
+     ```
+   - Un script programado (`tools\agent_autolearn\nightly_train.ps1`)
+     ejecuta el recolector y luego entrena; no programarlo mientras se
+     estén ejecutando tareas activas.
+
+
 ## Modo canary
 
 - `shadow`: simula steps sin ejecutar comandos.

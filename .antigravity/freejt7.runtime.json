@@ -1,6 +1,6 @@
 {
   "name": "freejt7-runtime",
-  "version": "﻿3.0",
+  "version": "4.0",
   "root": ".",
   "sources": {
     "instructions": ".github/copilot-instructions.md",
@@ -12,7 +12,14 @@
     "read",
     "write",
     "terminal",
-    "search"
+    "search",
+    "process",
+    "network"
   ],
-  "activation": "ephemeral"
+  "activation": "always",
+  "autonomy": {
+    "mode": "autonomous",
+    "autoApprove": true,
+    "requireUserConfirmationDefault": false
+  }
 }

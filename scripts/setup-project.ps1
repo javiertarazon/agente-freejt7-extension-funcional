@@ -1,10 +1,14 @@
 ﻿<#
 .SYNOPSIS
     Instala Agente Free JT7 en un proyecto y adapta la configuracion por IDE.
+    (script ubicado en scripts/ junto con otros utilitarios)
 
 .DESCRIPTION
     Wrapper de instalacion que delega en skills_manager.py:
       python skills_manager.py install <ProjectPath> --ide <target>
+
+    Este es el script preferido; `add-free-jt7-agent.ps1` es una versión
+    simplificada que persiste sólo por compatibilidad.
 
 .PARAMETER ProjectPath
     Ruta del proyecto destino. Por defecto: carpeta actual.

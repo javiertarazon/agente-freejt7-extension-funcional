@@ -90,6 +90,15 @@ MODEL_ROUTING_FILE = ROOT / ".github" / "free-jt7-model-routing.json"
 MODEL_ROUTING_LEGACY_FILE = ROOT / ".github" / "freejt7-model-routing.json"
 ROLLOUT_FILE  = COPILOT_AGENT / "rollout-mode.json"
 OPENCLAW_REPO_DIR = ROOT / "OPEN CLAW"
+OPENCLAW_REPO_NAMES: tuple[str, ...] = (
+    "OPEN CLAW",
+    "open claw",
+    "OPEN_CLAW",
+    "open_claw",
+    "openclaw",
+    "OpenClaw",
+    "open-claw",
+)
 
 SUPPORTED_IDES: tuple[str, ...] = (
     "vscode",
@@ -664,6 +673,15 @@ def _install_workspace_ide_adapter(target: Path, ide: str, force: bool) -> list[
 
     if ide == "antigravity":
         manifest = target / ".antigravity" / "freejt7.runtime.json"
+        settings_path = target / ".antigravity" / "settings.json"
+        settings = _load_json_object(settings_path)
+        _apply_freejt7_settings(settings, instruction_file, agent_location, ide)
+        settings["antigravity.freejt7.enabled"] = True
+        settings["antigravity.freejt7.autonomy.mode"] = "autonomous"
+        settings["antigravity.freejt7.approvals.auto"] = True
+        settings["antigravity.freejt7.requireUserConfirmationDefault"] = False
+        _save_json_object(settings_path, settings)
+        notes.append(f"workspace settings: {settings_path}")
         payload = {
             "name": "freejt7-runtime",
             "version": VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else "0.0",
@@ -674,8 +692,13 @@ def _install_workspace_ide_adapter(target: Path, ide: str, force: bool) -> list[
                 "skills_index": str((gh_dir / "skills" / ".skills_index.json").relative_to(target)).replace("\\", "/"),
                 "policy": str((gh_dir / "free-jt7-policy.yaml").relative_to(target)).replace("\\", "/"),
             },
-            "permissions": ["read", "write", "terminal", "search"],
-            "activation": "ephemeral",
+            "permissions": ["read", "write", "terminal", "search", "process", "network"],
+            "activation": "always",
+            "autonomy": {
+                "mode": "autonomous",
+                "autoApprove": True,
+                "requireUserConfirmationDefault": False,
+            },
         }
         if not manifest.exists() or force:
             _save_json_object(manifest, payload)
@@ -838,6 +861,9 @@ def _update_user_settings_for_ide(
             settings["kiro.freejt7.enabled"] = True
         if ide == "antigravity":
             settings["antigravity.freejt7.enabled"] = True
+            settings["antigravity.freejt7.autonomy.mode"] = "autonomous"
+            settings["antigravity.freejt7.approvals.auto"] = True
+            settings["antigravity.freejt7.requireUserConfirmationDefault"] = False
     _save_json_object(settings_path, settings)
     if ide in {"vscode", "cursor", "kiro", "antigravity"}:
         instruction_file = _to_posix((ROOT / ".github" / "copilot-instructions.md").resolve())
@@ -857,6 +883,9 @@ def _update_user_settings_for_ide(
                 profile_data["kiro.freejt7.enabled"] = True
             if ide == "antigravity":
                 profile_data["antigravity.freejt7.enabled"] = True
+                profile_data["antigravity.freejt7.autonomy.mode"] = "autonomous"
+                profile_data["antigravity.freejt7.approvals.auto"] = True
+                profile_data["antigravity.freejt7.requireUserConfirmationDefault"] = False
             _save_json_object(profile_settings, profile_data)
     return settings_path
 
@@ -1361,6 +1390,39 @@ def _openclaw_build_ready(repo: Path) -> bool:
     return True
 
 
+def _is_openclaw_repo(repo: Path) -> bool:
+    return (repo / "openclaw.mjs").exists() and (repo / "package.json").exists()
+
+
+def _discover_openclaw_repo(openclaw_repo: str = "") -> Path | None:
+    probes: list[Path] = []
+    explicit = str(openclaw_repo or "").strip()
+    env_repo = str(os.environ.get("FREE_JT7_OPENCLAW_REPO", "")).strip()
+    for raw in (explicit, env_repo):
+        if raw:
+            probes.append(Path(raw).expanduser())
+
+    for base in (ROOT, ROOT.parent, Path.cwd()):
+        for name in OPENCLAW_REPO_NAMES:
+            probes.append(base / name)
+
+    probes.append(OPENCLAW_REPO_DIR)
+
+    seen: set[str] = set()
+    for probe in probes:
+        try:
+            resolved = probe.resolve()
+        except Exception:
+            resolved = probe
+        key = _to_posix(resolved)
+        if key in seen:
+            continue
+        seen.add(key)
+        if _is_openclaw_repo(resolved):
+            return resolved
+    return None
+
+
 def _resolve_openclaw_command(openclaw_repo: str = "") -> list[str]:
     override = str(os.environ.get("FREE_JT7_OPENCLAW_CMD", "")).strip()
     if override:
@@ -1368,28 +1430,27 @@ def _resolve_openclaw_command(openclaw_repo: str = "") -> list[str]:
         if parsed:
             return [str(item) for item in parsed]
 
-    repo_raw = str(openclaw_repo or "").strip()
-    repo = Path(repo_raw).expanduser().resolve() if repo_raw else OPENCLAW_REPO_DIR.resolve()
-    local_entry = repo / "openclaw.mjs"
-    if local_entry.exists():
+    repo = _discover_openclaw_repo(openclaw_repo)
+    local_entry = (repo / "openclaw.mjs") if repo else None
+    if local_entry and local_entry.exists():
         build_ready = _openclaw_build_ready(repo)
         if build_ready:
             node = shutil.which("node")
             if not node:
-                raise RuntimeError("No se encontrÃ³ Node.js en PATH para ejecutar OPEN CLAW local")
+                raise RuntimeError("No se encontrÃ³ Node.js en PATH para ejecutar OpenClaw local")
             return [node, str(local_entry)]
 
     cli = shutil.which("openclaw")
     if cli:
         return [cli]
-    if local_entry.exists():
+    if local_entry and local_entry.exists():
         raise RuntimeError(
-            f"OPEN CLAW local detectado en '{repo}' pero sin build listo. "
+            f"OpenClaw local detectado en '{repo}' pero sin build listo. "
             f"Ejecuta: pnpm --dir \"{repo}\" install && pnpm --dir \"{repo}\" build"
         )
     raise RuntimeError(
-        "No se encontrÃ³ comando openclaw ni repositorio local en 'OPEN CLAW'. "
-        "Define FREE_JT7_OPENCLAW_CMD o instala OpenClaw."
+        "No se encontrÃ³ comando openclaw ni repositorio local de OpenClaw. "
+        "Define FREE_JT7_OPENCLAW_CMD o FREE_JT7_OPENCLAW_REPO, o instala OpenClaw."
     )
 
 
@@ -1399,16 +1460,47 @@ def _resolve_openclaw_command_hint(openclaw_repo: str = "") -> list[str]:
         parsed = shlex.split(override, posix=False)
         if parsed:
             return [str(item) for item in parsed]
-    repo_raw = str(openclaw_repo or "").strip()
-    repo = Path(repo_raw).expanduser().resolve() if repo_raw else OPENCLAW_REPO_DIR.resolve()
-    local_entry = repo / "openclaw.mjs"
+    repo = _discover_openclaw_repo(openclaw_repo)
+    local_entry = (repo / "openclaw.mjs") if repo else None
     node = shutil.which("node")
-    if local_entry.exists() and node:
+    if local_entry and local_entry.exists() and node:
         return [node, str(local_entry)]
     cli = shutil.which("openclaw")
     if cli:
         return [cli]
     return ["openclaw"]
+
+
+def _link_openclaw_repo_into_target(target: Path, force: bool = False) -> str:
+    source_repo = _discover_openclaw_repo("")
+    if source_repo is None:
+        return "WARN OpenClaw no detectado localmente; define FREE_JT7_OPENCLAW_REPO o instala openclaw CLI"
+
+    target_repo = target / "OPEN CLAW"
+    if _same_path(source_repo, target_repo):
+        return f"SKIP OpenClaw repo ya disponible en {target_repo}"
+
+    if target_repo.exists() or target_repo.is_symlink():
+        if _same_path(source_repo, target_repo):
+            return f"SKIP OpenClaw repo ya enlazado en {target_repo}"
+        if not force:
+            if _is_openclaw_repo(target_repo):
+                return f"SKIP OpenClaw repo ya existe en destino: {target_repo}"
+            return f"WARN no se vinculo OpenClaw: {target_repo} ya existe (usa --force)"
+        if target_repo.is_symlink():
+            target_repo.unlink()
+        else:
+            shutil.rmtree(target_repo)
+
+    try:
+        target_repo.symlink_to(source_repo, target_is_directory=True)
+        return f"LINK OpenClaw repo -> {target_repo} -> {source_repo}"
+    except OSError:
+        try:
+            shutil.copytree(source_repo, target_repo)
+            return f"COPY OpenClaw repo -> {target_repo}"
+        except Exception as exc:
+            return f"WARN fallo vinculando OpenClaw ({exc})"
 
 
 def _gateway_paths(project: Path) -> tuple[Path, Path]:
@@ -3073,14 +3165,17 @@ def cmd_sync_claude(args: argparse.Namespace) -> int:
             new_content = content.rstrip() + "\n\n" + block + "\n"
     else:
         # Crear CLAUDE.md nuevo
-        new_content = f"""# Proyecto: Agente Trader Codex
+        project_title = ROOT.name
+        new_content = f"""# Proyecto: {project_title}
 
-Este directorio contiene el agente de trading automatico para MetaTrader5
-(Expert Advisor TM_VOLATILITY_75) y el sistema de gestion de skills.
+Este directorio contiene el runtime de Free JT7, los bridges para IDEs y
+el sistema de gestion del catalogo de skills.
 
 ## Comandos del proyecto
-- Agente: `powershell -File descarga_datos/scripts/run_expert_tm_v75_agent.ps1`
-- Supervisor: `powershell -File descarga_datos/scripts/run_expert_tm_v75_supervisor.ps1`
+- Validacion: `python skills_manager.py policy-validate`
+- Estado: `python skills_manager.py doctor --strict`
+- Skills activas: `python skills_manager.py list --active`
+- Sincronizar Claude: `python skills_manager.py sync-claude`
 
 <!-- SKILLS_LIBRARY_START -->
 {block}
@@ -4147,6 +4242,9 @@ def cmd_install(args: argparse.Namespace) -> int:
     model_routing_target = _ensure_target_model_routing(target, force=getattr(args, "force", False))
     print(f"[install] OK model routing -> {model_routing_target}")
 
+    openclaw_note = _link_openclaw_repo_into_target(target, force=getattr(args, "force", False))
+    print(f"[install] {openclaw_note}")
+
     for ide in ide_targets:
         notes = _install_workspace_ide_adapter(target, ide, force=getattr(args, "force", False))
         if notes:
@@ -5040,7 +5138,7 @@ def main() -> int:
 
     p_gw_exec = sub.add_parser("gateway-exec", help="Ejecutar comando OpenClaw usando config del proyecto")
     p_gw_exec.add_argument("--project", default="", help="Ruta del proyecto objetivo")
-    p_gw_exec.add_argument("--openclaw-repo", default="", help="Ruta repo OpenClaw (si no usa OPEN CLAW local)")
+    p_gw_exec.add_argument("--openclaw-repo", default="", help="Ruta repo OpenClaw (si se omite, autodetecta local)")
     p_gw_exec.add_argument("--dry-run", action="store_true", help="Solo imprime comando")
     p_gw_exec.add_argument("--timeout-ms", type=int, default=120000, help="Timeout ejecucion")
     p_gw_exec.add_argument("openclaw_args", nargs=argparse.REMAINDER, help="Argumentos OpenClaw")
