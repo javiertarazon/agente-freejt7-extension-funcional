@@ -1,7 +1,7 @@
 {
   "version": 1,
   "default": {
-    "profile": "default",
+    "profile": "free-jt7",
     "preferIdeProfile": true,
     "allowApiFallback": true,
     "apiFallback": {
@@ -80,7 +80,11 @@
         ]
       },
       "profiles": {
-        "default": {}
+        "default": {},
+        "free-jt7": {
+          "temperature": 0.2,
+          "maxOutputTokens": 4096
+        }
       }
     },
     "cursor": {
