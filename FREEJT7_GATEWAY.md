@@ -1,10 +1,10 @@
-﻿# Free JT7 Gateway Runbook
+# Free JT7 Gateway Runbook
 
-- Proyecto: `<ruta-del-proyecto-activo>`
-- Config: `<proyecto>/.openclaw/openclaw.json`
-- Estado: `<proyecto>/.openclaw/state`
-- IDE/modelo por defecto: `vscode` / `github-copilot` / `copilot-default`
-- Retencion objetivo: `30 dias`
+- Proyecto: `E:\javie\agente-freejt7-extension-funcional`
+- Config: `E:\javie\agente-freejt7-extension-funcional\.openclaw\openclaw.json`
+- Estado: `E:\javie\agente-freejt7-extension-funcional\.openclaw\state`
+- IDE/modelo por defecto: `codex` / `codex` / `codex-default`
+- Retención objetivo: `30 dias`
 
 ## Comandos rapidos
 ```powershell

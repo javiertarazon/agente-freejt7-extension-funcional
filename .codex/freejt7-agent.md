@@ -5,3 +5,5 @@
 - Skills index: `.github/skills/.skills_index.json`
 - Policy: `.github/free-jt7-policy.yaml`
 - Runtime runs: `copilot-agent/runs/`
+- Mandatory debugging skills: `systematic-debugging`, `verification-before-completion`
+- Use skill-first workflow for bug fixing, and require fresh verification evidence before any success claim
