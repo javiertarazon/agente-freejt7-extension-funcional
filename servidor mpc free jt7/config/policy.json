@@ -1,0 +1,33 @@
+{
+  "mode": "high-autonomy-with-guardrails",
+  "allowedWebDomains": ["*"],
+  "allowedDesktopPrograms": [
+    "terminal64.exe",
+    "metatrader64.exe",
+    "mt5.exe",
+    "acad.exe",
+    "affinityphoto2.exe",
+    "affinitydesigner2.exe"
+  ],
+  "allowedCommands": [
+    "whoami",
+    "ipconfig",
+    "tasklist",
+    "echo",
+    "dir",
+    "powershell",
+    "cmd",
+    "node",
+    "python"
+  ],
+  "requireApproval": [
+    "registry.modify",
+    "external.publish",
+    "binary.execute",
+    "financial.operation",
+    "destructive.system"
+  ],
+  "allowYouTubeDownload": false,
+  "maxCommandTimeoutMs": 30000,
+  "maxFetchBytes": 2500000
+}

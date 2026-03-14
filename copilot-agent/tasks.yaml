@@ -52,11 +52,11 @@ tareas:
     titulo: "smoke autonomia antigravity"
     descripcion: >
       smoke autonomia antigravity
-    estado: "en_progreso"
+    estado: "completado"
     riesgo: "low"
     skills_usados: ["antigravity-workflows", "make-automation", "segment-automation"]
     resultado: >
-      status=running
+      Cerrada por reconciliacion manual el 2026-03-13: tarea duplicada; la ejecucion valida fue la 20260312T160203Z-403510d1.
   - id: "20260312T160203Z-403510d1"
     fecha: "2026-03-12"
     titulo: "smoke autonomia antigravity"
@@ -67,3 +67,28 @@ tareas:
     skills_usados: ["antigravity-workflows", "make-automation", "segment-automation"]
     resultado: >
       Smoke antigravity autonomy verificado
+  - id: "20260313-mcp-server-freejt7"
+    fecha: "2026-03-13"
+    titulo: "Crear servidor MCP Free JT7 local"
+    descripcion: >
+      Implementar carpeta 'servidor mpc free jt7' con servidor MCP modular,
+      politicas de seguridad, pruebas smoke y runbook para posterior integracion
+      con la extension.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["mcp-builder", "agent-governance", "verification-before-completion"]
+    resultado: >
+      Carpeta 'servidor mpc free jt7' creada con servidor MCP modular,
+      politicas locales, runbook y smoke test OK (npm.cmd run smoke).
+  - id: "20260313-cierre-bucle-tareas"
+    fecha: "2026-03-13"
+    titulo: "Cerrar tarea atascada y reforzar disciplina de cierre"
+    descripcion: >
+      Reconciliar tareas abiertas dejadas por ejecuciones previas, dejar evidencia
+      de cierre y registrar regla preventiva para no reabrir trabajo ya verificado.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["using-superpowers", "verification-before-completion"]
+    resultado: >
+      Tarea duplicada cerrada, RESUME actualizado y memoria operativa reforzada
+      para exigir cierre explicito tras cada ejecucion verificada.

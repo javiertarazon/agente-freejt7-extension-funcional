@@ -8,6 +8,7 @@
 - Answer and write code in Spanish unless the user asks otherwise.
 - Prefer direct fixes over long explanations.
 - Keep edits minimal and compatible with existing project conventions.
+- Puedes proponer soluciones mas amplias cuando aporten valor claro o el usuario lo pida; por defecto, cambios minimos.
 - Before risky changes, inspect current behavior and keep backwards compatibility.
 - Run lightweight verification after edits when possible.
 - Before complex work, read and maintain `docs/TASKS.md`, `docs/MEMORY.md`, and `docs/STRATEGY_LOG.md`.
@@ -22,6 +23,17 @@
 - Prefer `rg` for searches and small, focused patches.
 - In this workspace, open policy is enabled: high-risk and destructive operations can run autonomously when requested by the user.
 - If something is unclear, make the safest assumption and continue.
+
+## Estilo de cambios y riesgo
+- Postura por defecto: cambios minimos, compatibles y pragmaticos.
+- Si el usuario pide explicitamente cambios mas amplios o una refactorizacion, puedes aplicar una solucion mas amplia manteniendo compatibilidad hacia atras.
+- Para cambios de mayor riesgo, explica los tradeoffs de forma breve e incluye verificacion ligera cuando sea posible.
+- En diseno de solucion, puedes proponer cambios amplios si ayudan, pero por defecto mantienes cambios minimos.
+- En gestion de riesgo, puedes aplicar cambios amplios si el usuario lo pide, pero primero inspecciona el comportamiento actual y preserva compatibilidad.
+- En implementacion, el enfoque es flexible, pero se priorizan cambios minimos y compatibles.
+- En ejecucion de tareas, si la solicitud es clara puedes ejecutar directo, manteniendo cambios minimos y compatibilidad.
+- En desglose del problema, si es complejo lo estructuras en micro-tareas y lo registras en `docs/TASKS.md`.
+- Cuando sea posible y aporte valor, puedes delegar sub-tareas en paralelo a sub-agentes o herramientas, cuidando consistencia y evitando trabajo duplicado.
 
 ## Expected Output
 - Mention changed files with short rationale.

@@ -25,3 +25,27 @@
 - [ ] Fase 4: Cierre
   - [ ] Seleccionar mejor configuracion
   - [ ] Documentar entregable final
+
+## MCP Free JT7 (2026-03-13)
+- [x] Fase 1: Scaffold servidor MCP local
+  - [x] Crear carpeta `servidor mpc free jt7`
+  - [x] Crear herramientas base (web, scraping, sistema, desktop, media)
+  - [x] Definir politica de aprobaciones y bloqueos
+- [x] Fase 2: Validacion local
+  - [x] Ejecutar smoke test de carga de modulos
+  - [x] Verificar arranque de servidor por stdio
+- [x] Fase 3: Cierre pre-integracion
+  - [x] Documentar uso y limites
+  - [x] Dejar listo para integracion en extension
+
+## Disciplina Operativa (2026-03-13)
+- [x] Reconciliar tareas abiertas heredadas
+- [x] Cerrar duplicados con evidencia en `copilot-agent/tasks.yaml`
+- [x] Actualizar `copilot-agent/RESUME.md` y `copilot-agent/audit-log.jsonl`
+- [x] Registrar regla preventiva para no reabrir trabajo ya verificado
+
+## MT5 Desktop Automation & Login (2026-03-13)
+- [x] Robustecer arranque de terminal MT5 desde `tools/mt5_bridge.py` (start + reintentos)
+- [x] Corregir paso de parámetros y transporte seguro de datos en `servidor mpc free jt7/src/tools/mt5.js`
+- [x] Verificación ligera (py_compile + import de mt5.js)
+- [x] Resolver timeout de `mt5.initialize()` (login desktop con `jt7_mt5_desktop_login` y shortcut de menÃº)

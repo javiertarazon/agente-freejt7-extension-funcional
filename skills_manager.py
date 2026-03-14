@@ -4239,8 +4239,18 @@ def cmd_install(args: argparse.Namespace) -> int:
                 shutil.copytree(instr_src, instr_target)
                 print(f"[install] COPY .github/instructions/ -> copiado")
 
+    # Ensure both routing and policy files exist in target .github for all IDE bridges.
     model_routing_target = _ensure_target_model_routing(target, force=getattr(args, "force", False))
     print(f"[install] OK model routing -> {model_routing_target}")
+
+    policy_target = gh_target / "free-jt7-policy.yaml"
+    if _same_path(POLICY_FILE, policy_target):
+        print("[install] SKIP free-jt7-policy.yaml ya apunta al origen")
+    elif not policy_target.exists() or args.force:
+        shutil.copy2(POLICY_FILE, policy_target)
+        print(f"[install] OK policy -> {policy_target}")
+    else:
+        print("[install] SKIP free-jt7-policy.yaml ya existe (usa --force para sobreescribir)")
 
     openclaw_note = _link_openclaw_repo_into_target(target, force=getattr(args, "force", False))
     print(f"[install] {openclaw_note}")

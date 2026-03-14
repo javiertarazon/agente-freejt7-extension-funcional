@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local.",
-  "version": "4.1.0",
+  "version": "4.2.1",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -32,6 +32,23 @@
   ],
   "main": "./extension.js",
   "contributes": {
+    "themes": [
+      {
+        "label": "Free JT7 - Alto Contraste Oscuro",
+        "uiTheme": "vs-dark",
+        "path": "./themes/high-contrast-dark.json"
+      },
+      {
+        "label": "Free JT7 - Alto Contraste Claro",
+        "uiTheme": "vs",
+        "path": "./themes/high-contrast-light.json"
+      },
+      {
+        "label": "Free JT7 - Amigable para Daltónicos",
+        "uiTheme": "vs-dark",
+        "path": "./themes/colorblind-friendly.json"
+      }
+    ],
     "commands": [
       {
         "command": "freejt7.installWorkspace",

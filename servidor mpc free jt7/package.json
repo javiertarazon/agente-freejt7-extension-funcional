@@ -1,0 +1,20 @@
+{
+  "name": "free-jt7-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Servidor MCP local modular para Free JT7",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "smoke": "node src/index.js --self-test",
+    "check": "node --check src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

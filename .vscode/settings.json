@@ -17,5 +17,12 @@
     "freejt7.models.routing": "${workspaceFolder}/.github/free-jt7-model-routing.json",
     "freejt7.models.ide": "vscode",
     "github.copilot.chat.cli.customAgents.enabled": true,
-    "github.copilot.chat.switchAgent.enabled": true
+    "github.copilot.chat.switchAgent.enabled": true,
+    "python-envs.pythonProjects": [
+        {
+            "path": ".",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
+    ]
 }

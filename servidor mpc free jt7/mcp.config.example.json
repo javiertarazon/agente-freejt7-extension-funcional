@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "free-jt7-local": {
+      "command": "node",
+      "args": [
+        "src/index.js"
+      ],
+      "cwd": "E:/javie/agente-freejt7-extension-funcional/servidor mpc free jt7"
+    }
+  }
+}
