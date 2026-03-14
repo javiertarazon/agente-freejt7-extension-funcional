@@ -20,6 +20,7 @@ Este archivo evita repetir errores en sesiones futuras. Se actualiza despues de 
 | 2026-03-13 | MT5 no respondia hasta login por UI | La terminal estaba abierta pero requerÃ­a login desde el menÃº | Regla: usar `jt7_mt5_desktop_login` con shortcut `%fl` si el login por API se cuelga |
 | 2026-03-13 | `jt7_mt5_account_info` fallÃ³ tras login previo | Cada tool corre en proceso nuevo y pierde sesiÃ³n | Regla: auto-login por llamada leyendo `credentials_file` o creds directas antes de operaciones |
 | 2026-03-13 | `jt7_mt5_account_info` ignoraba credenciales | El handler no pasaba `params` a `executePythonMT5` | Regla: siempre reenviar `params` en tools sin argumentos para habilitar auto-login |
+| 2026-03-13 | `mt5_server.py` no arrancaba con SDK MCP reciente | Uso de API antigua (`callback`, `set_available_tools`) | Regla: adaptar a `@server.list_*()` y `stdio_server` con `server.run()` |
 
 ## Historial de bloqueos complejos
 - Pendiente: agregar entradas cuando haya bloqueos con 3+ intentos.

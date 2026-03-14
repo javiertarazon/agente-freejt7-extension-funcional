@@ -16,13 +16,12 @@ import subprocess
 import psutil
 import time
 
-from mcp.server import Server
+from mcp.server import Server, InitializationOptions
+from mcp.server.stdio import stdio_server
 from mcp.types import (
     Resource,
-    Callback,
     TextContent,
     Tool,
-    ToolResult,
 )
 import mcp.types as types
 
@@ -49,7 +48,7 @@ CREDENTIALS_FILE = CONFIG_DIR / "credentials.json"
 CACHE_FILE = CONFIG_DIR / "cache.json"
 
 # Crear servidor MCP
-server = Server("mt5-service")
+server = Server("mt5-service", version="0.1.0")
 
 # ===================== CONFIGURACIÓN =====================
 
@@ -433,7 +432,7 @@ def get_market_data(symbol: str, timeframe: int = mt5.TIMEFRAME_D1, count: int =
 
 # ===================== RECURSOS MCP =====================
 
-@server.list_resources.callback
+@server.list_resources()
 def handle_list_resources() -> list[types.Resource]:
     """Lista los recursos disponibles"""
     resources = [
@@ -464,7 +463,7 @@ def handle_list_resources() -> list[types.Resource]:
     ]
     return resources
 
-@server.read_resource.callback
+@server.read_resource()
 def handle_read_resource(uri: str) -> str:
     """Lee un recurso específico"""
     if uri == "mt5://account":
@@ -485,7 +484,7 @@ def handle_read_resource(uri: str) -> str:
 
 # ===================== HERRAMIENTAS MCP =====================
 
-@server.call_tool.callback
+@server.call_tool()
 def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     """Maneja las llamadas a herramientas"""
     try:
@@ -649,17 +648,27 @@ MT5_TOOLS = [
     ),
 ]
 
+@server.list_tools()
+def handle_list_tools() -> list[types.Tool]:
+    return MT5_TOOLS
+
 async def main():
     """Punto de entrada principal"""
     logger.info("Iniciando servidor MCP de MT5")
     
-    # Registrar herramientas
-    server.set_available_tools(MT5_TOOLS)
-    
     # Ejecutar servidor
-    async with server:
+    init_options = InitializationOptions(
+        server_name="mt5-service",
+        server_version="0.1.0",
+        capabilities=types.ServerCapabilities(
+            tools=types.ToolsCapability(),
+            resources=types.ResourcesCapability(),
+        ),
+    )
+
+    async with stdio_server() as (read_stream, write_stream):
         logger.info("Servidor MCP escuchando...")
-        await asyncio.sleep(float('inf'))
+        await server.run(read_stream, write_stream, init_options)
 
 if __name__ == "__main__":
     asyncio.run(main())
