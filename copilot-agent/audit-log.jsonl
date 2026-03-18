@@ -35,3 +35,30 @@
 {"ts": "2026-03-13T00:00:00Z", "action": "mcp-server-build", "detail": "servidor mpc free jt7 creado + smoke test ok"}
 {"ts": "2026-03-13T20:25:38Z", "action": "task-close", "detail": "20260312T160135Z-ac6476a1:closed-as-duplicate"}
 {"ts": "2026-03-13T20:25:38Z", "action": "task-close", "detail": "20260313-cierre-bucle-tareas:succeeded"}
+{"ts": "2026-03-15T01:14:12Z", "action": "task-open", "detail": "20260314-wallpaper-fix-interactive:diagnostico y refresco de wallpaper en sesion interactiva"}
+{"ts": "2026-03-15T01:21:42Z", "action": "task-close", "detail": "20260314-wallpaper-fix-interactive:succeeded root-cause=html-saved-as-jpg"}
+{"ts": "2026-03-15T01:27:00Z", "action": "task-reopen", "detail": "20260314-wallpaper-fix-interactive:visual-check-failed investigate-backgroundtype"}
+{"ts": "2026-03-15T01:35:00Z", "action": "task-close", "detail": "20260314-wallpaper-fix-interactive:succeeded wallpaper=wallpapers/motogp_wallpaper_3.jpg user-confirmed-visible"}
+{"ts": "2026-03-17T00:00:00Z", "action": "task-open", "detail": "20260317-model-routing-planner-executor:separar GPT-5.4 planner y modelos baratos de ejecucion"}
+{"ts": "2026-03-17T00:00:01Z", "action": "copilot-routing-update", "detail": "planner=gpt-5.4 executors=claude-haiku-4.5,gemini-3-flash,grok-code copilot-first"}
+{"ts": "2026-03-17T00:00:02Z", "action": "task-close", "detail": "20260317-model-routing-planner-executor:succeeded copilot-planner-executor"}
+{"ts": "2026-03-17T00:10:00Z", "action": "task-open", "detail": "20260317-revert-planner-executor-prep:revertir cambios funcionales previos antes del rediseño"}
+{"ts": "2026-03-17T00:10:01Z", "action": "task-close", "detail": "20260317-revert-planner-executor-prep:succeeded revertido planner-executor-prep"}
+{"ts": "2026-03-17T00:10:02Z", "action": "task-open", "detail": "20260317-copilot-sdk-router-plan:pendiente de plan y aprobacion del usuario"}
+{"ts": "2026-03-17T00:15:00Z", "action": "task-close", "detail": "20260317-copilot-sdk-router-plan:succeeded plan-aprobado-por-usuario"}
+{"ts": "2026-03-17T00:15:01Z", "action": "task-open", "detail": "20260317-copilot-sdk-router-impl:implementacion router real con Copilot SDK"}
+{"ts": "2026-03-18T15:03:27Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:08:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:13:46Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:13:47Z", "action": "install", "detail": "E:\\javie\\agente-freejt7-extension-funcional\\__audit_tmp_install5"}
+{"ts": "2026-03-18T15:13:52Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:13:52Z", "action": "install", "detail": "E:\\javie\\agente-freejt7-extension-funcional\\__audit_tmp_install6"}
+{"ts": "2026-03-18T15:23:07Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:23:07Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:23:07Z", "action": "install", "detail": "E:\\javie\\agente-freejt7-extension-funcional\\__audit_tmp_install8"}
+{"ts": "2026-03-18T15:23:08Z", "action": "install", "detail": "E:\\javie\\agente-freejt7-extension-funcional\\__audit_tmp_install7"}
+{"ts": "2026-03-18T15:23:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:23:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:23:30Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:23:40Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-03-18T15:24:01Z", "action": "task-close", "detail": "audit-autonomia-20260318:succeeded"}

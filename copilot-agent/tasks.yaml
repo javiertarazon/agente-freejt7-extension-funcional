@@ -92,3 +92,86 @@ tareas:
     resultado: >
       Tarea duplicada cerrada, RESUME actualizado y memoria operativa reforzada
       para exigir cierre explicito tras cada ejecucion verificada.
+  - id: "20260314-wallpaper-fix-interactive"
+    fecha: "2026-03-14"
+    titulo: "Forzar aplicacion del wallpaper en sesion interactiva"
+    descripcion: >
+      Investigar por que el fondo Moto GP quedo en registro y cache pero no se
+      reflejo visualmente, aplicar refresco forzado de la sesion y verificar
+      persistencia.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Causa raiz confirmada: `moto_gp.jpg` era HTML con extension `.jpg`. Se
+      aplico la imagen local solicitada `wallpapers/motogp_wallpaper_3.jpg`, se
+      forzo `BackgroundType=0`, se actualizo el fondo en registro/API y el
+      usuario confirmo que ya se ve correctamente en el escritorio.
+  - id: "20260317-model-routing-planner-executor"
+    fecha: "2026-03-17"
+    titulo: "Separar planner y executor por costo"
+    descripcion: >
+      Ajustar Free JT7 para que la planeacion/asignacion use GPT-5.4 dentro de
+      GitHub Copilot Chat y la ejecucion puntual use agentes ejecutores
+      baratos en Copilot como Claude Haiku 4.5, Gemini 3 Flash y Grok Code.
+      Las APIs externas quedan solo como opcion secundaria.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-governance", "subagent-driven-development"]
+    resultado: >
+      Completado: planner `free-jt7` fijado a `gpt-5.4`, se agregaron
+      ejecutores Copilot `free-jt7-executor-haiku`,
+      `free-jt7-executor-gemini-flash` y `free-jt7-executor-grok-code`, y se
+      actualizo el routing y la documentacion para operar Copilot-first con
+      APIs externas solo como opcion secundaria.
+  - id: "20260317-revert-planner-executor-prep"
+    fecha: "2026-03-17"
+    titulo: "Revertir cambios del split planner/executor"
+    descripcion: >
+      Revertir los cambios funcionales introducidos para planner/executor en
+      agentes, routing, runtime y documentacion, dejando solo trazabilidad de
+      que fueron retirados antes de redisenar la solucion correcta.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Revertidos los cambios en agentes, routing, runtime y documentacion.
+      Se elimino la preparacion intermedia basada en custom agents y se dejo
+      pendiente un plan separado para el router real con Copilot SDK.
+  - id: "20260317-copilot-sdk-router-plan"
+    fecha: "2026-03-17"
+    titulo: "Planificar router real con Copilot SDK"
+    descripcion: >
+      Disenar la implementacion de un router real que planifique con un modelo
+      caro y ejecute subtareas con modelos mas baratos dentro de GitHub
+      Copilot, con cambio automatizado por tarea y aprobacion del usuario
+      antes de implementarlo.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["copilot-sdk", "agent-governance", "plan-writing"]
+    resultado: >
+      Plan presentado y aprobado por el usuario para proceder con la
+      implementacion.
+  - id: "20260317-copilot-sdk-router-impl"
+    fecha: "2026-03-17"
+    titulo: "Implementar router real con Copilot SDK"
+    descripcion: >
+      Construir un router programatico que use un modelo de planificacion de
+      alta capacidad y cambie automaticamente a modelos mas baratos para la
+      ejecucion de subtareas, todo usando la cuenta del perfil GitHub Copilot.
+    estado: "en_progreso"
+    riesgo: "medium"
+    skills_usados: ["copilot-sdk", "agent-governance", "vscode-ext-commands"]
+    resultado: >
+      En progreso: integracion tecnica del router en la extension y en el flujo
+      del agente free-jt7.
+  - id: "audit-autonomia-20260318"
+    fecha: "2026-03-18"
+    titulo: "verificacion de autonomia auditada"
+    descripcion: >
+      verificacion de autonomia auditada
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["production-code-audit", "llm-application-dev-ai-assistant", "framework-migration-code-migrate"]
+    resultado: >
+      verificacion autonoma OK
