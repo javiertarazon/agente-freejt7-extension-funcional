@@ -118,5 +118,5 @@
 - [x] Sincronizar version en metadata, docs y archivo `VERSION`
 - [x] Reempaquetar `.vsix` final `4.2.3`
 - [x] Verificar instalacion limpia en VS Code
-- [ ] Commit y push de la rama al remoto
+- [x] Commit y push de la rama al remoto
 
