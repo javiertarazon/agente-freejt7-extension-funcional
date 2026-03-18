@@ -1,5 +1,11 @@
 ﻿# Changelog
 
+## [4.2.3] - 2026-03-18
+
+- Rama correlativa de release creada para dejar la extension final operativa y lista para instalar desde VSIX.
+- Version sincronizada en `package.json`, `package-lock.json`, `VERSION` y `README.md` para evitar deriva entre runtime, empaquetado y documentacion.
+- Reempaquetado y revalidado el bundle `dist/extension.cjs` junto con la extension VS Code para confirmar instalacion limpia sobre la linea 4.2.x.
+
 ## [4.2.2] - 2026-03-18
 
 - Corregido el flujo de instalacion desde la extension y wrappers PowerShell (`setup-project.ps1`, `add-free-jt7-agent.ps1`) con resolucion robusta de `skills_manager.py` y fallback de Python valido.

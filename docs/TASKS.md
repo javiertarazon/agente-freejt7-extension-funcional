@@ -113,3 +113,10 @@
   - [x] Bundlear `extension.js` y `copilot_router.js` en `dist/extension.cjs` con `esbuild`
   - [x] Validar la extension instalada desde VSIX usando el bundle generado
 
+## Release correlativa 4.2.3 (2026-03-18)
+- [x] Crear rama `release/4.2.3` desde `main`
+- [x] Sincronizar version en metadata, docs y archivo `VERSION`
+- [x] Reempaquetar `.vsix` final `4.2.3`
+- [x] Verificar instalacion limpia en VS Code
+- [ ] Commit y push de la rama al remoto
+
