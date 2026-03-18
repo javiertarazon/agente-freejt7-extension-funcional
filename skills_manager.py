@@ -269,6 +269,17 @@ DEFAULT_MODEL_ROUTING: dict[str, Any] = {
             "profiles": {"default": {}},
         },
     },
+    "copilotSdkRouter": {
+        "planner": {"model": "gpt-5.4"},
+        "execution": {
+            "cheapModel": "claude-haiku-4.5",
+            "contextModel": "gemini-3-flash",
+            "fallbackModel": "gpt-5.4",
+            "experimentalCodeModel": "",
+        },
+        "synthesis": {"model": "gpt-5.4"},
+        "permissions": {"autoApproveSafeTools": True},
+    },
 }
 
 # Palabras clave para auto-categorizar skills
@@ -319,9 +330,23 @@ def load_json(path: Path, default: Any) -> Any:
 
 def _atomic_write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
     tmp.write_text(content, encoding="utf-8")
-    tmp.replace(path)
+    try:
+        for attempt in range(6):
+            try:
+                tmp.replace(path)
+                return
+            except PermissionError:
+                if attempt == 5:
+                    raise
+                time.sleep(0.1 * (attempt + 1))
+    finally:
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
 
 
 def save_json(path: Path, data: Any) -> None:
@@ -5343,4 +5368,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

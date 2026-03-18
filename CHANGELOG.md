@@ -1,5 +1,16 @@
 ﻿# Changelog
 
+## [4.2.2] - 2026-03-18
+
+- Corregido el flujo de instalacion desde la extension y wrappers PowerShell (`setup-project.ps1`, `add-free-jt7-agent.ps1`) con resolucion robusta de `skills_manager.py` y fallback de Python valido.
+- Endurecido `skills_manager.py` para evitar colisiones de escritura en instalaciones concurrentes usando temporales unicos y reintentos cortos.
+- Recuperado el router Copilot real en `copilot_router.js`: version valida de `@github/copilot-sdk`, compatibilidad ESM automatizada por `postinstall`, soporte de `copilot.cmd` en Windows y auth por `copilot login` o variables `COPILOT_GITHUB_TOKEN`/`GH_TOKEN`/`GITHUB_TOKEN`.
+- Ajustado el router para ampliar la espera de `session.idle` y reducir falsos residuos por timeout en corridas largas.
+- Auditoria funcional completada: skills activas, modo autonomo, router Copilot autenticado y servidor MCP local validados con evidencia real.
+- Endurecimiento del arbol npm del root: `xml2js` actualizado, `undici` fijado por `overrides`, eliminada la dependencia legacy `vscode` y `npm audit` en `0` vulnerabilidades.
+- Empaquetado final 4.2.2 rehecho con `.vscodeignore` mas estricto para bajar ruido y peso del VSIX.
+- Bundling del runtime JS principal con `esbuild`: `extension.js` y `copilot_router.js` quedan como shims minimos y el runtime compartido se empaqueta en `dist/extension.cjs` con `vscode` como dependencia externa.
+
 ## [4.1.0] - 2026-03-12
 
 - Corregida la instalacion desde la extension VS Code: ahora usa `scripts/add-free-jt7-agent.ps1` (antes apuntaba a una ruta obsoleta en raiz).

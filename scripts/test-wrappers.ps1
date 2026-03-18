@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 
 Write-Host '[test] running openclaw-start.cmd --version'
 try {
-    & .\openclaw-start.cmd --version
+    & "$PSScriptRoot\openclaw-start.cmd" --version
 } catch {
     Write-Host "[test] openclaw-start.cmd failed: $_"
 }

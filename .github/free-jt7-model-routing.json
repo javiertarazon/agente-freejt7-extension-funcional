@@ -129,5 +129,22 @@
         "default": {}
       }
     }
+  },
+  "copilotSdkRouter": {
+    "planner": {
+      "model": "gpt-5.4"
+    },
+    "execution": {
+      "cheapModel": "claude-haiku-4.5",
+      "contextModel": "gemini-3-flash",
+      "fallbackModel": "gpt-5.4",
+      "experimentalCodeModel": ""
+    },
+    "synthesis": {
+      "model": "gpt-5.4"
+    },
+    "permissions": {
+      "autoApproveSafeTools": true
+    }
   }
 }

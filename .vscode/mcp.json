@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "free-jt7-local": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["src/index.js"],
+      "cwd": "${workspaceFolder}/servidor mpc free jt7"
+    }
+  }
+}

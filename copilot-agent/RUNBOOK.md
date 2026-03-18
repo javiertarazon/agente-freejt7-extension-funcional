@@ -19,6 +19,15 @@
    - `copilot-agent/runs/<run_id>.json`
    - `copilot-agent/runs/<run_id>.events.jsonl`
 
+## Router Copilot SDK
+
+- Comando VS Code: `Free JT7: Routed Copilot Task`
+- CLI local: `node copilot_router.js --goal "..." --workspace . --json`
+- Planner: `gpt-5.4`
+- Ejecutores baratos por defecto: `claude-haiku-4.5` y `gemini-3-flash`
+- Fallback de alto riesgo: `gpt-5.4`
+- Si el CLI responde que no hay autenticacion, ejecutar `copilot` y usar `/login`, o definir `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN`.
+
 8. Aprendizaje automático:
    - **Siempre** que el agente ejecute una tarea (autónoma o guiada), se
      crea un ejemplo de entrenamiento: el prompt es el `user_goal` y la

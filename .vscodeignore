@@ -16,3 +16,40 @@ legacy-vscode-free-jt7-agent/**
 .openclaw/**
 wallpapers/**
 out.txt
+*.vsix
+bundle-entry.js
+src-js/**
+scripts/build-extension-bundle.js
+node_modules/.bin/**
+node_modules/**/.github/**
+node_modules/**/test/**
+node_modules/**/tests/**
+node_modules/**/__tests__/**
+node_modules/**/benchmark/**
+node_modules/**/benchmarks/**
+node_modules/**/docs/**
+node_modules/**/doc/**
+node_modules/**/examples/**
+node_modules/**/*.map
+node_modules/**/*.ts
+node_modules/**/*.md
+node_modules/@github/copilot/ripgrep/bin/darwin-*/**
+node_modules/@github/copilot/ripgrep/bin/linux-*/**
+node_modules/@github/copilot/ripgrep/bin/win32-arm64/**
+node_modules/@github/copilot/prebuilds/darwin-*/**
+node_modules/@github/copilot/prebuilds/linux-*/**
+node_modules/@github/copilot/prebuilds/win32-arm64/**
+node_modules/@github/copilot/prebuilds/**/*.pdb
+servidor mpc free jt7/node_modules/.bin/**
+servidor mpc free jt7/node_modules/**/.github/**
+servidor mpc free jt7/node_modules/**/test/**
+servidor mpc free jt7/node_modules/**/tests/**
+servidor mpc free jt7/node_modules/**/__tests__/**
+servidor mpc free jt7/node_modules/**/benchmark/**
+servidor mpc free jt7/node_modules/**/benchmarks/**
+servidor mpc free jt7/node_modules/**/docs/**
+servidor mpc free jt7/node_modules/**/doc/**
+servidor mpc free jt7/node_modules/**/examples/**
+servidor mpc free jt7/node_modules/**/*.map
+servidor mpc free jt7/node_modules/**/*.ts
+servidor mpc free jt7/node_modules/**/*.md

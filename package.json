@@ -22,6 +22,7 @@
     "onCommand:freejt7.installWorkspace",
     "onCommand:freejt7.runtimeDoctor",
     "onCommand:freejt7.openRuntimeDocs",
+    "onCommand:freejt7.routeTaskWithCopilot",
     "onCommand:freejt7.openClawGatewayStatus",
     "onCommand:freejt7.openClawCLI",
     "onCommand:freejt7.openClawStartGateway",
@@ -30,7 +31,7 @@
     "onCommand:freejt7.openClawACP",
     "onCommand:freejt7.openClawChannelsLogin"
   ],
-  "main": "./extension.js",
+  "main": "./dist/extension.cjs",
   "contributes": {
     "themes": [
       {
@@ -61,6 +62,10 @@
       {
         "command": "freejt7.openRuntimeDocs",
         "title": "Free JT7: Abrir documentacion"
+      },
+      {
+        "command": "freejt7.routeTaskWithCopilot",
+        "title": "Free JT7: Routed Copilot Task"
       },
       {
         "command": "freejt7.openClawGatewayStatus",
@@ -119,17 +124,54 @@
           "type": "boolean",
           "default": false,
           "description": "Sobrescribe archivos de integracion existentes."
+        },
+        "freejt7.copilotRouter.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Ruta opcional al binario del GitHub Copilot CLI para el router SDK."
+        },
+        "freejt7.copilotRouter.plannerModel": {
+          "type": "string",
+          "default": "gpt-5.4",
+          "description": "Modelo de Copilot usado para planificacion y sintesis en el router."
+        },
+        "freejt7.copilotRouter.executorCheapModel": {
+          "type": "string",
+          "default": "claude-haiku-4.5",
+          "description": "Modelo barato por defecto para ejecutar subtareas acotadas."
+        },
+        "freejt7.copilotRouter.executorContextModel": {
+          "type": "string",
+          "default": "gemini-3-flash",
+          "description": "Modelo barato alternativo para subtareas con mas contexto."
+        },
+        "freejt7.copilotRouter.executorFallbackModel": {
+          "type": "string",
+          "default": "gpt-5.4",
+          "description": "Modelo de fallback cuando una subtarea es de alto riesgo o falla con un modelo barato."
+        },
+        "freejt7.copilotRouter.experimentalCodeModel": {
+          "type": "string",
+          "default": "",
+          "description": "Modelo opcional para codigo rapido, por ejemplo Grok Code Fast 1 si tu tenant lo expone."
+        },
+        "freejt7.copilotRouter.autoApproveSafeTools": {
+          "type": "boolean",
+          "default": true,
+          "description": "Aprueba automaticamente tools seguras del SDK y bloquea shells destructivas conocidas."
         }
       }
     }
   },
   "scripts": {
-    "package": "npx.cmd @vscode/vsce package --allow-missing-repository",
-    "package:local": "npx.cmd @vscode/vsce package --no-yarn --allow-missing-repository"
+    "build:bundle": "node scripts/build-extension-bundle.js",
+    "postinstall": "node scripts/fix-copilot-sdk-install.js && node scripts/build-extension-bundle.js",
+    "package": "npm.cmd run build:bundle && npx.cmd @vscode/vsce package --allow-missing-repository",
+    "package:local": "npm.cmd run build:bundle && npx.cmd @vscode/vsce package --no-yarn --allow-missing-repository"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.7.1",
-    "vscode": "^1.1.37"
+    "esbuild": "^0.25.10"
   },
   "repository": {
     "type": "git",
@@ -140,6 +182,10 @@
     "url": "https://github.com/javiertarazon/agente-freejt7-extension-funcional/issues"
   },
   "dependencies": {
-    "xml2js": "^0.4.23"
+    "@github/copilot-sdk": "0.1.32",
+    "xml2js": "0.6.2"
+  },
+  "overrides": {
+    "undici": "7.24.0"
   }
 }

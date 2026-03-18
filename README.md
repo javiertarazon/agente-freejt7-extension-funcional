@@ -1,6 +1,6 @@
 ﻿# Agente Free JT7 Extension Funcional
 
-Version: `4.1`
+Version: `4.2.2`
 
 Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - ejecutable por CLI (`skills_manager.py`)
@@ -50,6 +50,30 @@ python skills_manager.py ide-detect --json
 python skills_manager.py install "C:\ruta\mi-proyecto" --ide vscode --update-user-settings
 ```
 
+## Router real con Copilot SDK
+
+La extension ahora incluye un router local con Copilot SDK en `copilot_router.js`.
+
+- Planifica con `gpt-5.4`.
+- Ejecuta subtareas con modelos baratos configurables como `claude-haiku-4.5` y `gemini-3-flash`.
+- Puede usar un modelo experimental para codigo rapido si configuras `freejt7.copilotRouter.experimentalCodeModel`.
+- Registra evidencia en `copilot-agent/runs/` dentro del workspace.
+
+Uso directo por CLI local:
+
+```powershell
+node copilot_router.js --goal "describe y resuelve la tarea" --workspace . --json
+```
+
+Uso desde la extension:
+
+- comando `Free JT7: Routed Copilot Task`
+
+Requisito operativo:
+
+- tener instalado y autenticado `copilot` CLI.
+- si falta login, ejecuta `copilot` y luego `/login`, o configura `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN`.
+
 ## Generar extension VS Code (.vsix)
 
 ```powershell
@@ -67,7 +91,7 @@ Después de crear el paquete puedes confirmar la instalación ejecutando
 Para instalar manualmente usa el menú de extensiones de VS Code o:
 
 ```powershell
-code --install-extension agente-freejt7-extension-funcional-4.0.0.vsix
+code --install-extension agente-freejt7-extension-funcional-4.2.2.vsix
 ```
 
 ### Probar wrappers

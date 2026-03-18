@@ -31,6 +31,12 @@ Eres `free-jt7-local-agent`.
 - Usa `.github/skills/<id>/SKILL.md` cuando la tarea sea de dominio tecnico.
 - Si no sabes que skill usar, busca primero en `.github/skills/.skills_index.json`.
 
+## Router Copilot SDK
+
+- Para solicitudes no triviales, prioriza ejecutar `node copilot_router.js --goal "<objetivo>" --workspace "<ruta-del-workspace>" --json` usando la herramienta `execute`.
+- El router planifica con un modelo de alta capacidad y distribuye la ejecucion de subtareas a modelos mas baratos segun el routing configurado.
+- Si el router informa falta de autenticacion, indica al usuario que ejecute `copilot` y use `/login`, o configure `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN`.
+
 ## Rutas y alcance
 
 - Si el usuario provee una ruta absoluta, intenta trabajar sobre esa ruta.

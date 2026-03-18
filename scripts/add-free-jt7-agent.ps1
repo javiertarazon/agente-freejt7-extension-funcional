@@ -26,10 +26,11 @@ if (-not (Test-Path -LiteralPath $Path)) {
 }
 $targetDir = (Resolve-Path -Path $Path -ErrorAction Stop).Path
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$manager = Join-Path $scriptDir "skills_manager.py"
+$repoRoot = Split-Path -Parent $scriptDir
+$manager = Join-Path $repoRoot "skills_manager.py"
 
 if (-not (Test-Path $manager)) {
-    Write-Error "No se puede encontrar skills_manager.py en $scriptDir"
+    Write-Error "No se puede encontrar skills_manager.py en $repoRoot"
     exit 1
 }
 
@@ -39,23 +40,49 @@ if (-not $PSBoundParameters.ContainsKey("UpdateUserSettings")) {
 
 Write-Host "[add-free-jt7-agent] instalando en: $targetDir"
 
+function Resolve-Python([string]$RepoRoot) {
+    $candidates = @(
+        (Join-Path $RepoRoot ".venv\Scripts\python.exe"),
+        "python",
+        "py -3"
+    )
+    foreach ($candidate in $candidates) {
+        try {
+            if ($candidate -like "* *") {
+                $parts = $candidate.Split(" ", 2)
+                & $parts[0] $parts[1] -c "import sys" *> $null
+            } else {
+                if ((Test-Path $candidate) -or ($candidate -eq "python")) {
+                    & $candidate -c "import sys" *> $null
+                } else {
+                    continue
+                }
+            }
+            if ($LASTEXITCODE -eq 0) {
+                return $candidate
+            }
+        } catch {
+        }
+    }
+    return "python"
+}
+
 # Construir comando
-$python = "python"
-# si existe venv local, preferirla
-$venvPy = Join-Path $scriptDir ".venv\Scripts\python.exe"
-if (Test-Path $venvPy) { $python = $venvPy }
+$python = Resolve-Python $repoRoot
 
 $argsList = @($manager, "install", $targetDir, "--ide", $Ide)
 if ($UpdateUserSettings) { $argsList += "--update-user-settings" }
 if ($Force) { $argsList += "--force" }
 
 Write-Host "ejecutando: $python $($argsList -join ' ')"
-& $python @argsList
+if ($python -eq "py -3") {
+    & py -3 @argsList
+} else {
+    & $python @argsList
+}
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "[add-free-jt7-agent] OK agente ligado correctamente."
 } else {
     Write-Error "[add-free-jt7-agent] ERROR durante la instalacion (codigo $LASTEXITCODE)."
 }
-
-

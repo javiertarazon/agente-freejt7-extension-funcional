@@ -43,6 +43,33 @@ function Write-Ok([string]$msg) { Write-Host "[ok] $msg" -ForegroundColor Green 
 function Write-Warn([string]$msg) { Write-Host "[warn] $msg" -ForegroundColor Yellow }
 function Write-Err([string]$msg) { Write-Host "[error] $msg" -ForegroundColor Red }
 
+function Resolve-Python([string]$RepoRoot) {
+    $candidates = @(
+        (Join-Path $RepoRoot ".venv\Scripts\python.exe"),
+        "python",
+        "py -3"
+    )
+    foreach ($candidate in $candidates) {
+        try {
+            if ($candidate -like "* *") {
+                $parts = $candidate.Split(" ", 2)
+                & $parts[0] $parts[1] -c "import sys" *> $null
+            } else {
+                if ((Test-Path $candidate) -or ($candidate -eq "python")) {
+                    & $candidate -c "import sys" *> $null
+                } else {
+                    continue
+                }
+            }
+            if ($LASTEXITCODE -eq 0) {
+                return $candidate
+            }
+        } catch {
+        }
+    }
+    return "python"
+}
+
 function Resolve-AgentPath {
     param([string]$RequestedPath)
 
@@ -90,8 +117,7 @@ try {
     Write-Ok "Repositorio: $resolvedAgentPath"
 
     $manager = Join-Path $resolvedAgentPath "skills_manager.py"
-    $venvPython = Join-Path $resolvedAgentPath ".venv\Scripts\python.exe"
-    $pythonExe = if (Test-Path $venvPython) { $venvPython } else { "python" }
+    $pythonExe = Resolve-Python $resolvedAgentPath
 
     if (-not (Test-Path -LiteralPath $ProjectPath)) {
         Write-Step "Creando proyecto destino: $ProjectPath"
@@ -105,7 +131,11 @@ try {
 
     Write-Step "Ejecutando instalacion"
     Write-Host "$pythonExe $($cmdArgs -join ' ')"
-    & $pythonExe @cmdArgs
+    if ($pythonExe -eq "py -3") {
+        & py -3 @cmdArgs
+    } else {
+        & $pythonExe @cmdArgs
+    }
     if ($LASTEXITCODE -ne 0) {
         throw "skills_manager.py devolvio codigo $LASTEXITCODE"
     }
@@ -122,4 +152,3 @@ catch {
     Write-Err $_
     exit 1
 }
-
