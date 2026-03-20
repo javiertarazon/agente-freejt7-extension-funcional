@@ -1,4 +1,4 @@
-﻿---
+---
 name: agent-orchestration
 description: "Multi-agent orchestration patterns using Gem/RUG Orchestrator style: decompose goals, delegate to sub-agents, validate and repeat until complete. Use when coordinating multiple specialized agents for complex autonomous tasks."
 risk: medium

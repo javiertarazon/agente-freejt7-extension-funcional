@@ -21,6 +21,7 @@ Comandos:
     host-mode        Ver/cambiar modo de ejecucion host (safe/full)
     skill-resolve    Resolver skills efÃ­meras
     task-run/task-*  Orquestar runs de tarea con evidencia
+    copilot-router   Ejecutar el router autonomo multi-modelo de Free JT7
     task-list        Listar tareas/runs y su estado
     task-checklist   Ver checklist detallado de un run
     ide-detect       Detectar perfiles IDE instalados
@@ -163,10 +164,27 @@ SKILLS_START = "<!-- SKILLS_LIBRARY_START -->"
 SKILLS_END   = "<!-- SKILLS_LIBRARY_END -->"
 
 DEFAULT_POLICY: dict[str, Any] = {
-    "autonomy": {"mode": "autonomous"},
+    "autonomy": {
+        "mode": "autonomous",
+        "require_user_confirmation_default": False,
+        "planning": {
+            "classify_complexity": True,
+            "complex_threshold": "medium",
+            "require_task_run_for_complex": True,
+            "prefer_router_for_complex": True,
+        },
+        "orchestration": {
+            "enabled": True,
+            "prefer_parallel": True,
+            "max_parallel_agents": 4,
+            "allow_background_agents": True,
+            "require_validation_agent": True,
+        },
+    },
     "risk": {
-        "allow_high_risk_without_approval": False,
-        "allow_destructive": False,
+        "allow_high_risk_without_approval": True,
+        "allow_destructive": True,
+        "require_confirmation_for_high_risk": False,
         "thresholds": {
             "low_keywords": ["list", "search", "read", "inspect", "analyze"],
             "medium_keywords": ["install", "update", "configure", "build", "test"],
@@ -176,6 +194,8 @@ DEFAULT_POLICY: dict[str, Any] = {
     },
     "execution": {
         "retry": {"max_attempts": 3},
+        "allow_admin": True,
+        "allow_network": True,
         "allowlist": {
             "enabled": False,
             "bins": [
@@ -192,18 +212,42 @@ DEFAULT_POLICY: dict[str, Any] = {
                 "cmd",
             ],
         },
+        "prefer_direct_execution": True,
+        "prefer_gateway_for_external_tools": True,
+        "allow_background_processes": True,
+        "allow_external_paths": True,
     },
-    "quality_gate": {"required": True},
-    "skills": {"activation": "ephemeral", "max_composed": 3},
+    "admin": {
+        "enabled": True,
+        "strategy": "runas-on-demand",
+        "doctor_command": "admin-doctor",
+        "exec_command": "admin-exec",
+        "require_audit": True,
+    },
+    "mcp": {
+        "enabled": True,
+        "auto_bootstrap": True,
+        "default_server": "free-jt7-local",
+        "workspace_config": ".vscode/mcp.json",
+        "allow_gateway_tools": True,
+        "prefer_local_server": True,
+    },
+    "quality_gate": {
+        "required": True,
+        "require_plan_for_complex": True,
+        "require_validation_for_mutations": True,
+    },
+    "skills": {"activation": "ephemeral", "max_composed": 5},
     "shell": {"strategy": "cross-shell", "default": "powershell"},
     "telemetry": {"level": "full_sanitized"},
     "report": {"style": "executive_technical"},
+    "overrides": {"blocklists": [], "hard_stops": False, "restrictive_mode": False},
 }
 
 DEFAULT_MODEL_ROUTING: dict[str, Any] = {
-    "version": 1,
+    "version": 2,
     "default": {
-        "profile": "default",
+        "profile": "complex",
         "preferIdeProfile": True,
         "allowApiFallback": True,
         "apiFallback": {
@@ -216,6 +260,15 @@ DEFAULT_MODEL_ROUTING: dict[str, Any] = {
         "openai": ["OPENAI_API_KEY"],
         "anthropic": ["ANTHROPIC_API_KEY"],
         "google": ["GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY"],
+    },
+    "taskClassProfiles": {
+        "quick": "default",
+        "complex": "complex",
+        "architecture": "architecture",
+        "admin": "admin",
+        "mcp": "mcp",
+        "review": "review",
+        "recovery": "recovery",
     },
     "ideProfiles": {
         "codex": {
@@ -248,7 +301,16 @@ DEFAULT_MODEL_ROUTING: dict[str, Any] = {
             "provider": "github-copilot",
             "model": "copilot-default",
             "apiFallback": {"provider": "openai", "model": "gpt-5-mini", "env": ["OPENAI_API_KEY"]},
-            "profiles": {"default": {}},
+            "profiles": {
+                "default": {"temperature": 0.15, "maxOutputTokens": 4096},
+                "complex": {"temperature": 0.1, "maxOutputTokens": 8192},
+                "architecture": {"temperature": 0.05, "maxOutputTokens": 8192},
+                "admin": {"temperature": 0.05, "maxOutputTokens": 6144},
+                "mcp": {"temperature": 0.1, "maxOutputTokens": 6144},
+                "review": {"temperature": 0.05, "maxOutputTokens": 6144},
+                "recovery": {"temperature": 0.05, "maxOutputTokens": 8192},
+                "free-jt7": {"temperature": 0.1, "maxOutputTokens": 8192},
+            },
         },
         "cursor": {
             "provider": "cursor",
@@ -272,13 +334,85 @@ DEFAULT_MODEL_ROUTING: dict[str, Any] = {
     "copilotSdkRouter": {
         "planner": {"model": "gpt-5.4"},
         "execution": {
-            "cheapModel": "claude-haiku-4.5",
-            "contextModel": "gemini-3-flash",
+            "cheapModel": "gpt-5-mini",
+            "contextModel": "gemini-2.5-flash",
             "fallbackModel": "gpt-5.4",
-            "experimentalCodeModel": "",
+            "experimentalCodeModel": "gpt-5-codex",
+            "maxParallelTasks": 4,
         },
-        "synthesis": {"model": "gpt-5.4"},
-        "permissions": {"autoApproveSafeTools": True},
+        "synthesis": {"model": "gpt-5.4", "reviewModel": "gpt-5.4"},
+        "permissions": {
+            "autoApproveSafeTools": True,
+            "allowAdminEscalation": True,
+            "allowMcpServers": True,
+        },
+        "profiles": {
+            "default": {
+                "planner": {"model": "gpt-5.4"},
+                "execution": {
+                    "cheapModel": "gpt-5-mini",
+                    "contextModel": "gemini-2.5-flash",
+                    "fallbackModel": "gpt-5.4",
+                },
+                "synthesis": {"model": "gpt-5.4"},
+            },
+            "complex": {
+                "planner": {"model": "gpt-5.4"},
+                "execution": {
+                    "cheapModel": "gpt-5-mini",
+                    "contextModel": "gemini-2.5-pro",
+                    "fallbackModel": "gpt-5.4",
+                    "maxParallelTasks": 4,
+                },
+                "synthesis": {"model": "gpt-5.4", "reviewModel": "gpt-5.4"},
+            },
+            "architecture": {
+                "planner": {"model": "gpt-5.4"},
+                "execution": {
+                    "cheapModel": "gemini-2.5-flash",
+                    "contextModel": "gpt-5.4",
+                    "fallbackModel": "gpt-5.4",
+                },
+                "synthesis": {"model": "gpt-5.4", "reviewModel": "gpt-5.4"},
+            },
+            "admin": {
+                "planner": {"model": "gpt-5.4"},
+                "execution": {
+                    "cheapModel": "gpt-5-mini",
+                    "contextModel": "gpt-5.4",
+                    "fallbackModel": "gpt-5.4",
+                },
+                "permissions": {"allowAdminEscalation": True},
+            },
+            "mcp": {
+                "planner": {"model": "gpt-5.4"},
+                "execution": {
+                    "cheapModel": "gpt-5-mini",
+                    "contextModel": "gemini-2.5-pro",
+                    "fallbackModel": "gpt-5.4",
+                },
+                "permissions": {"allowMcpServers": True},
+            },
+            "review": {
+                "planner": {"model": "gpt-5.4"},
+                "execution": {
+                    "cheapModel": "gpt-5-mini",
+                    "contextModel": "gpt-5.4",
+                    "fallbackModel": "gpt-5.4",
+                },
+                "synthesis": {"model": "gpt-5.4", "reviewModel": "gpt-5.4"},
+            },
+            "recovery": {
+                "planner": {"model": "gpt-5.4"},
+                "execution": {
+                    "cheapModel": "gpt-5-mini",
+                    "contextModel": "gpt-5.4",
+                    "fallbackModel": "gpt-5.4",
+                    "maxParallelTasks": 4,
+                },
+                "synthesis": {"model": "gpt-5.4", "reviewModel": "gpt-5.4"},
+            },
+        },
     },
 }
 
@@ -574,11 +708,16 @@ def _apply_freejt7_settings(
     instruction_file: str,
     agent_location: str,
     ide: str,
+    *,
+    include_chat_paths: bool = True,
 ) -> None:
-    _append_instruction_entry(settings, instruction_file)
-    _append_agent_location(settings, agent_location)
+    if include_chat_paths:
+        _append_instruction_entry(settings, instruction_file)
+        _append_agent_location(settings, agent_location)
     settings["github.copilot.chat.codeGeneration.useInstructionFiles"] = True
     settings["github.copilot.chat.customInstructionsInSystemMessage"] = True
+    settings["github.copilot.chat.cli.customAgents.enabled"] = True
+    settings["github.copilot.chat.switchAgent.enabled"] = True
     settings["chat.agent.enabled"] = True
     settings["freejt7.enabled"] = True
     settings[f"freejt7.integrations.{ide}.enabled"] = True
@@ -877,8 +1016,9 @@ def _update_user_settings_for_ide(
         skills_index = _to_posix((ROOT / ".github" / "skills" / ".skills_index.json").resolve())
         policy_file = _to_posix((ROOT / ".github" / "free-jt7-policy.yaml").resolve())
         model_routing = _to_posix((ROOT / ".github" / "free-jt7-model-routing.json").resolve())
-        _apply_freejt7_settings(settings, instruction_file, agent_location, ide)
-        # In global user settings these must be absolute, otherwise they break per-workspace.
+        _apply_freejt7_settings(settings, instruction_file, agent_location, ide, include_chat_paths=False)
+        settings.pop("github.copilot.chat.codeGeneration.instructions", None)
+        settings.pop("chat.agentFilesLocations", None)
         settings["freejt7.skills.index"] = skills_index
         settings["freejt7.policy.file"] = policy_file
         settings["freejt7.models.routing"] = model_routing
@@ -900,7 +1040,9 @@ def _update_user_settings_for_ide(
             if _same_path(profile_settings, settings_path):
                 continue
             profile_data = _load_json_object(profile_settings)
-            _apply_freejt7_settings(profile_data, instruction_file, agent_location, ide)
+            _apply_freejt7_settings(profile_data, instruction_file, agent_location, ide, include_chat_paths=False)
+            profile_data.pop("github.copilot.chat.codeGeneration.instructions", None)
+            profile_data.pop("chat.agentFilesLocations", None)
             profile_data["freejt7.skills.index"] = skills_index
             profile_data["freejt7.policy.file"] = policy_file
             profile_data["freejt7.models.routing"] = model_routing
@@ -943,9 +1085,45 @@ def _parse_scalar(value: str) -> Any:
 
 
 def _parse_simple_yaml(text: str) -> dict[str, Any]:
+    normalized_lines: list[str] = []
+    raw_lines = text.splitlines()
+    index = 0
+    while index < len(raw_lines):
+        raw_line = raw_lines[index]
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            index += 1
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        if stripped.endswith(":"):
+            list_items: list[str] = []
+            lookahead = index + 1
+            while lookahead < len(raw_lines):
+                candidate = raw_lines[lookahead]
+                candidate_stripped = candidate.strip()
+                if not candidate_stripped or candidate_stripped.startswith("#"):
+                    lookahead += 1
+                    continue
+                candidate_indent = len(candidate) - len(candidate.lstrip(" "))
+                if candidate_indent <= indent:
+                    break
+                if candidate_stripped.startswith("- "):
+                    list_items.append(candidate_stripped[2:].strip())
+                    lookahead += 1
+                    continue
+                list_items = []
+                break
+            if list_items:
+                key = stripped[:-1].strip()
+                normalized_lines.append(f"{' ' * indent}{key}: [{', '.join(list_items)}]")
+                index = lookahead
+                continue
+        normalized_lines.append(raw_line)
+        index += 1
+
     root: dict[str, Any] = {}
     stack: list[tuple[int, dict[str, Any]]] = [(-1, root)]
-    for raw_line in text.splitlines():
+    for raw_line in normalized_lines:
         if not raw_line.strip() or raw_line.lstrip().startswith("#"):
             continue
         indent = len(raw_line) - len(raw_line.lstrip(" "))
@@ -992,6 +1170,135 @@ def _write_policy(policy: dict[str, Any]) -> None:
     _atomic_write_text(_policy_file_path(), "\n".join(lines))
 
 
+def _build_workspace_agent_config() -> dict[str, Any]:
+    return {
+        "version": 1,
+        "defaults": {
+            "strategy": "planner-first",
+            "max_parallel_agents": 4,
+            "require_validation_agent": True,
+            "require_audit_log": True,
+            "runtime_ledger_dir": "copilot-agent",
+            "workspace_mcp_file": ".vscode/mcp.json",
+        },
+        "agents": {
+            "planner-agent": {
+                "role": "Descompone solicitudes complejas en pasos ejecutables y valida dependencias",
+                "specialty": ["planificacion", "arquitectura", "scoping"],
+                "preferred_tools": ["read", "search", "plan"],
+            },
+            "researcher-agent": {
+                "role": "Recolecta contexto tecnico y riesgos antes de tocar codigo o sistema",
+                "specialty": ["analisis", "investigacion", "diagnostico"],
+                "preferred_tools": ["read", "search"],
+            },
+            "implementer-agent": {
+                "role": "Aplica cambios en codigo, configuracion y scripts con validacion local",
+                "specialty": ["implementacion", "refactor", "integracion"],
+                "preferred_tools": ["read", "edit", "execute"],
+            },
+            "reviewer-agent": {
+                "role": "Revisa riesgos, regresiones y huecos de pruebas antes del cierre",
+                "specialty": ["review", "quality_gate", "seguridad"],
+                "preferred_tools": ["read", "search", "execute"],
+            },
+            "admin-agent": {
+                "role": "Resuelve tareas con permisos elevados usando admin-doctor/admin-exec y evidencia",
+                "specialty": ["windows-admin", "runas", "servicios", "sistema"],
+                "preferred_tools": ["execute", "read"],
+            },
+            "mcp-agent": {
+                "role": "Configura, inicia y valida servidores MCP y gateway OpenClaw por proyecto",
+                "specialty": ["mcp", "gateway", "plugins", "resiliencia"],
+                "preferred_tools": ["execute", "read", "edit"],
+            },
+            "validator-agent": {
+                "role": "Ejecuta checks finales, smoke tests y deja evidencia verificable",
+                "specialty": ["testing", "smoke", "evidence"],
+                "preferred_tools": ["execute", "read"],
+            },
+        },
+        "profiles": {
+            "complex": ["planner-agent", "researcher-agent", "implementer-agent", "reviewer-agent", "validator-agent"],
+            "admin": ["planner-agent", "admin-agent", "reviewer-agent", "validator-agent"],
+            "mcp": ["planner-agent", "mcp-agent", "validator-agent"],
+            "recovery": ["planner-agent", "researcher-agent", "implementer-agent", "validator-agent", "reviewer-agent"],
+        },
+    }
+
+
+def _initialize_workspace_control_plane(target: Path, force: bool = False) -> list[str]:
+    notes: list[str] = []
+
+    copilot_dir = target / "copilot-agent"
+    tasks_path = copilot_dir / "tasks.yaml"
+    audit_path = copilot_dir / "audit-log.jsonl"
+    resume_path = copilot_dir / "RESUME.md"
+    active_project_path = copilot_dir / "active-project.json"
+
+    tasks_content = (
+        "# copilot-agent - Registro de Tareas\n"
+        "# Formato: lista YAML de tareas ejecutadas por el agente\n"
+        "# Actualizado automaticamente por skills_manager.py\n\n"
+        "tareas:\n"
+    )
+    if _write_text_if_needed(tasks_path, tasks_content, force):
+        notes.append(f"ledger: {tasks_path}")
+    if _write_text_if_needed(audit_path, "", force):
+        notes.append(f"audit-log: {audit_path}")
+    resume_content = (
+        "# Free JT7 Resume\n\n"
+        "- Estado: inicializado.\n"
+        f"- Workspace: {target}\n"
+        "- Siguiente paso sugerido: usar `python skills_manager.py task-run --goal \"...\"`.\n"
+    )
+    if _write_text_if_needed(resume_path, resume_content, force):
+        notes.append(f"resume: {resume_path}")
+    if force or not active_project_path.exists():
+        save_json(active_project_path, {
+            "path": str(target),
+            "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        })
+        notes.append(f"active-project: {active_project_path}")
+
+    codex_dir = target / ".codex-agent"
+    agent_config_path = codex_dir / "agent-config.yaml"
+    template_path = ROOT / ".codex-agent" / "agent-config.yaml"
+    if template_path.exists() and not force and agent_config_path.exists():
+        pass
+    else:
+        if template_path.exists():
+            content = template_path.read_text(encoding="utf-8", errors="replace")
+        else:
+            content = "\n".join(["# Free JT7 agent roster", *_to_yaml_lines(_build_workspace_agent_config()), ""])
+        if _write_text_if_needed(agent_config_path, content, force):
+            notes.append(f"agent-config: {agent_config_path}")
+
+    return notes
+
+
+def _write_workspace_mcp_config(target: Path, force: bool = False) -> Path | None:
+    mcp_path = target / ".vscode" / "mcp.json"
+    payload = {
+        "servers": {
+            "free-jt7-local": {
+                "type": "stdio",
+                "command": "node",
+                "args": ["src/index.js"],
+                "cwd": _to_posix((ROOT / "servidor mpc free jt7").resolve()),
+                "env": {
+                    "FREE_JT7_ROOT": _to_posix(ROOT.resolve()),
+                    "FREE_JT7_WORKSPACE": _to_posix(target.resolve()),
+                },
+            }
+        }
+    }
+    if mcp_path.exists() and not force:
+        return None
+    save_json(mcp_path, payload)
+    return mcp_path
+
+
 def _load_policy() -> dict[str, Any]:
     path = _policy_file_path()
     if not path.exists():
@@ -1009,6 +1316,12 @@ def _validate_policy(policy: dict[str, Any]) -> list[str]:
     mode = str(policy.get("autonomy", {}).get("mode", ""))
     if mode not in {"shadow", "assist", "autonomous"}:
         errors.append("autonomy.mode debe ser shadow|assist|autonomous")
+    complex_threshold = str(policy.get("autonomy", {}).get("planning", {}).get("complex_threshold", ""))
+    if complex_threshold and complex_threshold not in {"low", "medium", "high"}:
+        errors.append("autonomy.planning.complex_threshold debe ser low|medium|high")
+    max_parallel_agents = policy.get("autonomy", {}).get("orchestration", {}).get("max_parallel_agents", 0)
+    if not isinstance(max_parallel_agents, int) or max_parallel_agents < 1 or max_parallel_agents > 8:
+        errors.append("autonomy.orchestration.max_parallel_agents debe ser entero entre 1 y 8")
     strategy = str(policy.get("shell", {}).get("strategy", ""))
     if strategy not in {"cross-shell", "powershell"}:
         errors.append("shell.strategy debe ser cross-shell|powershell")
@@ -1030,6 +1343,28 @@ def _validate_policy(policy: dict[str, Any]) -> list[str]:
             errors.append("risk.allow_high_risk_without_approval debe ser bool")
         if "allow_destructive" in risk and not isinstance(risk.get("allow_destructive"), bool):
             errors.append("risk.allow_destructive debe ser bool")
+        if "require_confirmation_for_high_risk" in risk and not isinstance(risk.get("require_confirmation_for_high_risk"), bool):
+            errors.append("risk.require_confirmation_for_high_risk debe ser bool")
+    skills = policy.get("skills", {})
+    if isinstance(skills, dict):
+        max_composed = skills.get("max_composed", 0)
+        if not isinstance(max_composed, int) or max_composed < 1 or max_composed > 8:
+            errors.append("skills.max_composed debe ser entero entre 1 y 8")
+    admin = policy.get("admin", {})
+    if isinstance(admin, dict):
+        admin_strategy = str(admin.get("strategy", ""))
+        if admin_strategy and admin_strategy not in {"runas-on-demand", "elevated-first"}:
+            errors.append("admin.strategy debe ser runas-on-demand|elevated-first")
+    mcp = policy.get("mcp", {})
+    if isinstance(mcp, dict):
+        default_server = str(mcp.get("default_server", "")).strip()
+        if not default_server:
+            errors.append("mcp.default_server no puede estar vacio")
+    quality_gate = policy.get("quality_gate", {})
+    if isinstance(quality_gate, dict):
+        for key in ("required", "require_plan_for_complex", "require_validation_for_mutations"):
+            if key in quality_gate and not isinstance(quality_gate.get(key), bool):
+                errors.append(f"quality_gate.{key} debe ser bool")
     level = str(policy.get("telemetry", {}).get("level", ""))
     if level not in {"full_sanitized", "moderate", "minimal"}:
         errors.append("telemetry.level invÃ¡lido")
@@ -2027,6 +2362,30 @@ def _classify_risk(text: str, policy: dict[str, Any]) -> str:
     if any(k in probe for k in thresholds.get("medium_keywords", [])):
         return "medium"
     return "low"
+
+
+def _classify_goal_class(text: str) -> str:
+    probe = str(text or "").lower()
+    admin_patterns = ("admin", "runas", "uac", "servicio", "registro", "driver", "bcd", "winre", "elevado")
+    mcp_patterns = ("mcp", "gateway", "openclaw", "plugin", "server", "servidor", "canal", "pairing")
+    architecture_patterns = ("arquitect", "architecture", "dise", "design", "refactor", "migration", "migr", "sistema")
+    review_patterns = ("review", "revis", "audita", "audit", "findings", "riesgo", "regres")
+    recovery_patterns = ("fix", "correg", "debug", "falla", "error", "resilience", "recovery", "incident")
+    quick_patterns = ("readme", "doc", "format", "rename", "cambia texto", "one-liner")
+
+    if any(item in probe for item in admin_patterns):
+        return "admin"
+    if any(item in probe for item in mcp_patterns):
+        return "mcp"
+    if any(item in probe for item in review_patterns):
+        return "review"
+    if any(item in probe for item in architecture_patterns):
+        return "architecture"
+    if any(item in probe for item in recovery_patterns):
+        return "recovery"
+    if len(probe) < 180 and any(item in probe for item in quick_patterns):
+        return "quick"
+    return "complex"
 
 
 def _is_destructive(command: str, policy: dict[str, Any]) -> bool:
@@ -3260,15 +3619,7 @@ def cmd_set_project(args: argparse.Namespace) -> int:
         if not isinstance(settings, dict):
             settings = {}
             workspace["settings"] = settings
-        settings["github.copilot.chat.codeGeneration.useInstructionFiles"] = True
-        agent_locations = settings.get("chat.agentFilesLocations")
-        if isinstance(agent_locations, list):
-            agent_locations = {str(item): True for item in agent_locations if isinstance(item, str) and item.strip()}
-        elif not isinstance(agent_locations, dict):
-            agent_locations = {}
-        root_agent_path = _to_posix((ROOT / ".github" / "agents").resolve())
-        agent_locations[root_agent_path] = True
-        settings["chat.agentFilesLocations"] = agent_locations
+        _apply_freejt7_settings(settings, ".github/copilot-instructions.md", ".github/agents", "vscode")
         save_json(workspace_file, workspace)
     except Exception as exc:
         print(f"[set-project] WARN no se pudo actualizar workspace multiraiz: {exc}")
@@ -4204,6 +4555,7 @@ def cmd_install(args: argparse.Namespace) -> int:
 
     target = Path(args.path).resolve()
     gh_target = target / ".github"
+    agents_target = gh_target / "agents"
     skills_target = gh_target / "skills"
     instr_target = gh_target / "instructions"
     ci_target = gh_target / "copilot-instructions.md"
@@ -4212,6 +4564,16 @@ def cmd_install(args: argparse.Namespace) -> int:
         target.mkdir(parents=True, exist_ok=True)
 
     gh_target.mkdir(parents=True, exist_ok=True)
+
+    control_notes = _initialize_workspace_control_plane(target, force=getattr(args, "force", False))
+    if control_notes:
+        print("[install] Control plane:")
+        for note in control_notes:
+            print(f"  - {note}")
+
+    mcp_path = _write_workspace_mcp_config(target, force=getattr(args, "force", False))
+    if mcp_path is not None:
+        print(f"[install] OK workspace MCP -> {mcp_path}")
 
     # copilot-instructions.md
     ci_source = ROOT / ".github" / "copilot-instructions.md"
@@ -4222,6 +4584,27 @@ def cmd_install(args: argparse.Namespace) -> int:
         print(f"[install] OK copilot-instructions.md -> {ci_target}")
     else:
         print(f"[install] SKIP copilot-instructions.md ya existe (usa --force para sobreescribir)")
+
+    # agents/ (symlink)
+    agents_src = ROOT / ".github" / "agents"
+    if _same_path(agents_target, agents_src):
+        print("[install] SKIP .github/agents/ ya apunta al origen")
+    else:
+        if agents_target.exists() or agents_target.is_symlink():
+            if args.force:
+                if agents_target.is_symlink():
+                    agents_target.unlink()
+                else:
+                    shutil.rmtree(agents_target)
+            else:
+                print(f"[install] SKIP .github/agents/ ya existe (usa --force)")
+        if not agents_target.exists() and not agents_target.is_symlink():
+            try:
+                agents_target.symlink_to(agents_src, target_is_directory=True)
+                print(f"[install] LINK .github/agents/ -> symlink a {agents_src}")
+            except OSError:
+                shutil.copytree(agents_src, agents_target)
+                print(f"[install] COPY .github/agents/ -> copiado")
 
     # skills/ (symlink)
     if _same_path(skills_target, GH_SKILLS_DIR):
@@ -4698,6 +5081,15 @@ def cmd_task_run(args: argparse.Namespace) -> int:
     if not goal:
         print("[task-run] ERROR: especifica --goal")
         return 1
+    if not commands:
+        goal_class = _classify_goal_class(goal)
+        print(f"[task-run] delegando a copilot-router | class={goal_class}")
+        return cmd_copilot_router(argparse.Namespace(
+            goal=goal,
+            workspace=getattr(args, "workspace", ""),
+            cli_path=getattr(args, "cli_path", ""),
+            json=getattr(args, "json", False),
+        ))
     start_rc = cmd_task_start(argparse.Namespace(
         goal=goal,
         scope=getattr(args, "scope", "workspace"),
@@ -4732,6 +5124,76 @@ def cmd_task_run(args: argparse.Namespace) -> int:
 
     close_rc = cmd_task_close(argparse.Namespace(run_id=run_id, summary=getattr(args, "summary", "")))
     return close_rc if rc == 0 else rc
+
+
+def cmd_copilot_router(args: argparse.Namespace) -> int:
+    goal = str(getattr(args, "goal", "")).strip()
+    if not goal:
+        print("[copilot-router] ERROR: especifica --goal")
+        return 1
+
+    node_bin = shutil.which("node") or shutil.which("node.exe")
+    if not node_bin:
+        print("[copilot-router] ERROR: no se encontro Node.js en PATH")
+        return 1
+
+    workspace_raw = str(getattr(args, "workspace", "") or "").strip()
+    workspace = Path(workspace_raw).expanduser().resolve() if workspace_raw else Path.cwd().resolve()
+    if not workspace.exists():
+        print(f"[copilot-router] ERROR: workspace no existe: {workspace}")
+        return 1
+
+    router_candidates = [
+        ROOT / "copilot_router.js",
+        ROOT / "src-js" / "copilot_router.runtime.js",
+    ]
+    router_entry = next((candidate for candidate in router_candidates if candidate.exists()), None)
+    if router_entry is None:
+        print("[copilot-router] ERROR: no se encontro router runtime empaquetado ni fuente")
+        return 1
+
+    command = [
+        node_bin,
+        str(router_entry),
+        "--goal",
+        goal,
+        "--workspace",
+        str(workspace),
+    ]
+    cli_path = str(getattr(args, "cli_path", "") or "").strip()
+    if cli_path:
+        command.extend(["--cli-path", cli_path])
+    if bool(getattr(args, "json", False)):
+        command.append("--json")
+
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except Exception as exc:
+        print(f"[copilot-router] ERROR lanzando proceso: {exc}")
+        return 1
+
+    stdout = (proc.stdout or "").strip()
+    stderr = (proc.stderr or "").strip()
+    if stdout:
+        print(stdout)
+    if stderr:
+        print(stderr, file=sys.stderr)
+
+    _log_audit("copilot-router", f"workspace={workspace} rc={proc.returncode}")
+    _update_resume("copilot-router", f"goal_class={_classify_goal_class(goal)} workspace={workspace.name} rc={proc.returncode}")
+    if proc.returncode != 0:
+        print(f"[copilot-router] ERROR rc={proc.returncode}")
+        return proc.returncode
+
+    print(f"[copilot-router] OK workspace={workspace}")
+    return 0
 
 
 def cmd_task_list(args: argparse.Namespace) -> int:
@@ -5092,7 +5554,16 @@ def main() -> int:
     p_tr.add_argument("--summary", default="", help="Resumen final")
     p_tr.add_argument("--ide", default="auto", help="IDE origen para resolver modelo")
     p_tr.add_argument("--profile", default="default", help="Perfil de usuario del IDE")
+    p_tr.add_argument("--workspace", default="", help="Workspace para delegar al router cuando no hay comandos")
+    p_tr.add_argument("--cli-path", default="", help="Ruta opcional al Copilot CLI")
+    p_tr.add_argument("--json", action="store_true", help="Salida JSON cuando delega al router")
     p_tr.add_argument("--appdata-root", default="", help=argparse.SUPPRESS)
+
+    p_router = sub.add_parser("copilot-router", help="Ejecutar el router autonomo multi-modelo")
+    p_router.add_argument("--goal", required=True, help="Objetivo a resolver")
+    p_router.add_argument("--workspace", default="", help="Workspace objetivo (por defecto, cwd)")
+    p_router.add_argument("--cli-path", default="", help="Ruta opcional al Copilot CLI")
+    p_router.add_argument("--json", action="store_true", help="Salida JSON")
 
     # set-project
     p_sp = sub.add_parser("set-project", help="Establecer el proyecto activo (donde se aplican los cambios)")
@@ -5330,6 +5801,7 @@ def main() -> int:
         "task-list":     cmd_task_list,
         "task-checklist": cmd_task_checklist,
         "task-run":      cmd_task_run,
+        "copilot-router": cmd_copilot_router,
         "set-project":   cmd_set_project,
         "ide-detect":    cmd_ide_detect,
         "model-profiles-init": cmd_model_profiles_init,

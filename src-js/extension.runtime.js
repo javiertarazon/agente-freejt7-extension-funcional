@@ -19,6 +19,7 @@ try {
       workspaceFolders: [{uri:{fsPath:process.cwd()}}],
       getConfiguration: () => ({get:()=>null}),
       openTextDocument: async () => ({}),
+      onDidChangeWorkspaceFolders: () => ({dispose:()=>{}}),
     },
   };
 }
@@ -26,6 +27,16 @@ const path = require("path");
 const fs = require("fs");
 const { spawn, spawnSync } = require("child_process");
 const { runCopilotRouter } = require("./copilot_router.runtime");
+
+const WORKSPACE_IDE = "vscode";
+const REQUIRED_WORKSPACE_FILES = [
+  [".github", "copilot-instructions.md"],
+  [".github", "agents", "free-jt7.agent.md"],
+  [".github", "skills", ".skills_index.json"],
+  [".github", "free-jt7-policy.yaml"],
+  [".github", "free-jt7-model-routing.json"],
+  [".github", "instructions"],
+];
 
 function runCommand(bin, args, options, output) {
   return new Promise((resolve) => {
@@ -82,6 +93,184 @@ function pythonCommand(extensionPath) {
     }
   }
   return { bin: "python", args: [] };
+}
+
+function pathExists(targetPath) {
+  try {
+    return fs.existsSync(targetPath);
+  } catch {
+    return false;
+  }
+}
+
+function loadJsonObject(targetPath) {
+  try {
+    return JSON.parse(fs.readFileSync(targetPath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function normalizeComparablePath(value) {
+  return String(value || "").replace(/\\/g, "/").replace(/\/+$/g, "").toLowerCase();
+}
+
+function hasInstructionEntry(entries, expectedPath) {
+  if (!Array.isArray(entries)) {
+    return false;
+  }
+  const expected = normalizeComparablePath(expectedPath);
+  return entries.some((item) => item && typeof item === "object" && normalizeComparablePath(item.file) === expected);
+}
+
+function hasAgentLocation(value, expectedPath) {
+  const expected = normalizeComparablePath(expectedPath);
+  if (Array.isArray(value)) {
+    return value.some((item) => normalizeComparablePath(item) === expected);
+  }
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  return Object.keys(value).some((item) => normalizeComparablePath(item) === expected);
+}
+
+function localWorkspacePaths() {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders || folders.length === 0) {
+    return [];
+  }
+  return folders
+    .filter((folder) => folder && folder.uri && typeof folder.uri.fsPath === "string" && (!folder.uri.scheme || folder.uri.scheme === "file"))
+    .map((folder) => folder.uri.fsPath);
+}
+
+function workspaceNeedsBootstrap(workspacePath) {
+  for (const parts of REQUIRED_WORKSPACE_FILES) {
+    if (!pathExists(path.join(workspacePath, ...parts))) {
+      return true;
+    }
+  }
+
+  const settingsPath = path.join(workspacePath, ".vscode", "settings.json");
+  const settings = loadJsonObject(settingsPath);
+  if (!settings || typeof settings !== "object") {
+    return true;
+  }
+
+  if (settings["chat.agent.enabled"] !== true) {
+    return true;
+  }
+  if (settings["github.copilot.chat.codeGeneration.useInstructionFiles"] !== true) {
+    return true;
+  }
+  if (settings["github.copilot.chat.cli.customAgents.enabled"] !== true) {
+    return true;
+  }
+  if (settings["github.copilot.chat.switchAgent.enabled"] !== true) {
+    return true;
+  }
+  if (!hasInstructionEntry(settings["github.copilot.chat.codeGeneration.instructions"], ".github/copilot-instructions.md")) {
+    return true;
+  }
+  if (!hasAgentLocation(settings["chat.agentFilesLocations"], ".github/agents")) {
+    return true;
+  }
+  return false;
+}
+
+function getAutoBootstrapConfig() {
+  const config = vscode.workspace.getConfiguration("freejt7");
+  return {
+    enabled: config.get("autoBootstrap.enabled", true),
+    updateUserSettings: config.get("autoBootstrap.updateUserSettings", true),
+    force: config.get("autoBootstrap.force", false),
+    showNotifications: config.get("autoBootstrap.showNotifications", false),
+  };
+}
+
+const bootstrapRuns = new Map();
+
+async function bootstrapWorkspace(context, output, workspacePath, reason) {
+  const cfg = getAutoBootstrapConfig();
+  if (!cfg.enabled) {
+    return false;
+  }
+
+  const managerPath = path.join(context.extensionPath, "skills_manager.py");
+  if (!pathExists(managerPath)) {
+    output.appendLine(`[freejt7] bootstrap omitido: no se encontro ${managerPath}`);
+    return false;
+  }
+
+  const key = normalizeComparablePath(workspacePath);
+  if (bootstrapRuns.has(key)) {
+    return bootstrapRuns.get(key);
+  }
+
+  const needsBootstrap = workspaceNeedsBootstrap(workspacePath);
+  if (!needsBootstrap && !cfg.updateUserSettings) {
+    return false;
+  }
+
+  const py = pythonCommand(context.extensionPath);
+  const args = [
+    ...py.args,
+    managerPath,
+    "install",
+    workspacePath,
+    "--ide",
+    WORKSPACE_IDE,
+  ];
+  if (cfg.updateUserSettings) {
+    args.push("--update-user-settings");
+  }
+  if (cfg.force) {
+    args.push("--force");
+  }
+
+  const run = (async () => {
+    output.appendLine(`[freejt7] bootstrap ${reason} -> ${workspacePath}`);
+    const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
+    if (result.code === 0) {
+      output.appendLine(`[freejt7] bootstrap OK -> ${workspacePath}`);
+      if (cfg.showNotifications) {
+        vscode.window.showInformationMessage(`Free JT7 activo en ${path.basename(workspacePath) || workspacePath}`);
+      }
+      return true;
+    }
+
+    output.appendLine(`[freejt7] bootstrap ERROR (${result.code}) -> ${workspacePath}`);
+    if (cfg.showNotifications) {
+      vscode.window.showWarningMessage(`Free JT7 no pudo activarse automaticamente en ${path.basename(workspacePath) || workspacePath}. Revisa Output 'Free JT7'.`);
+    }
+    return false;
+  })();
+
+  bootstrapRuns.set(key, run);
+  try {
+    return await run;
+  } finally {
+    bootstrapRuns.delete(key);
+  }
+}
+
+function wireAutoBootstrap(context, output) {
+  const cfg = getAutoBootstrapConfig();
+  if (!cfg.enabled) {
+    return;
+  }
+
+  for (const workspacePath of localWorkspacePaths()) {
+    void bootstrapWorkspace(context, output, workspacePath, "startup");
+  }
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      for (const workspacePath of localWorkspacePaths()) {
+        void bootstrapWorkspace(context, output, workspacePath, "workspace-change");
+      }
+    }),
+  );
 }
 
 async function installWorkspace(context, output) {
@@ -229,7 +418,6 @@ async function runOpenClaw(args, output) {
 function activate(context) {
   const output = vscode.window.createOutputChannel("Free JT7");
 
-
   context.subscriptions.push(
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
@@ -271,6 +459,8 @@ function activate(context) {
 
     output
   );
+
+  wireAutoBootstrap(context, output);
 }
 
 function deactivate() {}

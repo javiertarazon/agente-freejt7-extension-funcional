@@ -1,7 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "default": {
-    "profile": "free-jt7",
+    "profile": "complex",
     "preferIdeProfile": true,
     "allowApiFallback": true,
     "apiFallback": {
@@ -25,6 +25,15 @@
       "GOOGLE_GENERATIVE_AI_API_KEY"
     ]
   },
+  "taskClassProfiles": {
+    "quick": "default",
+    "complex": "complex",
+    "architecture": "architecture",
+    "admin": "admin",
+    "mcp": "mcp",
+    "review": "review",
+    "recovery": "recovery"
+  },
   "ideProfiles": {
     "codex": {
       "provider": "codex",
@@ -37,7 +46,12 @@
         ]
       },
       "profiles": {
-        "default": {}
+        "default": {},
+        "complex": {},
+        "admin": {},
+        "mcp": {},
+        "review": {},
+        "recovery": {}
       }
     },
     "claude-code": {
@@ -51,7 +65,12 @@
         ]
       },
       "profiles": {
-        "default": {}
+        "default": {},
+        "complex": {},
+        "admin": {},
+        "mcp": {},
+        "review": {},
+        "recovery": {}
       }
     },
     "gemini-cli": {
@@ -66,7 +85,12 @@
         ]
       },
       "profiles": {
-        "default": {}
+        "default": {},
+        "complex": {},
+        "admin": {},
+        "mcp": {},
+        "review": {},
+        "recovery": {}
       }
     },
     "vscode": {
@@ -80,10 +104,37 @@
         ]
       },
       "profiles": {
-        "default": {},
-        "free-jt7": {
-          "temperature": 0.2,
+        "default": {
+          "temperature": 0.15,
           "maxOutputTokens": 4096
+        },
+        "complex": {
+          "temperature": 0.1,
+          "maxOutputTokens": 8192
+        },
+        "architecture": {
+          "temperature": 0.05,
+          "maxOutputTokens": 8192
+        },
+        "admin": {
+          "temperature": 0.05,
+          "maxOutputTokens": 6144
+        },
+        "mcp": {
+          "temperature": 0.1,
+          "maxOutputTokens": 6144
+        },
+        "review": {
+          "temperature": 0.05,
+          "maxOutputTokens": 6144
+        },
+        "recovery": {
+          "temperature": 0.05,
+          "maxOutputTokens": 8192
+        },
+        "free-jt7": {
+          "temperature": 0.1,
+          "maxOutputTokens": 8192
         }
       }
     },
@@ -98,7 +149,12 @@
         ]
       },
       "profiles": {
-        "default": {}
+        "default": {},
+        "complex": {},
+        "admin": {},
+        "mcp": {},
+        "review": {},
+        "recovery": {}
       }
     },
     "kiro": {
@@ -112,7 +168,12 @@
         ]
       },
       "profiles": {
-        "default": {}
+        "default": {},
+        "complex": {},
+        "admin": {},
+        "mcp": {},
+        "review": {},
+        "recovery": {}
       }
     },
     "antigravity": {
@@ -126,7 +187,12 @@
         ]
       },
       "profiles": {
-        "default": {}
+        "default": {},
+        "complex": {},
+        "admin": {},
+        "mcp": {},
+        "review": {},
+        "recovery": {}
       }
     }
   },
@@ -135,16 +201,119 @@
       "model": "gpt-5.4"
     },
     "execution": {
-      "cheapModel": "claude-haiku-4.5",
-      "contextModel": "gemini-3-flash",
+      "cheapModel": "gpt-5-mini",
+      "contextModel": "gemini-2.5-flash",
       "fallbackModel": "gpt-5.4",
-      "experimentalCodeModel": ""
+      "experimentalCodeModel": "gpt-5-codex",
+      "maxParallelTasks": 4
     },
     "synthesis": {
-      "model": "gpt-5.4"
+      "model": "gpt-5.4",
+      "reviewModel": "gpt-5.4"
     },
     "permissions": {
-      "autoApproveSafeTools": true
+      "autoApproveSafeTools": true,
+      "allowAdminEscalation": true,
+      "allowMcpServers": true
+    },
+    "profiles": {
+      "default": {
+        "planner": {
+          "model": "gpt-5.4"
+        },
+        "execution": {
+          "cheapModel": "gpt-5-mini",
+          "contextModel": "gemini-2.5-flash",
+          "fallbackModel": "gpt-5.4"
+        },
+        "synthesis": {
+          "model": "gpt-5.4"
+        }
+      },
+      "complex": {
+        "planner": {
+          "model": "gpt-5.4"
+        },
+        "execution": {
+          "cheapModel": "gpt-5-mini",
+          "contextModel": "gemini-2.5-pro",
+          "fallbackModel": "gpt-5.4",
+          "maxParallelTasks": 4
+        },
+        "synthesis": {
+          "model": "gpt-5.4",
+          "reviewModel": "gpt-5.4"
+        }
+      },
+      "architecture": {
+        "planner": {
+          "model": "gpt-5.4"
+        },
+        "execution": {
+          "cheapModel": "gemini-2.5-flash",
+          "contextModel": "gpt-5.4",
+          "fallbackModel": "gpt-5.4"
+        },
+        "synthesis": {
+          "model": "gpt-5.4",
+          "reviewModel": "gpt-5.4"
+        }
+      },
+      "admin": {
+        "planner": {
+          "model": "gpt-5.4"
+        },
+        "execution": {
+          "cheapModel": "gpt-5-mini",
+          "contextModel": "gpt-5.4",
+          "fallbackModel": "gpt-5.4"
+        },
+        "permissions": {
+          "allowAdminEscalation": true
+        }
+      },
+      "mcp": {
+        "planner": {
+          "model": "gpt-5.4"
+        },
+        "execution": {
+          "cheapModel": "gpt-5-mini",
+          "contextModel": "gemini-2.5-pro",
+          "fallbackModel": "gpt-5.4"
+        },
+        "permissions": {
+          "allowMcpServers": true
+        }
+      },
+      "review": {
+        "planner": {
+          "model": "gpt-5.4"
+        },
+        "execution": {
+          "cheapModel": "gpt-5-mini",
+          "contextModel": "gpt-5.4",
+          "fallbackModel": "gpt-5.4"
+        },
+        "synthesis": {
+          "model": "gpt-5.4",
+          "reviewModel": "gpt-5.4"
+        }
+      },
+      "recovery": {
+        "planner": {
+          "model": "gpt-5.4"
+        },
+        "execution": {
+          "cheapModel": "gpt-5-mini",
+          "contextModel": "gpt-5.4",
+          "fallbackModel": "gpt-5.4",
+          "maxParallelTasks": 4
+        },
+        "synthesis": {
+          "model": "gpt-5.4",
+          "reviewModel": "gpt-5.4"
+        }
+      }
     }
   }
 }

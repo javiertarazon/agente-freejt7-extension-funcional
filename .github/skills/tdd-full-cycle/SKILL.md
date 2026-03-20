@@ -1,4 +1,4 @@
-﻿---
+---
 name: tdd-full-cycle
 description: "Complete TDD Redâ†’Greenâ†’Refactor cycle with autonomous agents for each phase. Use when implementing any new feature or bugfix following test-driven development. Covers all languages and frameworks."
 risk: low

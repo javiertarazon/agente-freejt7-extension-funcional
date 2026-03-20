@@ -1,4 +1,4 @@
-﻿---
+---
 name: context-multi-file
 description: "Context Architect pattern for autonomous multi-file changes. Plans and executes coordinated changes across multiple files by mapping dependencies, identifying impact, and applying changes in correct order. Use when refactoring, renaming, or implementing features that span multiple files."
 risk: medium

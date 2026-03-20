@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local.",
-  "version": "4.2.3",
+  "version": "4.2.4",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -19,6 +19,7 @@
     "automation"
   ],
   "activationEvents": [
+    "onStartupFinished",
     "onCommand:freejt7.installWorkspace",
     "onCommand:freejt7.runtimeDoctor",
     "onCommand:freejt7.openRuntimeDocs",
@@ -125,6 +126,26 @@
           "default": false,
           "description": "Sobrescribe archivos de integracion existentes."
         },
+        "freejt7.autoBootstrap.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activa automaticamente Free JT7 al abrir una carpeta o repositorio local en VS Code."
+        },
+        "freejt7.autoBootstrap.updateUserSettings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sincroniza los settings de usuario de VS Code durante el bootstrap automatico."
+        },
+        "freejt7.autoBootstrap.force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fuerza la reinstalacion de archivos de integracion durante el bootstrap automatico."
+        },
+        "freejt7.autoBootstrap.showNotifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Muestra notificaciones cuando el bootstrap automatico termina o falla."
+        },
         "freejt7.copilotRouter.cliPath": {
           "type": "string",
           "default": "",
@@ -137,12 +158,12 @@
         },
         "freejt7.copilotRouter.executorCheapModel": {
           "type": "string",
-          "default": "claude-haiku-4.5",
+          "default": "gpt-5-mini",
           "description": "Modelo barato por defecto para ejecutar subtareas acotadas."
         },
         "freejt7.copilotRouter.executorContextModel": {
           "type": "string",
-          "default": "gemini-3-flash",
+          "default": "gemini-2.5-flash",
           "description": "Modelo barato alternativo para subtareas con mas contexto."
         },
         "freejt7.copilotRouter.executorFallbackModel": {
@@ -152,7 +173,7 @@
         },
         "freejt7.copilotRouter.experimentalCodeModel": {
           "type": "string",
-          "default": "",
+          "default": "gpt-5-codex",
           "description": "Modelo opcional para codigo rapido, por ejemplo Grok Code Fast 1 si tu tenant lo expone."
         },
         "freejt7.copilotRouter.autoApproveSafeTools": {

@@ -1,0 +1,101 @@
+# Free JT7 agent roster
+version: 1
+defaults:
+  strategy: planner-first
+  max_parallel_agents: 4
+  require_validation_agent: true
+  require_audit_log: true
+  runtime_ledger_dir: copilot-agent
+  workspace_mcp_file: .vscode/mcp.json
+agents:
+  planner-agent:
+    role: Descompone solicitudes complejas en pasos ejecutables y valida dependencias
+    specialty:
+      - planificacion
+      - arquitectura
+      - scoping
+    preferred_tools:
+      - read
+      - search
+      - plan
+  researcher-agent:
+    role: Recolecta contexto tecnico y riesgos antes de tocar codigo o sistema
+    specialty:
+      - analisis
+      - investigacion
+      - diagnostico
+    preferred_tools:
+      - read
+      - search
+  implementer-agent:
+    role: Aplica cambios en codigo, configuracion y scripts con validacion local
+    specialty:
+      - implementacion
+      - refactor
+      - integracion
+    preferred_tools:
+      - read
+      - edit
+      - execute
+  reviewer-agent:
+    role: Revisa riesgos, regresiones y huecos de pruebas antes del cierre
+    specialty:
+      - review
+      - quality_gate
+      - seguridad
+    preferred_tools:
+      - read
+      - search
+      - execute
+  admin-agent:
+    role: Resuelve tareas con permisos elevados usando admin-doctor/admin-exec y evidencia
+    specialty:
+      - windows-admin
+      - runas
+      - servicios
+      - sistema
+    preferred_tools:
+      - execute
+      - read
+  mcp-agent:
+    role: Configura, inicia y valida servidores MCP y gateway OpenClaw por proyecto
+    specialty:
+      - mcp
+      - gateway
+      - plugins
+      - resiliencia
+    preferred_tools:
+      - execute
+      - read
+      - edit
+  validator-agent:
+    role: Ejecuta checks finales, smoke tests y deja evidencia verificable
+    specialty:
+      - testing
+      - smoke
+      - evidence
+    preferred_tools:
+      - execute
+      - read
+profiles:
+  complex:
+    - planner-agent
+    - researcher-agent
+    - implementer-agent
+    - reviewer-agent
+    - validator-agent
+  admin:
+    - planner-agent
+    - admin-agent
+    - reviewer-agent
+    - validator-agent
+  mcp:
+    - planner-agent
+    - mcp-agent
+    - validator-agent
+  recovery:
+    - planner-agent
+    - researcher-agent
+    - implementer-agent
+    - validator-agent
+    - reviewer-agent

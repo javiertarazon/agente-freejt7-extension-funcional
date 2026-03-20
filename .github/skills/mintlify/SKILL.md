@@ -1,4 +1,3 @@
-```skill
 ---
 name: mintlify
 description: Build and maintain documentation sites with Mintlify. Use when
@@ -71,16 +70,16 @@ Review the Mintlify [components](https://www.mintlify.com/docs/components) to se
 
 ```
 project/
-├── docs.json           # Site configuration
-├── introduction.mdx
-├── quickstart.mdx
-├── guides/
-│   └── example.mdx
-├── openapi.yml         # API specification
-├── images/             # Static assets
-│   └── example.png
-└── snippets/           # Reusable components
-    └── component.jsx
+â”œâ”€â”€ docs.json           # Site configuration
+â”œâ”€â”€ introduction.mdx
+â”œâ”€â”€ quickstart.mdx
+â”œâ”€â”€ guides/
+â”‚   â””â”€â”€ example.mdx
+â”œâ”€â”€ openapi.yml         # API specification
+â”œâ”€â”€ images/             # Static assets
+â”‚   â””â”€â”€ example.png
+â””â”€â”€ snippets/           # Reusable components
+    â””â”€â”€ component.jsx
 ```
 
 ## Page frontmatter
@@ -155,9 +154,9 @@ The `navigation` property in `docs.json` controls site structure. Choose one pri
 
 **What to customize where:**
 
-- **Brand colors, fonts, logo** → `docs.json`. See [global settings](https://mintlify.com/docs/settings/global)
-- **Component styling, layout tweaks** → `custom.css` at project root
-- **Dark mode** → Enabled by default. Only disable with `"appearance": "light"` in `docs.json` if brand requires it
+- **Brand colors, fonts, logo** â†’ `docs.json`. See [global settings](https://mintlify.com/docs/settings/global)
+- **Component styling, layout tweaks** â†’ `custom.css` at project root
+- **Dark mode** â†’ Enabled by default. Only disable with `"appearance": "light"` in `docs.json` if brand requires it
 
 Start with `docs.json`. Only add `custom.css` when you need styling that config doesn't support.
 
@@ -247,9 +246,9 @@ Import snippets with `import { Component } from "/path/to/snippet-name.jsx"`.
 
 **Choose your approach:**
 
-- **Have an OpenAPI spec?** → Add to `docs.json` with `"openapi": ["openapi.yaml"]`. Pages auto-generate. Reference in navigation as `GET /endpoint`
-- **No spec?** → Write endpoints manually with `api: "POST /users"` in frontmatter. More work but full control
-- **Hybrid** → Use OpenAPI for most endpoints, manual pages for complex workflows
+- **Have an OpenAPI spec?** â†’ Add to `docs.json` with `"openapi": ["openapi.yaml"]`. Pages auto-generate. Reference in navigation as `GET /endpoint`
+- **No spec?** â†’ Write endpoints manually with `api: "POST /users"` in frontmatter. More work but full control
+- **Hybrid** â†’ Use OpenAPI for most endpoints, manual pages for complex workflows
 
 Encourage users to generate endpoint pages from an OpenAPI spec. It is the most efficient and easiest to maintain option.
 
@@ -259,8 +258,8 @@ Mintlify deploys automatically when changes are pushed to the connected Git repo
 
 **What agents can configure:**
 
-- **Redirects** → Add to `docs.json` with `"redirects": [{"source": "/old", "destination": "/new"}]`
-- **SEO indexing** → Control with `"seo": {"indexing": "all"}` to include hidden pages in search
+- **Redirects** â†’ Add to `docs.json` with `"redirects": [{"source": "/old", "destination": "/new"}]`
+- **SEO indexing** â†’ Control with `"seo": {"indexing": "all"}` to include hidden pages in search
 
 **Requires dashboard setup (human task):**
 

@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+## [4.2.4] - 2026-03-20
+
+- Nueva rama correlativa `release/4.2.4` preparada para publicar la evolución autónoma de Free JT7.
+- Fortalecida la autonomía operativa: `task-run` ahora delega al router Copilot cuando no se le pasan comandos y se añadió el comando `copilot-router` en `skills_manager.py`.
+- Mejorada la orquestación real del router con ejecución paralela de subtareas, dependencias `dependsOn`, perfiles por clase de tarea y síntesis final con mejor trazabilidad.
+- Endurecido el plano de control por workspace con `.codex-agent/agent-config.yaml`, bootstrap MCP por proyecto y política/routing alineados con admin, MCP y validación.
+- Corregido el empaquetado del VSIX para incluir `.codex-agent` y para que el router CLI empaquetado funcione también fuera del repo fuente.
+
 ## [4.2.3] - 2026-03-18
 
 - Rama correlativa de release creada para dejar la extension final operativa y lista para instalar desde VSIX.

@@ -1,4 +1,4 @@
-﻿---
+---
 name: agent-safety-governance
 description: "Safety and governance framework for autonomous AI agents. Validates agent actions before execution, enforces permission boundaries, detects dangerous patterns (file deletion, env modification, network calls), and maintains audit trails. Use before deploying autonomous agents or when reviewing agent-generated code."
 risk: low

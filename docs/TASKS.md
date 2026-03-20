@@ -120,3 +120,51 @@
 - [x] Verificar instalacion limpia en VS Code
 - [x] Commit y push de la rama al remoto
 
+## Release correlativa 4.2.4 (2026-03-20)
+- [x] Crear rama `release/4.2.4` desde `release/4.2.3`
+- [x] Sincronizar version en metadata, docs y archivo `VERSION`
+- [x] Incorporar mejoras de autonomía, subagentes, admin y MCP
+- [x] Reempaquetar `.vsix` final `4.2.4`
+- [x] Empujar la rama al remoto
+
+## Auditoria profunda: ferreteria inventario (2026-03-18)
+- [x] Levantar contexto tecnico del proyecto `E:\javie\ferreteria inventario`
+  - [x] Revisar arquitectura, stack y modulos principales
+  - [x] Identificar puntos de entrada, persistencia y superficie funcional
+- [x] Auditar calidad de codigo
+  - [x] Buscar errores potenciales y fallas funcionales
+  - [x] Detectar malas practicas, duplicidad y codigo muerto/innecesario
+  - [x] Revisar pruebas y cobertura observable
+- [x] Evaluar transformacion a extension de Google
+  - [x] Determinar si aplica conversion directa o re-arquitectura parcial
+  - [x] Proponer ruta tecnica recomendada y riesgos
+- [x] Preparar entregable operativo
+  - [x] Redactar informe con hallazgos priorizados
+  - [x] Proponer mejoras funcionales (incluyendo facturacion)
+  - [x] Generar plan, preguntas de aclaracion, tareas/subtareas y asignacion de agentes
+
+## Ejecucion priorizada: ferreteria inventario (2026-03-18)
+- [x] Fase 1: errores criticos funcionales
+  - [x] Corregir creacion de ordenes de venta
+  - [x] Corregir API de clientes alineada al modelo actual
+  - [x] Corregir API de movimientos usando servicio y ajuste de stock
+  - [x] Corregir comando BCV y links inconsistentes del dashboard
+  - [x] Verificacion ligera de regresion
+- [ ] Fase 1.5: entorno Python reproducible
+  - [ ] Sanear `requirements.txt`
+  - [ ] Recrear `.venv` funcional con Python disponible
+  - [ ] Instalar dependencias y validar imports
+  - [ ] Ejecutar pruebas focalizadas reales
+- [ ] Fase 2: limpieza legacy dejando `app/` como fuente unica
+  - [ ] Inventariar archivos legacy raiz vs `app/`
+  - [ ] Separar o archivar scripts, tests y templates legacy
+  - [ ] Alinear README, bootstrap e instalacion real
+- [ ] Fase 3: instalacion simple para PCs de bajos recursos
+  - [ ] Definir modo de distribucion recomendado
+  - [ ] Reducir dependencias/operaciones pesadas
+  - [ ] Documentar instalacion en 1 flujo simple
+- [ ] Fase 4: diseno e implementacion del modulo POS/caja
+  - [ ] Definir alcance MVP
+  - [ ] Diseñar datos y flujo operativo
+  - [ ] Planificar ejecucion por modulos
+

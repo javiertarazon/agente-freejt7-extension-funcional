@@ -5,12 +5,13 @@ const { randomUUID } = require("crypto");
 
 const ROUTER_DEFAULTS = {
   plannerModel: "gpt-5.4",
-  executorCheapModel: "claude-haiku-4.5",
-  executorContextModel: "gemini-3-flash",
+  executorCheapModel: "gpt-5-mini",
+  executorContextModel: "gemini-2.5-flash",
   executorFallbackModel: "gpt-5.4",
-  experimentalCodeModel: "",
+  experimentalCodeModel: "gpt-5-codex",
   autoApproveSafeTools: true,
   sessionWaitTimeoutMs: 180000,
+  maxParallelTasks: 4,
 };
 
 function nowIso() {
@@ -37,6 +38,20 @@ function writeJson(filePath, value) {
 function appendLine(filePath, line) {
   ensureDir(path.dirname(filePath));
   fs.appendFileSync(filePath, `${line}\n`, "utf8");
+}
+
+function deepMerge(base, override) {
+  const source = base && typeof base === "object" && !Array.isArray(base) ? base : {};
+  const extra = override && typeof override === "object" && !Array.isArray(override) ? override : {};
+  const out = { ...source };
+  for (const [key, value] of Object.entries(extra)) {
+    if (value && typeof value === "object" && !Array.isArray(value) && out[key] && typeof out[key] === "object" && !Array.isArray(out[key])) {
+      out[key] = deepMerge(out[key], value);
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
 }
 
 function sanitizeText(value, maxLength = 12000) {
@@ -77,13 +92,21 @@ function readRoutingConfig(workspacePath) {
   const router = data.copilotSdkRouter || {};
   return {
     routePath,
+    defaultProfile: data.default?.profile || "complex",
+    taskClassProfiles: data.taskClassProfiles || {},
+    routerProfiles: router.profiles || {},
     plannerModel: router.planner?.model || ROUTER_DEFAULTS.plannerModel,
     executorCheapModel: router.execution?.cheapModel || ROUTER_DEFAULTS.executorCheapModel,
     executorContextModel: router.execution?.contextModel || ROUTER_DEFAULTS.executorContextModel,
     executorFallbackModel: router.execution?.fallbackModel || ROUTER_DEFAULTS.executorFallbackModel,
     experimentalCodeModel: router.execution?.experimentalCodeModel || ROUTER_DEFAULTS.experimentalCodeModel,
     synthesisModel: router.synthesis?.model || router.planner?.model || ROUTER_DEFAULTS.plannerModel,
+    reviewModel: router.synthesis?.reviewModel || router.synthesis?.model || router.planner?.model || ROUTER_DEFAULTS.plannerModel,
     autoApproveSafeTools: router.permissions?.autoApproveSafeTools ?? ROUTER_DEFAULTS.autoApproveSafeTools,
+    allowAdminEscalation: router.permissions?.allowAdminEscalation ?? true,
+    allowMcpServers: router.permissions?.allowMcpServers ?? true,
+    maxParallelTasks: Number(router.execution?.maxParallelTasks || ROUTER_DEFAULTS.maxParallelTasks),
+    sessionWaitTimeoutMs: Number(router.sessionWaitTimeoutMs || ROUTER_DEFAULTS.sessionWaitTimeoutMs),
   };
 }
 
@@ -108,15 +131,90 @@ function mergeRouterConfig(workspacePath, vscode) {
   const editor = readVsCodeRouterConfig(vscode);
   return {
     routePath: routing.routePath,
+    defaultProfile: routing.defaultProfile,
+    taskClassProfiles: routing.taskClassProfiles,
+    routerProfiles: routing.routerProfiles,
     plannerModel: editor.plannerModel || routing.plannerModel,
     executorCheapModel: editor.executorCheapModel || routing.executorCheapModel,
     executorContextModel: editor.executorContextModel || routing.executorContextModel,
     executorFallbackModel: editor.executorFallbackModel || routing.executorFallbackModel,
     experimentalCodeModel: editor.experimentalCodeModel || routing.experimentalCodeModel,
     synthesisModel: editor.plannerModel || routing.synthesisModel,
+    reviewModel: routing.reviewModel,
     autoApproveSafeTools: editor.autoApproveSafeTools,
     cliPath: editor.cliPath || "",
-    sessionWaitTimeoutMs: Number(routing.sessionWaitTimeoutMs || ROUTER_DEFAULTS.sessionWaitTimeoutMs),
+    allowAdminEscalation: routing.allowAdminEscalation,
+    allowMcpServers: routing.allowMcpServers,
+    maxParallelTasks: routing.maxParallelTasks,
+    sessionWaitTimeoutMs: routing.sessionWaitTimeoutMs,
+  };
+}
+
+function classifyGoal(goal) {
+  const text = String(goal || "").toLowerCase();
+  const adminPatterns = ["admin", "runas", "uac", "servicio", "registro", "driver", "bcd", "winre", "elevado"];
+  const mcpPatterns = ["mcp", "gateway", "openclaw", "plugin", "server", "servidor", "canal", "pairing"];
+  const architecturePatterns = ["arquitect", "architecture", "diseña", "design", "refactor", "migration", "migr", "sistema"];
+  const reviewPatterns = ["review", "revis", "audita", "audit", "findings", "riesgo", "regres"];
+  const recoveryPatterns = ["fix", "correg", "debug", "falla", "error", "resilience", "recovery", "incident"];
+  const quickPatterns = ["readme", "doc", "format", "rename", "cambia texto", "one-liner"];
+
+  if (adminPatterns.some((item) => text.includes(item))) {
+    return "admin";
+  }
+  if (mcpPatterns.some((item) => text.includes(item))) {
+    return "mcp";
+  }
+  if (reviewPatterns.some((item) => text.includes(item))) {
+    return "review";
+  }
+  if (architecturePatterns.some((item) => text.includes(item))) {
+    return "architecture";
+  }
+  if (recoveryPatterns.some((item) => text.includes(item))) {
+    return "recovery";
+  }
+  if (quickPatterns.some((item) => text.includes(item)) && text.length < 180) {
+    return "quick";
+  }
+  return "complex";
+}
+
+function applyRouterProfile(config, goal) {
+  const goalClass = classifyGoal(goal);
+  const selectedProfile = config.taskClassProfiles?.[goalClass] || config.defaultProfile || "default";
+  const profileConfig = config.routerProfiles?.[selectedProfile] || {};
+  const merged = deepMerge({
+    planner: { model: config.plannerModel },
+    execution: {
+      cheapModel: config.executorCheapModel,
+      contextModel: config.executorContextModel,
+      fallbackModel: config.executorFallbackModel,
+      experimentalCodeModel: config.experimentalCodeModel,
+      maxParallelTasks: config.maxParallelTasks,
+    },
+    synthesis: { model: config.synthesisModel, reviewModel: config.reviewModel },
+    permissions: {
+      autoApproveSafeTools: config.autoApproveSafeTools,
+      allowAdminEscalation: config.allowAdminEscalation,
+      allowMcpServers: config.allowMcpServers,
+    },
+  }, profileConfig);
+  return {
+    ...config,
+    goalClass,
+    selectedProfile,
+    plannerModel: merged.planner?.model || config.plannerModel,
+    executorCheapModel: merged.execution?.cheapModel || config.executorCheapModel,
+    executorContextModel: merged.execution?.contextModel || config.executorContextModel,
+    executorFallbackModel: merged.execution?.fallbackModel || config.executorFallbackModel,
+    experimentalCodeModel: merged.execution?.experimentalCodeModel || config.experimentalCodeModel,
+    synthesisModel: merged.synthesis?.model || config.synthesisModel,
+    reviewModel: merged.synthesis?.reviewModel || config.reviewModel,
+    autoApproveSafeTools: merged.permissions?.autoApproveSafeTools ?? config.autoApproveSafeTools,
+    allowAdminEscalation: merged.permissions?.allowAdminEscalation ?? config.allowAdminEscalation,
+    allowMcpServers: merged.permissions?.allowMcpServers ?? config.allowMcpServers,
+    maxParallelTasks: Number(merged.execution?.maxParallelTasks || config.maxParallelTasks || ROUTER_DEFAULTS.maxParallelTasks),
   };
 }
 
@@ -302,6 +400,12 @@ function selectExecutionModel(task, config) {
   if (hint) {
     return hint;
   }
+  if (task.kind === "admin" || task.kind === "review") {
+    return config.executorFallbackModel;
+  }
+  if (task.kind === "mcp" || task.kind === "ops" || task.kind === "validation") {
+    return config.executorContextModel;
+  }
   if (task.risk === "high") {
     return config.executorFallbackModel;
   }
@@ -318,6 +422,10 @@ function buildPlannerPrompt(goal, config) {
   return [
     "You are the planning phase of Free JT7's multi-model Copilot router.",
     "Plan the user request and split it into concrete tasks.",
+    `Goal class: ${config.goalClass}. Router profile: ${config.selectedProfile}.`,
+    `Max parallel tasks available for orchestration: ${config.maxParallelTasks}.`,
+    "Independent tasks may omit dependsOn so they can run in parallel.",
+    "For non-trivial changes, include explicit validation/review tasks after implementation.",
     "Return only valid JSON with this shape:",
     JSON.stringify({
       summary: "short summary",
@@ -326,10 +434,11 @@ function buildPlannerPrompt(goal, config) {
           id: "task-1",
           title: "short title",
           objective: "what this subtask must achieve",
-          kind: "implementation|analysis|validation|docs",
+          kind: "implementation|analysis|validation|docs|review|admin|mcp|ops",
           risk: "low|medium|high",
           needsBroadContext: true,
           model: config.executorCheapModel,
+          dependsOn: ["task-0"],
           successCriteria: ["criterion 1"],
         },
       ],
@@ -341,11 +450,12 @@ function buildPlannerPrompt(goal, config) {
   ].join("\n\n");
 }
 
-function buildExecutorPrompt(goal, planSummary, task) {
+function buildExecutorPrompt(goal, planSummary, task, config) {
   return [
     "You are an execution phase inside Free JT7's Copilot router.",
     "Work in the current workspace, use the available coding tools, and complete only the assigned subtask.",
     "If you need to edit files, do it. If you need to run validation, do it.",
+    "Prefer verifiable outputs over narration. If the task is admin or MCP related, leave the exact checks you ran.",
     "Return only valid JSON with this shape:",
     JSON.stringify({
       status: "completed",
@@ -355,9 +465,173 @@ function buildExecutorPrompt(goal, planSummary, task) {
       residualRisks: ["optional risk"],
     }, null, 2),
     `Original goal: ${goal}`,
+    `Router profile: ${config.selectedProfile} | Goal class: ${config.goalClass}`,
     `Plan summary: ${planSummary}`,
     `Assigned task: ${JSON.stringify(task, null, 2)}`,
   ].join("\n\n");
+}
+
+function createDefaultExecutionResult(task, model, order, overrides = {}) {
+  return {
+    taskId: task.id,
+    model,
+    order,
+    dependsOn: Array.isArray(task.dependsOn) ? task.dependsOn : [],
+    status: "completed",
+    summary: "",
+    files: [],
+    verification: [],
+    residualRisks: [],
+    ...overrides,
+  };
+}
+
+async function executePlanTask({ client, goal, planSummary, task, order, routing, workspacePath, permissionHandler, run, runPaths, output }) {
+  const model = selectExecutionModel(task, routing);
+  cliLog(output, `[freejt7-router] ${task.id} -> ${model}`);
+  try {
+    const executorText = await sendSession({
+      client,
+      model,
+      prompt: buildExecutorPrompt(goal, planSummary, task, routing),
+      systemMessage: "You are a coding executor. Use tools when needed. Return JSON only.",
+      workingDirectory: workspacePath,
+      onPermissionRequest: permissionHandler,
+      allowTools: true,
+      timeoutMs: routing.sessionWaitTimeoutMs,
+    });
+
+    const parsedResult = parseJsonResponse(executorText, createDefaultExecutionResult(task, model, order, {
+      summary: sanitizeText(executorText, 2000),
+    }));
+    const normalized = createDefaultExecutionResult(task, model, order, parsedResult);
+
+    recordStep(run, runPaths.events, {
+      step_id: task.id,
+      action: "copilot-executor",
+      command: model,
+      result: executorText,
+      exit_code: 0,
+      retry_index: 0,
+      risk_level: task.risk,
+      mode: "autonomous",
+    });
+    return normalized;
+  } catch (error) {
+    const fallbackText = String(error?.message || error || "executor failure");
+    const failedResult = createDefaultExecutionResult(task, model, order, {
+      status: "failed",
+      summary: fallbackText,
+      residualRisks: [fallbackText],
+    });
+    recordStep(run, runPaths.events, {
+      step_id: task.id,
+      action: "copilot-executor",
+      command: model,
+      result: fallbackText,
+      exit_code: 1,
+      retry_index: 0,
+      risk_level: task.risk,
+      mode: "autonomous",
+    });
+    return failedResult;
+  }
+}
+
+function blockPendingTask(task, order, reason, run, runPaths) {
+  const blockedResult = createDefaultExecutionResult(task, "blocked", order, {
+    status: "blocked",
+    summary: reason,
+    residualRisks: [reason],
+  });
+  recordStep(run, runPaths.events, {
+    step_id: task.id,
+    action: "copilot-executor-blocked",
+    command: "",
+    result: reason,
+    exit_code: 1,
+    retry_index: 0,
+    risk_level: task.risk,
+    mode: "autonomous",
+  });
+  return blockedResult;
+}
+
+async function executePlannedTasks({ client, goal, plan, routing, workspacePath, permissionHandler, run, runPaths, output }) {
+  const taskEntries = plan.tasks.map((task, order) => ({ ...task, order }));
+  const knownTasks = new Map(taskEntries.map((task) => [task.id, task]));
+  const pending = new Map(taskEntries.map((task) => [task.id, task]));
+  const completed = new Set();
+  const failed = new Set();
+  const results = [];
+  const concurrency = Math.max(1, Number(routing.maxParallelTasks || ROUTER_DEFAULTS.maxParallelTasks));
+
+  while (pending.size > 0) {
+    const blockedNow = [];
+    for (const task of pending.values()) {
+      const deps = task.dependsOn.filter((dep) => knownTasks.has(dep));
+      if (deps.some((dep) => failed.has(dep))) {
+        blockedNow.push(task);
+      }
+    }
+
+    for (const task of blockedNow) {
+      pending.delete(task.id);
+      failed.add(task.id);
+      const reason = `Blocked because dependency failed: ${task.dependsOn.filter((dep) => failed.has(dep)).join(", ")}`;
+      results.push(blockPendingTask(task, task.order, reason, run, runPaths));
+    }
+    if (pending.size === 0) {
+      break;
+    }
+
+    const ready = [];
+    for (const task of pending.values()) {
+      const deps = task.dependsOn.filter((dep) => knownTasks.has(dep));
+      if (deps.every((dep) => completed.has(dep))) {
+        ready.push(task);
+      }
+    }
+
+    if (!ready.length) {
+      const unresolved = [...pending.values()].sort((a, b) => a.order - b.order);
+      for (const task of unresolved) {
+        pending.delete(task.id);
+        failed.add(task.id);
+        const reason = `Blocked because dependencies could not be resolved: ${(task.dependsOn || []).join(", ") || "(none)"}`;
+        results.push(blockPendingTask(task, task.order, reason, run, runPaths));
+      }
+      break;
+    }
+
+    const batch = ready.sort((a, b) => a.order - b.order).slice(0, concurrency);
+    cliLog(output, `[freejt7-router] batch=${batch.map((task) => task.id).join(", ")}`);
+    const batchResults = await Promise.all(batch.map((task) => executePlanTask({
+      client,
+      goal,
+      planSummary: plan.summary,
+      task,
+      order: task.order,
+      routing,
+      workspacePath,
+      permissionHandler,
+      run,
+      runPaths,
+      output,
+    })));
+
+    for (const result of batchResults) {
+      pending.delete(result.taskId);
+      results.push(result);
+      if (result.status === "failed" || result.status === "blocked") {
+        failed.add(result.taskId);
+      } else {
+        completed.add(result.taskId);
+      }
+    }
+  }
+
+  return results.sort((left, right) => (left.order || 0) - (right.order || 0));
 }
 
 function buildSynthesisPrompt(goal, plan, results) {
@@ -413,9 +687,10 @@ function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo) {
     steps: [],
     summary: "",
     rollout_mode: "autonomous",
+    goal_class: routing.goalClass,
     model_resolution: {
       ide: "vscode",
-      profile: "free-jt7",
+      profile: routing.selectedProfile || "free-jt7",
       provider: "github-copilot-sdk",
       model: routing.plannerModel,
       auth_mode: authInfo.authMode,
@@ -434,6 +709,8 @@ function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo) {
         executionContext: routing.executorContextModel,
         executionFallback: routing.executorFallbackModel,
         executionExperimental: routing.experimentalCodeModel || "",
+        reviewModel: routing.reviewModel,
+        maxParallelTasks: routing.maxParallelTasks,
       },
     },
   };
@@ -463,7 +740,7 @@ async function runCopilotRouter(options) {
   const workspacePath = path.resolve(options.workspacePath || process.cwd());
   const runId = createRunId();
   const runPaths = createRunPaths(workspacePath, runId);
-  const routing = mergeRouterConfig(workspacePath, options.vscode);
+  const routing = applyRouterProfile(mergeRouterConfig(workspacePath, options.vscode), goal);
   const cli = resolveCopilotCliCommand(options.cliPath || routing.cliPath);
   const authInfo = getCopilotAuthInfo();
   const permissionHandler = createPermissionHandler(routing.autoApproveSafeTools);
@@ -502,7 +779,7 @@ async function runCopilotRouter(options) {
     const plannerText = await sendSession({
       client,
       model: routing.plannerModel,
-      prompt: buildPlannerPrompt(goal, routing),
+        prompt: buildPlannerPrompt(goal, routing),
       systemMessage: "Return JSON only. No markdown fences.",
       workingDirectory: workspacePath,
       onPermissionRequest: permissionHandler,
@@ -524,67 +801,17 @@ async function runCopilotRouter(options) {
     const plan = normalizePlan(parseJsonResponse(plannerText, buildFallbackPlan(goal, routing)), goal, routing);
     cliLog(options.output, `[freejt7-router] planner generated ${plan.tasks.length} task(s)`);
 
-    const executionResults = [];
-    for (let index = 0; index < plan.tasks.length; index += 1) {
-      const task = plan.tasks[index];
-      const model = selectExecutionModel(task, routing);
-      cliLog(options.output, `[freejt7-router] ${task.id} -> ${model}`);
-      try {
-        const executorText = await sendSession({
-          client,
-          model,
-          prompt: buildExecutorPrompt(goal, plan.summary, task),
-          systemMessage: "You are a coding executor. Use tools when needed. Return JSON only.",
-          workingDirectory: workspacePath,
-          onPermissionRequest: permissionHandler,
-          allowTools: true,
-          timeoutMs: routing.sessionWaitTimeoutMs,
-        });
-
-        const parsedResult = parseJsonResponse(executorText, {
-          status: "completed",
-          summary: sanitizeText(executorText, 2000),
-          files: [],
-          verification: [],
-          residualRisks: [],
-        });
-        parsedResult.taskId = task.id;
-        parsedResult.model = model;
-        executionResults.push(parsedResult);
-
-        recordStep(run, runPaths.events, {
-          step_id: task.id,
-          action: "copilot-executor",
-          command: model,
-          result: executorText,
-          exit_code: 0,
-          retry_index: 0,
-          risk_level: task.risk,
-          mode: "autonomous",
-        });
-      } catch (error) {
-        const fallbackText = String(error?.message || error || "executor failure");
-        executionResults.push({
-          taskId: task.id,
-          model,
-          status: "failed",
-          summary: fallbackText,
-          files: [],
-          verification: [],
-          residualRisks: [fallbackText],
-        });
-        recordStep(run, runPaths.events, {
-          step_id: task.id,
-          action: "copilot-executor",
-          command: model,
-          result: fallbackText,
-          exit_code: 1,
-          retry_index: 0,
-          risk_level: task.risk,
-          mode: "autonomous",
-        });
-      }
-    }
+    const executionResults = await executePlannedTasks({
+      client,
+      goal,
+      plan,
+      routing,
+      workspacePath,
+      permissionHandler,
+      run,
+      runPaths,
+      output: options.output,
+    });
 
     const synthesisText = await sendSession({
       client,

@@ -1,4 +1,4 @@
-﻿---
+---
 name: oss-hunter
 description: "Automatically hunt for high-impact OSS contribution opportunities in trending repositories."
 risk: safe

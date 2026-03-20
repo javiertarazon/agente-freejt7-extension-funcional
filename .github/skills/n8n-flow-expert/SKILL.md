@@ -1,6 +1,7 @@
 ---
-title: n8n Flow Expert
-id: n8n-flow-expert
+name: n8n-flow-expert
+description: "Expert guidance for building and troubleshooting n8n workflows."
+risk: low
 ---
 
 # n8n Flow Expert
