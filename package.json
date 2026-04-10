@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local.",
-  "version": "4.2.2",
+  "version": "4.2.3",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -19,6 +19,7 @@
     "automation"
   ],
   "activationEvents": [
+    "onChatParticipant:freejt7.chat",
     "onCommand:freejt7.installWorkspace",
     "onCommand:freejt7.runtimeDoctor",
     "onCommand:freejt7.openRuntimeDocs",
@@ -96,6 +97,33 @@
         "title": "Free JT7: OpenClaw Channels Login"
       }
     ],
+    "chatParticipants": [
+      {
+        "id": "freejt7.chat",
+        "name": "freejt7",
+        "fullName": "Free JT7",
+        "description": "Planifica y ejecuta tareas de Free JT7 en el workspace actual.",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "route",
+            "description": "Ejecuta el router de Free JT7 sobre tu solicitud actual"
+          },
+          {
+            "name": "doctor",
+            "description": "Valida el runtime de Free JT7"
+          },
+          {
+            "name": "install",
+            "description": "Instala o adapta Free JT7 en el workspace actual"
+          },
+          {
+            "name": "docs",
+            "description": "Abre la documentacion de Free JT7"
+          }
+        ]
+      }
+    ],
     "configuration": {
       "title": "Free JT7",
       "properties": {
@@ -166,8 +194,8 @@
   "scripts": {
     "build:bundle": "node scripts/build-extension-bundle.js",
     "postinstall": "node scripts/fix-copilot-sdk-install.js && node scripts/build-extension-bundle.js",
-    "package": "npm.cmd run build:bundle && npx.cmd @vscode/vsce package --allow-missing-repository",
-    "package:local": "npm.cmd run build:bundle && npx.cmd @vscode/vsce package --no-yarn --allow-missing-repository"
+    "package": "npm run build:bundle && npx @vscode/vsce package --allow-missing-repository",
+    "package:local": "npm run build:bundle && npx @vscode/vsce package --no-yarn --allow-missing-repository"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.7.1",

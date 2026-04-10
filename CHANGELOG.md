@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+## [4.2.3] - 2026-04-09
+
+- Adaptada la extension para Linux y entornos VS Code modernos: `Free JT7: Instalar en workspace actual` ya no depende de PowerShell y usa `skills_manager.py install` con Python multiplataforma.
+- Integrado `@freejt7` como participante nativo de Copilot Chat con comandos `/route`, `/doctor`, `/install` y `/docs`.
+- Ajustada la resolucion del router para priorizar el Copilot CLI empaquetado dentro de la extension y usar el CLI global solo como fallback.
+- Validado el flujo Linux extremo a extremo: compilacion del bundle JS, autenticacion real de Copilot CLI, prueba directa del CLI y ejecucion correcta de `copilot_router.js`.
+- Normalizado el versionado del repositorio: `VERSION`, `package.json` y `package-lock.json` quedan alineados en `4.2.3`.
+
 ## [4.2.2] - 2026-03-18
 
 - Corregido el flujo de instalacion desde la extension y wrappers PowerShell (`setup-project.ps1`, `add-free-jt7-agent.ps1`) con resolucion robusta de `skills_manager.py` y fallback de Python valido.
