@@ -137,10 +137,33 @@ function getPathCandidates() {
   return candidates;
 }
 
-function resolveCopilotCliPath(explicitPath = "") {
+function getBundledCliCandidates(extensionPath = "") {
+  const root = String(extensionPath || "").trim();
+  if (!root) {
+    return [];
+  }
+  const normalizedRoot = path.resolve(root);
+  const packageName = `@github/copilot-${process.platform}-${process.arch}`;
+  const binaryName = process.platform === "win32" ? "copilot.exe" : "copilot";
+  const candidates = [
+    path.join(normalizedRoot, "node_modules", packageName, binaryName),
+    path.join(normalizedRoot, "node_modules", ".bin", process.platform === "win32" ? "copilot.cmd" : "copilot"),
+  ];
+  if (process.platform === "win32") {
+    candidates.push(path.join(normalizedRoot, "node_modules", ".bin", "copilot.bat"));
+  }
+  return candidates;
+}
+
+function resolveCopilotCliPath(explicitPath = "", extensionPath = "") {
   const direct = String(explicitPath || process.env.FREEJT7_COPILOT_CLI_PATH || "").trim();
   if (direct && fs.existsSync(direct)) {
     return direct;
+  }
+  for (const candidate of getBundledCliCandidates(extensionPath)) {
+    if (candidate && fs.existsSync(candidate)) {
+      return candidate;
+    }
   }
   for (const candidate of getPathCandidates()) {
     if (candidate && fs.existsSync(candidate)) {
@@ -150,8 +173,8 @@ function resolveCopilotCliPath(explicitPath = "") {
   return direct || (process.platform === "win32" ? "copilot.cmd" : "copilot");
 }
 
-function resolveCopilotCliCommand(explicitPath = "") {
-  const cliPath = resolveCopilotCliPath(explicitPath);
+function resolveCopilotCliCommand(explicitPath = "", extensionPath = "") {
+  const cliPath = resolveCopilotCliPath(explicitPath, extensionPath);
   const lower = cliPath.toLowerCase();
   if (process.platform === "win32" && lower.endsWith(".cmd")) {
     const npmLoader = path.join(path.dirname(cliPath), "node_modules", "@github", "copilot", "npm-loader.js");
@@ -464,7 +487,7 @@ async function runCopilotRouter(options) {
   const runId = createRunId();
   const runPaths = createRunPaths(workspacePath, runId);
   const routing = mergeRouterConfig(workspacePath, options.vscode);
-  const cli = resolveCopilotCliCommand(options.cliPath || routing.cliPath);
+  const cli = resolveCopilotCliCommand(options.cliPath || routing.cliPath, options.extensionPath || "");
   const authInfo = getCopilotAuthInfo();
   const permissionHandler = createPermissionHandler(routing.autoApproveSafeTools);
   const run = buildRunSkeleton(runId, goal, workspacePath, routing, authInfo);

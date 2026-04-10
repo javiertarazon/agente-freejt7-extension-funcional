@@ -1,6 +1,6 @@
 ﻿# Agente Free JT7 Extension Funcional
 
-Version: `4.2.2`
+Version: `4.2.3`
 
 Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - ejecutable por CLI (`skills_manager.py`)
@@ -13,6 +13,7 @@ Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - Catalogo de skills disponible en `.github/skills`.
 - Configuracion de agente, policy y model routing incluida.
 - Extension VS Code incluida (`package.json` + `extension.js`).
+- Variante Linux documentada y validada en la rama `feature/linux-v4.2.3`.
 
 ## Origen y trazabilidad
 
@@ -37,17 +38,17 @@ La carpeta `legacy-vscode-free-jt7-agent` y los registros en
 `copilot-agent\admin-runs` han sido eliminados para reducir el desorden.
 
 
-- Windows 10/11
+- Linux y Windows 10/11
 - Python 3.11+ (`python` en PATH)
-- Node.js 20+ (para generar `.vsix`)
+- Node.js 20+ recomendado para generar `.vsix`
 - VS Code 1.90+
 
 ## Uso CLI rapido
 
-```powershell
-python skills_manager.py policy-validate
-python skills_manager.py ide-detect --json
-python skills_manager.py install "C:\ruta\mi-proyecto" --ide vscode --update-user-settings
+```bash
+python3 skills_manager.py policy-validate
+python3 skills_manager.py ide-detect --json
+python3 skills_manager.py install "/ruta/mi-proyecto" --ide vscode --update-user-settings
 ```
 
 ## Router real con Copilot SDK
@@ -68,17 +69,18 @@ node copilot_router.js --goal "describe y resuelve la tarea" --workspace . --jso
 Uso desde la extension:
 
 - comando `Free JT7: Routed Copilot Task`
+- participante nativo `@freejt7` en Copilot Chat
 
 Requisito operativo:
 
 - tener instalado y autenticado `copilot` CLI.
-- si falta login, ejecuta `copilot` y luego `/login`, o configura `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN`.
+- si falta login, ejecuta `copilot login`, o configura `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN`.
 
 ## Generar extension VS Code (.vsix)
 
-```powershell
-npm.cmd install
-npm.cmd run package
+```bash
+npm install
+npm run package
 ```
 
 Esto genera un archivo `.vsix` en la raiz del repo.
@@ -90,8 +92,8 @@ Después de crear el paquete puedes confirmar la instalación ejecutando
 
 Para instalar manualmente usa el menú de extensiones de VS Code o:
 
-```powershell
-code --install-extension agente-freejt7-extension-funcional-4.2.2.vsix
+```bash
+code --install-extension agente-freejt7-extension-funcional-4.2.3.vsix
 ```
 
 ### Probar wrappers
@@ -115,6 +117,12 @@ esperado en un entorno de desarrollo.
 3. Seleccionar el archivo `.vsix` generado
 4. Ejecutar el comando:
    - `Free JT7: Instalar en workspace actual`
+
+En Linux o Windows tambien puedes abrir Copilot Chat y usar:
+
+- `@freejt7 /doctor`
+- `@freejt7 /install`
+- `@freejt7 /route analiza este proyecto y aplica la solucion`
 
 ## Comandos de la extension
 

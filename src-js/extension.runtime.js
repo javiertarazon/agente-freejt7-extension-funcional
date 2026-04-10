@@ -68,6 +68,8 @@ function isWorkingPython(bin, prefixArgs = []) {
 function pythonCommand(extensionPath) {
   const candidates = [
     { bin: path.join(extensionPath, ".venv", "Scripts", "python.exe"), args: [] },
+    { bin: path.join(extensionPath, ".venv", "bin", "python"), args: [] },
+    { bin: "python3", args: [] },
     { bin: "python", args: [] },
   ];
   if (process.platform === "win32") {
@@ -84,64 +86,72 @@ function pythonCommand(extensionPath) {
   return { bin: "python", args: [] };
 }
 
-async function installWorkspace(context, output) {
-  if (process.platform !== "win32") {
-    vscode.window.showErrorMessage("Free JT7: esta extension solo soporta Windows por ahora.");
-    return;
-  }
-
+function getPrimaryWorkspacePath() {
   const folders = vscode.workspace.workspaceFolders;
   if (!folders || folders.length === 0) {
-    vscode.window.showErrorMessage("Free JT7: abre un workspace antes de instalar.");
-    return;
+    return "";
+  }
+  return folders[0].uri.fsPath;
+}
+
+async function installWorkspace(context, output) {
+  const workspacePath = getPrimaryWorkspacePath();
+  if (!workspacePath) {
+    const message = "Free JT7: abre un workspace antes de instalar.";
+    vscode.window.showErrorMessage(message);
+    return { ok: false, message };
   }
 
-  const workspacePath = folders[0].uri.fsPath;
-  const scriptPath = path.join(context.extensionPath, "scripts", "setup-project.ps1");
-  if (!fs.existsSync(scriptPath)) {
-    vscode.window.showErrorMessage(`Free JT7: no se encontro ${scriptPath}.`);
-    return;
+  const managerPath = path.join(context.extensionPath, "skills_manager.py");
+  if (!fs.existsSync(managerPath)) {
+    const message = `Free JT7: no se encontro ${managerPath}.`;
+    vscode.window.showErrorMessage(message);
+    return { ok: false, message };
   }
 
   const config = vscode.workspace.getConfiguration("freejt7");
   const ide = config.get("install.ide", "vscode");
   const updateUserSettings = config.get("install.updateUserSettings", true);
   const force = config.get("install.force", false);
+  const py = pythonCommand(context.extensionPath);
 
   const args = [
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    scriptPath,
-    "-ProjectPath",
+    ...py.args,
+    managerPath,
+    "install",
     workspacePath,
-    "-AgentPath",
-    context.extensionPath,
-    "-Ide",
-    ide
+    "--ide",
+    ide,
   ];
-  args.push(updateUserSettings ? "-UpdateUserSettings:$true" : "-UpdateUserSettings:$false");
+  if (updateUserSettings) {
+    args.push("--update-user-settings");
+  }
   if (force) {
-    args.push("-Force");
+    args.push("--force");
   }
 
   output.appendLine("[freejt7] Iniciando instalacion...");
-  output.appendLine(`powershell.exe ${args.map((a) => `"${a}"`).join(" ")}`);
+  output.appendLine(`[freejt7] ${[py.bin, ...args].map((a) => `"${a}"`).join(" ")}`);
   output.show(true);
 
-  const result = await runCommand("powershell.exe", args, { cwd: context.extensionPath }, output);
+  const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
   if (result.code === 0) {
-    vscode.window.showInformationMessage("Free JT7: instalacion completada correctamente.");
+    const message = "Free JT7: instalacion completada correctamente.";
+    vscode.window.showInformationMessage(message);
+    return { ok: true, message };
   } else {
-    vscode.window.showErrorMessage("Free JT7: fallo la instalacion. Revisa el Output 'Free JT7'.");
+    const message = "Free JT7: fallo la instalacion. Revisa el Output 'Free JT7'.";
+    vscode.window.showErrorMessage(message);
+    return { ok: false, message };
   }
 }
 
 async function runtimeDoctor(context, output) {
   const managerPath = path.join(context.extensionPath, "skills_manager.py");
   if (!fs.existsSync(managerPath)) {
-    vscode.window.showErrorMessage(`Free JT7: no se encontro ${managerPath}.`);
-    return;
+    const message = `Free JT7: no se encontro ${managerPath}.`;
+    vscode.window.showErrorMessage(message);
+    return { ok: false, message };
   }
 
   const py = pythonCommand(context.extensionPath);
@@ -150,25 +160,67 @@ async function runtimeDoctor(context, output) {
 
   const first = await runCommand(py.bin, [...py.args, managerPath, "policy-validate"], { cwd: context.extensionPath }, output);
   if (first.code !== 0) {
-    vscode.window.showErrorMessage("Free JT7: policy-validate fallo. Revisa Output 'Free JT7'.");
-    return;
+    const message = "Free JT7: policy-validate fallo. Revisa Output 'Free JT7'.";
+    vscode.window.showErrorMessage(message);
+    return { ok: false, message };
   }
 
   const second = await runCommand(py.bin, [...py.args, managerPath, "ide-detect", "--json"], { cwd: context.extensionPath }, output);
   if (second.code === 0) {
-    vscode.window.showInformationMessage("Free JT7: runtime validado.");
+    const message = "Free JT7: runtime validado.";
+    vscode.window.showInformationMessage(message);
+    return { ok: true, message };
   } else {
-    vscode.window.showWarningMessage("Free JT7: policy OK, pero ide-detect reporto errores.");
+    const message = "Free JT7: policy OK, pero ide-detect reporto errores.";
+    vscode.window.showWarningMessage(message);
+    return { ok: false, message };
   }
 }
 
-async function routeTaskWithCopilot(context, output) {
-  const folders = vscode.workspace.workspaceFolders;
-  if (!folders || folders.length === 0) {
-    vscode.window.showErrorMessage("Free JT7: abre un workspace antes de usar el router Copilot.");
-    return;
+function formatRouterMarkdown(result) {
+  const final = result?.final || {};
+  const lines = [
+    `**Estado:** ${final.status || "desconocido"}`,
+    "",
+    final.summary || "Sin resumen disponible.",
+  ];
+  const changedFiles = Array.isArray(final.changedFiles) ? final.changedFiles.filter(Boolean) : [];
+  const verification = Array.isArray(final.verification) ? final.verification.filter(Boolean) : [];
+  const residualRisks = Array.isArray(final.residualRisks) ? final.residualRisks.filter(Boolean) : [];
+  if (changedFiles.length) {
+    lines.push("", "**Archivos:**", ...changedFiles.map((file) => `- \`${file}\``));
+  }
+  if (verification.length) {
+    lines.push("", "**Validacion:**", ...verification.map((item) => `- ${item}`));
+  }
+  if (residualRisks.length) {
+    lines.push("", "**Riesgos residuales:**", ...residualRisks.map((item) => `- ${item}`));
+  }
+  return lines.join("\n");
+}
+
+async function routeTaskWithGoal(context, output, goal) {
+  if (!goal) {
+    return null;
   }
 
+  const workspacePath = getPrimaryWorkspacePath();
+  if (!workspacePath) {
+    throw new Error("Free JT7: abre un workspace antes de usar el router Copilot.");
+  }
+
+  output.appendLine(`[freejt7-router] starting goal=${goal}`);
+  output.show(true);
+  return runCopilotRouter({
+    goal,
+    workspacePath,
+    vscode,
+    output,
+    extensionPath: context.extensionPath,
+  });
+}
+
+async function routeTaskWithCopilot(context, output) {
   const goal = await vscode.window.showInputBox({
     prompt: "Objetivo para el router Copilot de Free JT7",
     placeHolder: "Ej: analiza el bug, planifica y aplica la solucion con validacion",
@@ -178,16 +230,11 @@ async function routeTaskWithCopilot(context, output) {
     return;
   }
 
-  const workspacePath = folders[0].uri.fsPath;
-  output.appendLine(`[freejt7-router] starting goal=${goal}`);
-  output.show(true);
   try {
-    const result = await runCopilotRouter({
-      goal,
-      workspacePath,
-      vscode,
-      output,
-    });
+    const result = await routeTaskWithGoal(context, output, goal);
+    if (!result) {
+      return;
+    }
     vscode.window.showInformationMessage(`Free JT7: router completado (${result.runId}).`);
   } catch (error) {
     const message = String(error && error.message ? error.message : error);
@@ -226,11 +273,57 @@ async function runOpenClaw(args, output) {
   }
 }
 
+async function handleChatRequest(context, output, request, chatContext, stream) {
+  const command = request.command || "route";
+
+  if (command === "docs") {
+    openRuntimeDocs(context);
+    stream.markdown("Abrí la documentación de Free JT7 en el editor.");
+    return { metadata: { command } };
+  }
+
+  if (command === "doctor") {
+    stream.progress("Validando el runtime de Free JT7...");
+    const result = await runtimeDoctor(context, output);
+    stream.markdown(result?.message || "Runtime validado.");
+    return { metadata: { command, ok: Boolean(result?.ok) } };
+  }
+
+  if (command === "install") {
+    stream.progress("Instalando Free JT7 en el workspace actual...");
+    const result = await installWorkspace(context, output);
+    stream.markdown(result?.message || "Instalacion finalizada.");
+    return { metadata: { command, ok: Boolean(result?.ok) } };
+  }
+
+  const prompt = String(request.prompt || "").trim();
+  if (!prompt) {
+    stream.markdown("Escribe una solicitud para `@freejt7` o usa `/doctor`, `/install` o `/docs`.");
+    return { metadata: { command, ok: false } };
+  }
+
+  stream.progress("Ejecutando el router de Free JT7...");
+  try {
+    const result = await routeTaskWithGoal(context, output, prompt);
+    stream.markdown(formatRouterMarkdown(result));
+    return {
+      metadata: {
+        command,
+        ok: true,
+        runId: result?.runId || "",
+      },
+    };
+  } catch (error) {
+    const message = String(error && error.message ? error.message : error);
+    output.appendLine(`[freejt7-chat] ERROR ${message}`);
+    stream.markdown(`Free JT7 no pudo completar la tarea.\n\n${message}`);
+    return { metadata: { command, ok: false, error: message } };
+  }
+}
+
 function activate(context) {
   const output = vscode.window.createOutputChannel("Free JT7");
-
-
-  context.subscriptions.push(
+  const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
     vscode.commands.registerCommand("freejt7.openRuntimeDocs", () => openRuntimeDocs(context)),
@@ -268,9 +361,17 @@ function activate(context) {
       }
     }),
     vscode.commands.registerCommand("freejt7.openClawChannelsLogin", () => runOpenClaw(["channels","login"], output)),
+    output,
+  ];
 
-    output
-  );
+  if (vscode.chat?.createChatParticipant) {
+    const participant = vscode.chat.createChatParticipant("freejt7.chat", (request, chatContext, stream, token) => (
+      handleChatRequest(context, output, request, chatContext, stream, token)
+    ));
+    subscriptions.push(participant);
+  }
+
+  context.subscriptions.push(...subscriptions);
 }
 
 function deactivate() {}
