@@ -187,8 +187,8 @@
   "scripts": {
     "build:bundle": "node scripts/build-extension-bundle.js",
     "postinstall": "node scripts/fix-copilot-sdk-install.js && node scripts/build-extension-bundle.js",
-    "package": "npm run build:bundle && npx @vscode/vsce package --allow-missing-repository",
-    "package:local": "npm run build:bundle && npx @vscode/vsce package --no-yarn --allow-missing-repository"
+    "package": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --allow-missing-repository",
+    "package:local": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --no-yarn --allow-missing-repository"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.7.1",

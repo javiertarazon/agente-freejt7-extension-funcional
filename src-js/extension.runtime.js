@@ -376,6 +376,20 @@ async function handleChatRequest(context, output, request, chatContext, stream) 
   }
 }
 
+async function ensureMcpDependencies(extensionPath, output) {
+  const mcpDir = path.join(extensionPath, "servidor mpc free jt7");
+  const mcpCheck = path.join(mcpDir, "node_modules", "@modelcontextprotocol");
+  if (!fs.existsSync(mcpCheck)) {
+    output.appendLine("[freejt7] ⚠️ Dependencias MCP no encontradas, instalando...");
+    try {
+      await runCommand("npm", ["install", "--production"], { cwd: mcpDir }, output);
+      output.appendLine("[freejt7] ✅ Dependencias MCP instaladas correctamente.");
+    } catch (e) {
+      output.appendLine(`[freejt7] ❌ Error instalando deps MCP: ${e.message}`);
+    }
+  }
+}
+
 function activate(context) {
   const output = vscode.window.createOutputChannel("Free JT7");
   const chatDiagnostics = getChatDiagnostics();
@@ -384,6 +398,41 @@ function activate(context) {
       output.appendLine(`[freejt7] ${issue}`);
     }
   }
+  // FIX #4: Check Python disponible
+  const pyCmd = pythonCommand(context.extensionPath);
+  if (!isWorkingPython(pyCmd.bin, pyCmd.args)) {
+    output.appendLine("[freejt7] ⚠️ Python no encontrado en el sistema.");
+    vscode.window.showWarningMessage(
+      "Free JT7: Python no encontrado. Instale Python 3 y reinicie VS Code.",
+      "Descargar Python"
+    ).then(action => {
+      if (action === "Descargar Python")
+        vscode.env.openExternal(vscode.Uri.parse("https://www.python.org/downloads/"));
+    });
+  }
+
+  // FIX #3: Check OpenClaw disponible
+  const wsPath = getPrimaryWorkspacePath();
+  const clawBin = findOpenClawBinary(wsPath);
+  if (clawBin === "openclaw") {
+    const clawCheck = spawnSync("openclaw", ["--version"], { shell: true });
+    if (clawCheck.error || clawCheck.status !== 0) {
+      output.appendLine("[freejt7] ⚠️ OpenClaw CLI no encontrado en PATH.");
+      vscode.window.showWarningMessage(
+        "Free JT7: OpenClaw CLI no encontrado. Instálalo con: npm install -g openclaw",
+        "Más información"
+      ).then(action => {
+        if (action === "Más información")
+          vscode.env.openExternal(vscode.Uri.parse("https://github.com/openclaw/openclaw#readme"));
+      });
+    }
+  }
+
+  // FIX #2: Verificar/instalar deps MCP en background
+  ensureMcpDependencies(context.extensionPath, output).catch(e =>
+    output.appendLine(`[freejt7] ensureMcpDependencies error: ${e}`)
+  );
+
   const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
