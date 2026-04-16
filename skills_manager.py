@@ -1892,6 +1892,7 @@ def _build_gateway_config(
     allow_from = [owner_phone] if owner_phone else []
     cfg: dict[str, Any] = {
         "gateway": {
+            "mode": "local",
             "bind": "loopback",
             "port": 18789,
             "reload": {"mode": "hybrid"},
@@ -2037,10 +2038,13 @@ def _is_destructive(command: str, policy: dict[str, Any]) -> bool:
     return False
 
 
-def _normalize_shell_command(command: str, strategy: str) -> str:
+def _normalize_shell_command(command: str, strategy: str, platform_family: str | None = None) -> str:
     if strategy != "cross-shell":
         return command
+    family = platform_family or _platform_family()
     trimmed = command.strip()
+    if family != "windows":
+        return command
     if trimmed == "ls":
         return "Get-ChildItem"
     if trimmed.startswith("cat "):
@@ -2105,6 +2109,57 @@ def _execute_powershell(command: str, timeout: int = 120000) -> tuple[int, str]:
         return 124, "command timed out"
     except Exception as exc:
         return 1, str(exc)
+
+
+def _execute_task_shell(
+    command: str,
+    timeout: int = 120000,
+    platform_family: str | None = None,
+) -> tuple[int, str]:
+    family = platform_family or _platform_family()
+    if family == "windows":
+        return _execute_powershell(command, timeout=timeout)
+
+    shell_bin = shutil.which("bash") or shutil.which("sh")
+    if not shell_bin:
+        return 1, "No compatible POSIX shell found"
+
+    shell_name = Path(shell_bin).name.lower()
+    shell_args = [shell_bin, "-lc" if shell_name == "bash" else "-c", command]
+    try:
+        proc = subprocess.run(
+            shell_args,
+            capture_output=True,
+            text=True,
+            timeout=timeout / 1000,
+            encoding="utf-8",
+            errors="replace",
+        )
+        output = (proc.stdout or "") + (proc.stderr or "")
+        return proc.returncode, output[:8000]
+    except subprocess.TimeoutExpired:
+        return 124, "command timed out"
+    except Exception as exc:
+        return 1, str(exc)
+
+
+def _task_step_attempts(command: str, normalized: str, platform_family: str | None = None) -> list[str]:
+    family = platform_family or _platform_family()
+    attempts: list[str] = []
+
+    def _push(candidate: str) -> None:
+        text = str(candidate or "").strip()
+        if text and text not in attempts:
+            attempts.append(text)
+
+    _push(normalized)
+    if family == "windows":
+        _push(f"{normalized} 2>$null")
+        _push(f"cmd /c {command}")
+    else:
+        _push(f"{normalized} 2>/dev/null")
+        _push(command)
+    return attempts
 
 
 def _resolve_skills_for_query(query: str, top_n: int = 3) -> list[dict[str, Any]]:
@@ -3417,23 +3472,24 @@ def cmd_gateway_bootstrap(args: argparse.Namespace) -> int:
         f"- Config: `{config_path}`",
         f"- Estado: `{state_dir}`",
         f"- IDE/modelo por defecto: `{model_resolution.get('ide')}` / `{model_resolution.get('provider')}` / `{model_resolution.get('model')}`",
+        "- Runtime OpenClaw: `Node.js 22.14+` en `~/.local/bin/openclaw` o equivalente en PATH",
         "- Retención objetivo: `30 dias`",
         "",
         "## Comandos rapidos",
-        "```powershell",
-        "python skills_manager.py easy-onboard --project \"D:\\ruta\\proyecto\" --interactive",
-        "python skills_manager.py credentials-wizard --project \"D:\\ruta\\proyecto\" --interactive",
-        "python skills_manager.py credentials-apply --project \"D:\\ruta\\proyecto\"",
-        "python skills_manager.py gateway-status",
-        "python skills_manager.py gateway-start --dry-run",
-        "python skills_manager.py channel-login --channel whatsapp",
-        "python skills_manager.py channel-login --channel telegram",
-        "python skills_manager.py pairing-list --channel telegram",
-        "python skills_manager.py pairing-approve --channel telegram --code <CODE>",
-        "python skills_manager.py plugin-list",
-        "python skills_manager.py plugin-validate",
-        "python skills_manager.py phase7-smoke",
-        "python skills_manager.py gateway-resilience",
+        "```bash",
+        "python3 skills_manager.py easy-onboard --project \"/ruta/proyecto\" --interactive",
+        "python3 skills_manager.py credentials-wizard --project \"/ruta/proyecto\" --interactive",
+        "python3 skills_manager.py credentials-apply --project \"/ruta/proyecto\"",
+        "python3 skills_manager.py gateway-status",
+        "python3 skills_manager.py gateway-start --dry-run",
+        "python3 skills_manager.py channel-login --channel whatsapp",
+        "python3 skills_manager.py channel-login --channel telegram",
+        "python3 skills_manager.py pairing-list --channel telegram",
+        "python3 skills_manager.py pairing-approve --channel telegram --code <CODE>",
+        "python3 skills_manager.py plugin-list",
+        "python3 skills_manager.py plugin-validate",
+        "python3 skills_manager.py phase7-smoke",
+        "python3 skills_manager.py gateway-resilience",
         "```",
     ]
     _atomic_write_text(runbook, "\n".join(runbook_lines) + "\n")
@@ -4529,7 +4585,8 @@ def cmd_task_step(args: argparse.Namespace) -> int:
     policy = _load_policy()
     mode = run.get("rollout_mode", _load_rollout_mode(policy))
     strategy = str(policy.get("shell", {}).get("strategy", "cross-shell"))
-    normalized = _normalize_shell_command(command, strategy)
+    platform_family = _platform_family()
+    normalized = _normalize_shell_command(command, strategy, platform_family)
     risk_level = _classify_risk(command, policy)
     destructive = _is_destructive(command, policy)
     risk_cfg = policy.get("risk", {}) if isinstance(policy.get("risk", {}), dict) else {}
@@ -4601,11 +4658,7 @@ def cmd_task_step(args: argparse.Namespace) -> int:
 
     max_attempts = int(policy.get("execution", {}).get("retry", {}).get("max_attempts", 3))
     run["status"] = "running"
-    attempts = [
-        normalized,
-        normalized + " 2>$null",
-        f"cmd /c {command}",
-    ]
+    attempts = _task_step_attempts(command, normalized, platform_family)
     attempts = attempts[:max_attempts]
 
     if mode == "shadow":
@@ -4614,7 +4667,7 @@ def cmd_task_step(args: argparse.Namespace) -> int:
     else:
         exit_code, result, used_attempt = 1, "", 0
         for retry_index, candidate in enumerate(attempts):
-            code, out = _execute_powershell(candidate)
+            code, out = _execute_task_shell(candidate, platform_family=platform_family)
             exit_code, result, used_attempt = code, out, retry_index
             _append_run_event(run_id, {
                 "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

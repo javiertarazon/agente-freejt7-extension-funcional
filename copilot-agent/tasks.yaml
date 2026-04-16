@@ -175,3 +175,23 @@ tareas:
     skills_usados: ["production-code-audit", "llm-application-dev-ai-assistant", "framework-migration-code-migrate"]
     resultado: >
       verificacion autonoma OK
+  - id: "20260416T001718Z-981db5e5"
+    fecha: "2026-04-16"
+    titulo: "runtime-audit"
+    descripcion: >
+      runtime-audit
+    estado: "bloqueado"
+    riesgo: "low"
+    skills_usados: ["free-jt7-global-runtime-audit", "production-code-audit", "seo-audit"]
+    resultado: >
+      Bloqueado por quality gate: existen steps fallidos o sin evidencia.
+  - id: "20260416T002223Z-5d848cba"
+    fecha: "2026-04-16"
+    titulo: "runtime-audit"
+    descripcion: >
+      runtime-audit
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["free-jt7-global-runtime-audit", "production-code-audit", "seo-audit"]
+    resultado: >
+      Run finalizado con 2 steps

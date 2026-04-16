@@ -1,0 +1,17 @@
+{
+  "name": "Free JT7 - Alto Contraste Claro",
+  "type": "light",
+  "colors": {
+    "editor.background": "#FFFDF8",
+    "editor.foreground": "#1A1F2B",
+    "activityBar.background": "#E8EEF7",
+    "activityBar.foreground": "#10243A",
+    "sideBar.background": "#F6F9FD",
+    "sideBar.foreground": "#1A1F2B",
+    "statusBar.background": "#C9DDF3",
+    "statusBar.foreground": "#10243A",
+    "button.background": "#005FB8",
+    "button.foreground": "#FFFFFF"
+  },
+  "tokenColors": []
+}

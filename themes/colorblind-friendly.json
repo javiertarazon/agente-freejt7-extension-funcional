@@ -1,0 +1,17 @@
+{
+  "name": "Free JT7 - Amigable para Daltónicos",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#0F1720",
+    "editor.foreground": "#F3F5F7",
+    "activityBar.background": "#12344A",
+    "activityBar.foreground": "#F3F5F7",
+    "sideBar.background": "#16222D",
+    "sideBar.foreground": "#F3F5F7",
+    "statusBar.background": "#1A5E63",
+    "statusBar.foreground": "#FFFFFF",
+    "button.background": "#D97706",
+    "button.foreground": "#111827"
+  },
+  "tokenColors": []
+}

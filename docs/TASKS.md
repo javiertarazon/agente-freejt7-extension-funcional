@@ -113,3 +113,28 @@
   - [x] Bundlear `extension.js` y `copilot_router.js` en `dist/extension.cjs` con `esbuild`
   - [x] Validar la extension instalada desde VSIX usando el bundle generado
 
+## task-run cross-platform Linux (2026-04-16)
+- [x] Identificar causa raiz del bloqueo de `runtime-audit` en Linux
+  - [x] Confirmar normalizacion indebida a PowerShell para `pwd`
+  - [x] Confirmar ejecucion hardcoded con `_execute_powershell()` en `cmd_task_step`
+- [x] Corregir shell por plataforma en `skills_manager.py`
+  - [x] Mantener traduccion PowerShell solo para Windows
+  - [x] Ejecutar con `bash` o `sh` y reintentos POSIX en Linux
+- [x] Revalidar auditoria completa
+  - [x] Ejecutar `policy-validate`, `doctor --strict`, `rollout-mode`, `host-mode status`, `ide-detect --json`
+  - [x] Ejecutar `task-run --goal "runtime-audit" --commands "pwd" "node --version"`
+  - [x] Confirmar run verde con checklist completo
+
+## Pruebas de Regresion task-run Cross-Platform (2026-04-16)
+- [x] Crear suite de tests automatizados para evitar regresiones del bug Linux/PowerShell
+  - [x] Confirmar 0 infraestructura de tests preexistente (sin directorio `tests/`, sin archivos de test)
+  - [x] Instalar pytest 9.0.3 en .venv (pip 26.0.1 via curl bootstrap desde bootstrap.pypa.io)
+  - [x] Crear `tests/__init__.py` (paquete Python vacío)
+  - [x] Crear `tests/test_task_run_cross_platform.py` — 47 test cases, 4 clases
+    - [x] `TestPlatformFamily` (7 tests): linux, windows, darwin, unknown→linux, empty→linux
+    - [x] `TestNormalizeShellCommand` (17 tests): passthrough POSIX, traducción Windows, auto-detect
+    - [x] `TestTaskStepAttempts` (12 tests): redirect POSIX vs PowerShell redirect+cmd fallback
+    - [x] `TestExecuteTaskShell` (10 tests): bash/sh en Linux/Darwin, PS en Windows, timeout→rc=124
+  - [x] Verificacion: `.venv/bin/pytest tests/ -v` → **47/47 passed in 0.97s**
+  - [x] Suite vinculada al fix verificado en run `20260416T002223Z-5d848cba`
+

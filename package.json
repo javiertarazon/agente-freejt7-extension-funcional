@@ -1,8 +1,8 @@
 {
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
-  "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local.",
-  "version": "4.2.3",
+  "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local, router Copilot y gateway OpenClaw.",
+  "version": "4.2.5",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -18,19 +18,12 @@
     "skills",
     "automation"
   ],
+  "extensionDependencies": [
+    "github.copilot-chat"
+  ],
   "activationEvents": [
-    "onChatParticipant:freejt7.chat",
-    "onCommand:freejt7.installWorkspace",
-    "onCommand:freejt7.runtimeDoctor",
-    "onCommand:freejt7.openRuntimeDocs",
-    "onCommand:freejt7.routeTaskWithCopilot",
-    "onCommand:freejt7.openClawGatewayStatus",
-    "onCommand:freejt7.openClawCLI",
-    "onCommand:freejt7.openClawStartGateway",
-    "onCommand:freejt7.editOpenClawConfig",
-    "onCommand:freejt7.openClawInstallService",
-    "onCommand:freejt7.openClawACP",
-    "onCommand:freejt7.openClawChannelsLogin"
+    "onStartupFinished",
+    "onChatParticipant:freejt7.chat"
   ],
   "main": "./dist/extension.cjs",
   "contributes": {

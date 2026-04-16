@@ -1,0 +1,17 @@
+{
+  "name": "Free JT7 - Alto Contraste Oscuro",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#0B0D12",
+    "editor.foreground": "#F4F7FB",
+    "activityBar.background": "#10151F",
+    "activityBar.foreground": "#FFFFFF",
+    "sideBar.background": "#111826",
+    "sideBar.foreground": "#F4F7FB",
+    "statusBar.background": "#0E2238",
+    "statusBar.foreground": "#FFFFFF",
+    "button.background": "#007ACC",
+    "button.foreground": "#FFFFFF"
+  },
+  "tokenColors": []
+}

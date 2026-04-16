@@ -1,6 +1,6 @@
 ﻿# Agente Free JT7 Extension Funcional
 
-Version: `4.2.3`
+Version: `4.2.4`
 
 Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - ejecutable por CLI (`skills_manager.py`)
@@ -40,8 +40,47 @@ La carpeta `legacy-vscode-free-jt7-agent` y los registros en
 
 - Linux y Windows 10/11
 - Python 3.11+ (`python` en PATH)
-- Node.js 20+ recomendado para generar `.vsix`
+- Node.js 20+ para generar `.vsix` y reconstruir la extension
+- Node.js 22.14+ para ejecutar OpenClaw actual si usas gateway y canales
 - VS Code 1.90+
+
+## Capas de instalacion
+
+La instalacion operativa del proyecto queda separada en tres capas:
+
+### 1. Extension base + router Copilot
+
+Incluye:
+
+- extension VS Code (`package.json`, `extension.js`, `dist/extension.cjs`)
+- runtime JS en `src-js/`
+- bootstrap del workspace mediante `skills_manager.py`
+- router Copilot con participante `@freejt7`
+
+Requisitos minimos:
+
+- Python 3.11+
+- VS Code 1.90+
+- GitHub Copilot Chat instalado para que aparezca `@freejt7` en el panel de chat de VS Code
+- `copilot` CLI autenticado o token valido para Copilot
+- Node 20+ solo si quieres reconstruir el bundle o empaquetar el VSIX
+
+### 2. Servicios fundamentales: MCP + OpenClaw
+
+Esta capa forma parte del funcionamiento completo que espera Free JT7:
+
+- `servidor mpc free jt7/` como servidor MCP local complementario
+- OpenClaw como runtime del gateway y de los comandos de canales
+
+Estado operativo esperado:
+
+- `servidor mpc free jt7` debe pasar `npm run smoke`
+- `openclaw` debe existir en PATH
+- OpenClaw actual exige Node 22.14+
+
+### 3. Integraciones opcionales: MT5
+
+`mcp-servers/mt5/` no es requisito base de la extension. Solo hace falta si quieres automatizacion o consulta de MetaTrader 5.
 
 ## Uso CLI rapido
 
@@ -73,8 +112,29 @@ Uso desde la extension:
 
 Requisito operativo:
 
+- tener instalado GitHub Copilot Chat para el participante `@freejt7` en VS Code.
 - tener instalado y autenticado `copilot` CLI.
 - si falta login, ejecuta `copilot login`, o configura `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN`.
+
+### Si `@freejt7` no aparece en Copilot Chat
+
+Las causas mas comunes ya verificadas en Linux son estas:
+
+- GitHub Copilot Chat no esta instalado en el perfil actual de VS Code.
+- La sesion actual del IDE no expone `vscode.chat.createChatParticipant`.
+- La extension esta instalada, pero el usuario no tiene disponible la infraestructura de chat en ese IDE/perfil.
+
+Compruebalo con:
+
+```bash
+code --list-extensions --show-versions | grep -i copilot
+```
+
+Y dentro de la extension con:
+
+```text
+Free JT7: Validar runtime
+```
 
 ## Generar extension VS Code (.vsix)
 
@@ -85,6 +145,11 @@ npm run package
 
 Esto genera un archivo `.vsix` en la raiz del repo.
 
+En este repositorio el build de la extension y el runtime de OpenClaw pueden convivir con versiones distintas de Node:
+
+- Node 20 para `npm run build:bundle` y `npm run package:local`
+- Node 22 para `openclaw`
+
 ### Verificar e instalar
 
 Después de crear el paquete puedes confirmar la instalación ejecutando
@@ -93,7 +158,7 @@ Después de crear el paquete puedes confirmar la instalación ejecutando
 Para instalar manualmente usa el menú de extensiones de VS Code o:
 
 ```bash
-code --install-extension agente-freejt7-extension-funcional-4.2.3.vsix
+code --install-extension agente-freejt7-extension-funcional-4.2.4.vsix
 ```
 
 ### Probar wrappers
@@ -124,15 +189,44 @@ En Linux o Windows tambien puedes abrir Copilot Chat y usar:
 - `@freejt7 /install`
 - `@freejt7 /route analiza este proyecto y aplica la solucion`
 
+## Servicios fundamentales despues de instalar la extension
+
+### Servidor MCP local
+
+```bash
+cd "servidor mpc free jt7"
+npm install
+npm run smoke
+```
+
+### Gateway OpenClaw
+
+Free JT7 espera que `openclaw` exista en PATH. Si instalas OpenClaw en un runtime separado, deja un wrapper o binario accesible como `openclaw`.
+
+Comandos utiles desde la raiz del repo:
+
+```bash
+python3 skills_manager.py gateway-bootstrap --project . --ide vscode --profile default
+python3 skills_manager.py gateway-start --dry-run
+python3 skills_manager.py gateway-status
+```
+
+## Linux y multi-IDE
+
+La guia operativa completa para Linux y los IDEs soportados por el runtime esta en:
+
+- `docs/06-RELEASE-4.2.4.md`
+- `docs/07-INSTALACION-LINUX-MULTI-IDE.md`
+
 ## Comandos de la extension
 
 - `Free JT7: Instalar en workspace actual`
 - `Free JT7: Validar runtime`
 - `Free JT7: Abrir documentacion`
 
-### Wrappers OpenClaw (cuando esté disponible)
+### Wrappers OpenClaw
 Si el binario `openclaw` se encuentra en el PATH o dentro de
-`OPEN CLAW/node_modules/.bin/`, la extensión habilita dos comandos
+`OPEN CLAW/node_modules/.bin/`, la extensión habilita comandos
 adicionales que ejecutan directamente el CLI:
 
 - `Free JT7: OpenClaw Gateway Status` – muestra salida de
@@ -140,9 +234,9 @@ adicionales que ejecutan directamente el CLI:
 - `Free JT7: Run OpenClaw CLI` – solicita argumentos libres
   para enviarlos al comando `openclaw`.
 
-Estos comandos son útiles para trabajar con el gateway desde VS Code
-sin necesidad de abrir manualmente una terminal, pero **no arrancan ni
-gestionan el servidor**; sólo envían órdenes al ejecutable si existe.
+Estos comandos son parte de la capa operativa del gateway. Si `openclaw`
+no existe en PATH, la extension queda instalada pero el flujo completo de
+gateway y canales no queda funcional.
 
 ## Archivos clave
 
@@ -169,5 +263,6 @@ con el servidor OpenClaw:
 - `Free JT7: OpenClaw Channels Login` – ejecuta `openclaw channels login` para
   emparejar un canal desde VS Code.
 
-Estos comandos facilitan el uso del CLI desde VS Code, pero el servidor no se
-autogestiona; sigue siendo responsabilidad del usuario mantenerlo en ejecución.
+Estos comandos facilitan el uso del CLI desde VS Code, pero el servidor no se
+autogestiona por completo; sigue siendo responsabilidad del usuario validar el
+estado del gateway y su configuracion local.

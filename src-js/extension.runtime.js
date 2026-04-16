@@ -20,6 +20,9 @@ try {
       getConfiguration: () => ({get:()=>null}),
       openTextDocument: async () => ({}),
     },
+    extensions: {
+      getExtension: () => undefined,
+    },
   };
 }
 const path = require("path");
@@ -94,6 +97,53 @@ function getPrimaryWorkspacePath() {
   return folders[0].uri.fsPath;
 }
 
+function getExtensionById(...ids) {
+  for (const id of ids) {
+    try {
+      const extension = vscode.extensions?.getExtension?.(id);
+      if (extension) {
+        return extension;
+      }
+    } catch {
+      // ignore extension lookup failures in constrained runtimes
+    }
+  }
+  return undefined;
+}
+
+function getChatDiagnostics() {
+  const copilotChat = getExtensionById("github.copilot-chat", "GitHub.copilot-chat");
+  const chatApiAvailable = Boolean(vscode.chat?.createChatParticipant);
+  const issues = [];
+
+  if (!copilotChat) {
+    issues.push("GitHub Copilot Chat no esta instalado o no esta disponible en este IDE/perfil.");
+  }
+  if (!chatApiAvailable) {
+    issues.push("La API de chat de VS Code no esta disponible en esta sesion (`vscode.chat.createChatParticipant`).");
+  }
+
+  return {
+    ok: issues.length === 0,
+    issues,
+    copilotChatInstalled: Boolean(copilotChat),
+    chatApiAvailable,
+  };
+}
+
+function appendDoctorDiagnostics(output, py) {
+  const diagnostics = getChatDiagnostics();
+  output.appendLine(`[freejt7] Python: ${[py.bin, ...py.args].join(" ")}`);
+  output.appendLine(`[freejt7] Copilot Chat instalado: ${diagnostics.copilotChatInstalled ? "si" : "no"}`);
+  output.appendLine(`[freejt7] Chat API disponible: ${diagnostics.chatApiAvailable ? "si" : "no"}`);
+  if (!diagnostics.ok) {
+    for (const issue of diagnostics.issues) {
+      output.appendLine(`[freejt7] chat-diagnostico: ${issue}`);
+    }
+  }
+  return diagnostics;
+}
+
 async function installWorkspace(context, output) {
   const workspacePath = getPrimaryWorkspacePath();
   if (!workspacePath) {
@@ -156,6 +206,7 @@ async function runtimeDoctor(context, output) {
 
   const py = pythonCommand(context.extensionPath);
   output.appendLine(`[freejt7] Runtime doctor usando ${[py.bin, ...py.args].join(" ")}`);
+  const chatDiagnostics = appendDoctorDiagnostics(output, py);
   output.show(true);
 
   const first = await runCommand(py.bin, [...py.args, managerPath, "policy-validate"], { cwd: context.extensionPath }, output);
@@ -166,10 +217,14 @@ async function runtimeDoctor(context, output) {
   }
 
   const second = await runCommand(py.bin, [...py.args, managerPath, "ide-detect", "--json"], { cwd: context.extensionPath }, output);
-  if (second.code === 0) {
+  if (second.code === 0 && chatDiagnostics.ok) {
     const message = "Free JT7: runtime validado.";
     vscode.window.showInformationMessage(message);
     return { ok: true, message };
+  } else if (second.code === 0) {
+    const message = "Free JT7: runtime base OK, pero el participante de chat no quedara disponible sin GitHub Copilot Chat y soporte de API chat en este IDE.";
+    vscode.window.showWarningMessage(message);
+    return { ok: false, message };
   } else {
     const message = "Free JT7: policy OK, pero ide-detect reporto errores.";
     vscode.window.showWarningMessage(message);
@@ -323,6 +378,12 @@ async function handleChatRequest(context, output, request, chatContext, stream) 
 
 function activate(context) {
   const output = vscode.window.createOutputChannel("Free JT7");
+  const chatDiagnostics = getChatDiagnostics();
+  if (!chatDiagnostics.ok) {
+    for (const issue of chatDiagnostics.issues) {
+      output.appendLine(`[freejt7] ${issue}`);
+    }
+  }
   const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),

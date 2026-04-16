@@ -1,5 +1,17 @@
 ﻿# Changelog
 
+## [4.2.5] - 2026-04-15
+
+- Corregido: `extensionDependencies` con `github.copilot-chat` faltaba en `package.json` pese a que el CHANGELOG 4.2.4 lo declaraba. Sin esta dependencia VS Code no garantizaba que la API `vscode.chat.createChatParticipant` estuviese disponible al activar la extension, impidiendo que `@freejt7` apareciese en Copilot Chat.
+
+## [4.2.4] - 2026-04-15
+
+- Agregado diagnostico explicito en el runtime de VS Code para detectar si GitHub Copilot Chat y la API `vscode.chat` estan disponibles; `Free JT7: Validar runtime` ahora reporta por que `@freejt7` no aparece en Copilot Chat.
+- Declarada dependencia de extension sobre `github.copilot-chat` para reducir instalaciones incompletas en VS Code.
+- Corregido `skills_manager.py` para generar `gateway.mode=local` en `.openclaw/openclaw.json`, compatible con OpenClaw 2026.4.14+.
+- Validado stack Linux por capas: build de la extension con Node 20, runtime de OpenClaw con Node 22.14+, servidor MCP local y wrapper `~/.local/bin/openclaw`.
+- Reorganizada la documentacion para separar extension base, stack operativo base (`Copilot + MCP + OpenClaw`) e integraciones opcionales como MT5.
+
 ## [4.2.3] - 2026-04-09
 
 - Adaptada la extension para Linux y entornos VS Code modernos: `Free JT7: Instalar en workspace actual` ya no depende de PowerShell y usa `skills_manager.py install` con Python multiplataforma.
