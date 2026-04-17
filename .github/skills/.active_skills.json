@@ -3,8 +3,26 @@
     "free-jt7-global-runtime-audit",
     "using-superpowers",
     "systematic-debugging",
-    "verification-before-completion"
+    "verification-before-completion",
+    "backtesting-frameworks",
+    "risk-metrics-calculation",
+    "risk-manager",
+    "quant-analyst",
+    "ai-agent-development",
+    "ai-agents-architect",
+    "agent-orchestration",
+    "autonomous-agents",
+    "crewai",
+    "langgraph",
+    "multi-agent-patterns",
+    "python-pro",
+    "fastapi-pro",
+    "python-testing-patterns",
+    "vscode-ext-commands",
+    "vscode-ext-localization",
+    "mcp-builder",
+    "mcp-cli"
   ],
   "auto_detect": true,
-  "last_changed": "2026-03-06T14:08:35"
+  "last_changed": "2026-04-17T17:28:26"
 }

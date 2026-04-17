@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local, router Copilot y gateway OpenClaw.",
-  "version": "4.2.7",
+  "version": "4.2.8",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {

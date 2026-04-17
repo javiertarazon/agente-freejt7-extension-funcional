@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [4.2.8] - 2026-04-26
+
+### Added
+- `tools/skill_creator.py` — CLI para gestión de skills (argparse, CRUD)
+- `start_mt5_wine.sh` — script de lanzamiento Wine/MT5 para Linux
+- `INSTALL_WINE_MT5.md` — guía de instalación Wine + MetaTrader5 en Linux
+- `tools/agent_autolearn/nightly_train.sh` — script de entrenamiento nocturno autolearn
+
+### Changed
+- `mcp-servers/mt5/mt5_server.py` — compatibilidad Wine/Linux añadida
+- `src-js/scheduler/agent-scheduler.js` — actualizaciones del scheduler
+- Skills index files (`.github/skills/`, `skills/`) — índices actualizados
+- `CLAUDE.md`, `copilot-agent/RESUME.md`, `copilot-agent/audit-log.jsonl` — documentación actualizada
+
 ## [4.2.7] - 2026-04-19
 
 ### Added

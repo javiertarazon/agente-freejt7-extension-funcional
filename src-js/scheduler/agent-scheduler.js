@@ -22,8 +22,11 @@
 
 'use strict';
 
-const fs   = require('fs');
-const path = require('path');
+const fs            = require('fs');
+const path          = require('path');
+const { spawn }     = require('child_process');
+const http          = require('http');
+const https         = require('https');
 
 // ---------------------------------------------------------------------------
 // Defaults
@@ -38,6 +41,7 @@ const DEFAULTS = {
     doctorNocturno:    8 * 60 * 60 * 1000, // 8 h
     gatewayStatus:      15 * 60 * 1000,    // 15 min
     revisarPendientes:  20 * 60 * 1000,    // 20 min
+    nightlyTrain:      24 * 60 * 60 * 1000, // 24 h
   },
 };
 
@@ -301,30 +305,227 @@ function createDefaultScheduler(opts = {}, orchestrator = null) {
     }
   );
 
-  // Job: doctor nocturno — placeholder para health-checks futuros
+  // Job: doctor nocturno — ejecuta skills_manager.py doctor --strict
   scheduler.addJob(
     'doctorNocturno',
     (opts.intervals || DEFAULTS.intervals).doctorNocturno,
     async () => {
-      // Futuro: skills_manager.py doctor --strict via child_process
+      const rootDir   = scheduler.cfg.rootDir;
+      const statePath = path.join(rootDir, 'copilot-agent', 'scheduler-state.json');
+      const python    = process.platform === 'win32' ? 'python' : 'python3';
+      const script    = path.join(rootDir, 'skills_manager.py');
+
+      await new Promise((resolve) => {
+        const proc = spawn(python, [script, 'doctor', '--strict'], {
+          cwd: rootDir,
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        let out = '';
+        let err = '';
+        proc.stdout.on('data', d => { out += d.toString(); });
+        proc.stderr.on('data', d => { err += d.toString(); });
+        proc.on('close', (code) => {
+          const result = {
+            job: 'doctorNocturno',
+            ts: new Date().toISOString(),
+            exitCode: code,
+            status: code === 0 ? 'OK' : 'FAIL',
+            summary: out.trim().split('\n').slice(-5).join(' | '),
+          };
+          // Persistir resultado en scheduler-state
+          try {
+            const existing = fs.existsSync(statePath)
+              ? JSON.parse(fs.readFileSync(statePath, 'utf8'))
+              : {};
+            existing.doctorNocturno = result;
+            fs.mkdirSync(path.dirname(statePath), { recursive: true });
+            fs.writeFileSync(statePath, JSON.stringify(existing, null, 2), 'utf8');
+          } catch (_) {}
+          if (code !== 0) {
+            scheduler._warn(`doctorNocturno: exitCode=${code} | ${err.trim().slice(0, 120)}`);
+          } else {
+            scheduler._info(`doctorNocturno: ${result.status} | ${result.summary.slice(0, 100)}`);
+          }
+          resolve();
+        });
+      });
     }
   );
 
-  // Job: gateway status — placeholder para verificación del servidor MCP
+  // Job: gateway status — ping HTTP al servidor MCP local
   scheduler.addJob(
     'gatewayStatus',
     (opts.intervals || DEFAULTS.intervals).gatewayStatus,
     async () => {
-      // Futuro: ping al servidor MCP local o gateway
+      const rootDir   = scheduler.cfg.rootDir;
+      const statePath = path.join(rootDir, 'copilot-agent', 'scheduler-state.json');
+
+      // Leer puerto desde .vscode/mcp.json si existe, o usar default 3000
+      let port = 3000;
+      let healthPath = '/health';
+      const mcpJsonPath = path.join(rootDir, '.vscode', 'mcp.json');
+      if (fs.existsSync(mcpJsonPath)) {
+        try {
+          const mcpCfg = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf8'));
+          const servers = mcpCfg.servers || mcpCfg.inputs || {};
+          const firstServer = Object.values(servers)[0] || {};
+          if (firstServer.port) port = firstServer.port;
+        } catch (_) {}
+      }
+      // Leer también desde .openclaw/config.json
+      const oclawCfg = path.join(rootDir, '.openclaw', 'config.json');
+      if (fs.existsSync(oclawCfg)) {
+        try {
+          const cfg = JSON.parse(fs.readFileSync(oclawCfg, 'utf8'));
+          if (cfg.mcp && cfg.mcp.default_port) port = cfg.mcp.default_port;
+          if (cfg.mcp && cfg.mcp.health_path) healthPath = cfg.mcp.health_path;
+        } catch (_) {}
+      }
+
+      const consecutiveFailsKey = '_gatewayFails';
+      let consecutiveFails = 0;
+      const statePath2 = statePath;
+      if (fs.existsSync(statePath2)) {
+        try {
+          const st = JSON.parse(fs.readFileSync(statePath2, 'utf8'));
+          consecutiveFails = st[consecutiveFailsKey] || 0;
+        } catch (_) {}
+      }
+
+      const result = await new Promise((resolve) => {
+        const t0 = Date.now();
+        const proto = port === 443 ? https : http;
+        const req = proto.get(`http://127.0.0.1:${port}${healthPath}`, { timeout: 3000 }, (res) => {
+          const latencyMs = Date.now() - t0;
+          resolve({ ok: true, statusCode: res.statusCode, latencyMs });
+        });
+        req.on('error', () => resolve({ ok: false }));
+        req.on('timeout', () => { req.destroy(); resolve({ ok: false, reason: 'timeout' }); });
+      });
+
+      consecutiveFails = result.ok ? 0 : consecutiveFails + 1;
+
+      // Persistir
+      try {
+        const existing = fs.existsSync(statePath)
+          ? JSON.parse(fs.readFileSync(statePath, 'utf8'))
+          : {};
+        existing.gatewayStatus = { ...result, ts: new Date().toISOString(), port };
+        existing[consecutiveFailsKey] = consecutiveFails;
+        fs.mkdirSync(path.dirname(statePath), { recursive: true });
+        fs.writeFileSync(statePath, JSON.stringify(existing, null, 2), 'utf8');
+      } catch (_) {}
+
+      if (!result.ok) {
+        scheduler._warn(`gatewayStatus: MCP no responde en :${port} (fallos consecutivos: ${consecutiveFails})`);
+        if (consecutiveFails >= 3) {
+          // Escribir alerta en audit-log
+          const auditPath = path.join(rootDir, 'copilot-agent', 'audit-log.jsonl');
+          try {
+            const entry = JSON.stringify({
+              ts: new Date().toISOString(),
+              level: 'ALERT',
+              job: 'gatewayStatus',
+              msg: `MCP gateway no responde — ${consecutiveFails} fallos consecutivos`,
+              port,
+            });
+            fs.appendFileSync(auditPath, entry + '\n', 'utf8');
+          } catch (_) {}
+        }
+      } else {
+        scheduler._info(`gatewayStatus: OK :${port} — ${result.latencyMs}ms (HTTP ${result.statusCode})`);
+      }
     }
   );
 
-  // Job: revisar pendientes — placeholder para procesar tasks.yaml pendientes
+  // Job: revisar pendientes — lee tasks.yaml y loguea resumen
   scheduler.addJob(
     'revisarPendientes',
     (opts.intervals || DEFAULTS.intervals).revisarPendientes,
     async () => {
-      // Futuro: leer copilot-agent/tasks.yaml y procesar tareas pending
+      const rootDir     = scheduler.cfg.rootDir;
+      const tasksPath   = path.join(rootDir, 'copilot-agent', 'tasks.yaml');
+      const statePath   = path.join(rootDir, 'copilot-agent', 'scheduler-state.json');
+
+      if (!fs.existsSync(tasksPath)) {
+        scheduler._info('revisarPendientes: tasks.yaml no encontrado — nada que revisar');
+        return;
+      }
+
+      const raw = fs.readFileSync(tasksPath, 'utf8');
+
+      // Parseo ligero sin dependencia yaml: buscar líneas con status
+      const pending    = (raw.match(/status:\s*pending/gi)    || []).length;
+      const inProgress = (raw.match(/status:\s*in.?progress/gi) || []).length;
+      const done       = (raw.match(/status:\s*done/gi)       || []).length;
+      const failed     = (raw.match(/status:\s*fail/gi)       || []).length;
+
+      const summary = `pending=${pending} in_progress=${inProgress} done=${done} failed=${failed}`;
+      scheduler._info(`revisarPendientes: ${summary}`);
+
+      // Persistir resumen
+      try {
+        const existing = fs.existsSync(statePath)
+          ? JSON.parse(fs.readFileSync(statePath, 'utf8'))
+          : {};
+        existing.revisarPendientes = {
+          ts: new Date().toISOString(),
+          pending,
+          inProgress,
+          done,
+          failed,
+        };
+        fs.mkdirSync(path.dirname(statePath), { recursive: true });
+        fs.writeFileSync(statePath, JSON.stringify(existing, null, 2), 'utf8');
+      } catch (_) {}
+
+      if (pending + inProgress > 0) {
+        scheduler._warn(`revisarPendientes: hay ${pending + inProgress} tareas activas — revisa copilot-agent/tasks.yaml`);
+      }
+    }
+  );
+
+  // ---------------------------------------------------------------------------
+  // nightlyTrain — entrenamiento LoRA nocturno (cada 24 h)
+  // ---------------------------------------------------------------------------
+  scheduler.addJob(
+    'nightlyTrain',
+    cfg.intervals.nightlyTrain ?? DEFAULTS.intervals.nightlyTrain,
+    async () => {
+      const logDir  = path.join(cfg.rootDir, '.agent-learning', 'logs');
+      const logFile = path.join(logDir, 'nightly_train.log');
+      const cfgFile = path.join(cfg.rootDir, 'tools', 'agent_autolearn', 'config.json');
+      fs.mkdirSync(logDir, { recursive: true });
+      scheduler._info('nightlyTrain: iniciando entrenamiento LoRA...');
+      await new Promise((resolve) => {
+        const proc = spawn(
+          'python3',
+          ['tools/agent_autolearn/auto_trainer.py', '--config', cfgFile],
+          { cwd: cfg.rootDir, stdio: ['ignore', 'pipe', 'pipe'] }
+        );
+        const log = fs.createWriteStream(logFile, { flags: 'a' });
+        log.write(`\n--- nightlyTrain ${new Date().toISOString()} ---\n`);
+        proc.stdout.pipe(log);
+        proc.stderr.pipe(log);
+        proc.on('close', (code) => {
+          if (code !== 0) {
+            scheduler._warn(`nightlyTrain: proceso terminó con código ${code} — revisa ${logFile}`);
+          } else {
+            scheduler._info('nightlyTrain: entrenamiento completado OK');
+          }
+          log.end();
+          try {
+            const statePath = path.join(cfg.rootDir, cfg.stateFile);
+            const existing  = fs.existsSync(statePath)
+              ? JSON.parse(fs.readFileSync(statePath, 'utf8'))
+              : {};
+            existing.nightlyTrain = { ts: new Date().toISOString(), exitCode: code };
+            fs.mkdirSync(path.dirname(statePath), { recursive: true });
+            fs.writeFileSync(statePath, JSON.stringify(existing, null, 2), 'utf8');
+          } catch (_) {}
+          resolve();
+        });
+      });
     }
   );
 

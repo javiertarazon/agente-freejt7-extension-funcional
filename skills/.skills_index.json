@@ -200,7 +200,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "agent-orchestration-improve-agent",
@@ -311,7 +311,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "ai-agents-architect",
@@ -326,7 +326,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "ai-engineer",
@@ -1018,7 +1018,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "avalonia-layout-zafiro",
@@ -3204,7 +3204,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "bamboohr-automation",
@@ -5088,7 +5088,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "crypto-bd-agent",
@@ -6578,7 +6578,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "fastapi-router-py",
@@ -8632,7 +8632,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "laravel-expert",
@@ -9206,7 +9206,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "mcp-builder-ms",
@@ -9236,7 +9236,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "meeting-minutes",
@@ -9716,7 +9716,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "multi-cloud-architecture",
@@ -11296,7 +11296,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "python-testing-patterns",
@@ -11312,7 +11312,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "quant-analyst",
@@ -11327,7 +11327,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "quasi-coder",
@@ -11742,7 +11742,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "risk-metrics-calculation",
@@ -11758,7 +11758,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "ruby-pro",
@@ -14351,7 +14351,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "vscode-ext-localization",
@@ -14367,7 +14367,7 @@
     ],
     "risk": "unknown",
     "source": "local",
-    "active": false
+    "active": true
   },
   {
     "id": "vulnerability-scanner",

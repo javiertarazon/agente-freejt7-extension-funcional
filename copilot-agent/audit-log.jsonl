@@ -81,3 +81,61 @@
 {"ts": "2026-04-16T00:00:03Z", "action": "task-close", "detail": "20260416-provider-context-budget-fix:succeeded provider-prompt-compaction-build-bundle"}
 {"ts": "2026-04-17T00:00:00Z", "action": "task-open", "detail": "20260417-claurst-freejt7-comparison:analizar Claurst local y compararlo con Free JT7"}
 {"ts": "2026-04-17T00:00:01Z", "action": "task-close", "detail": "20260417-claurst-freejt7-comparison:succeeded docs-08-analisis-claurst-vs-freejt7"}
+{"ts": "2026-04-17T17:28:12Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:14Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "sync-claude", "detail": "5 activas de 964"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "sync-claude", "detail": "6 activas de 964"}
+{"ts": "2026-04-17T17:28:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:18Z", "action": "sync-claude", "detail": "7 activas de 964"}
+{"ts": "2026-04-17T17:28:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "sync-claude", "detail": "8 activas de 964"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "sync-claude", "detail": "9 activas de 964"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "sync-claude", "detail": "10 activas de 964"}
+{"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "sync-claude", "detail": "11 activas de 964"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "sync-claude", "detail": "12 activas de 964"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "sync-claude", "detail": "13 activas de 964"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "sync-claude", "detail": "14 activas de 964"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "sync-claude", "detail": "15 activas de 964"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:23Z", "action": "sync-claude", "detail": "16 activas de 964"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:23Z", "action": "sync-claude", "detail": "17 activas de 964"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "sync-claude", "detail": "18 activas de 964"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "sync-claude", "detail": "19 activas de 964"}
+{"ts": "2026-04-17T17:28:25Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:25Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:25Z", "action": "sync-claude", "detail": "20 activas de 964"}
+{"ts": "2026-04-17T17:28:25Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "sync-claude", "detail": "21 activas de 964"}
+{"ts": "2026-04-17T17:28:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "sync-claude", "detail": "22 activas de 964"}
+{"ts": "2026-04-17T17:28:29Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:29Z", "action": "sync-claude", "detail": "22 activas de 964"}
