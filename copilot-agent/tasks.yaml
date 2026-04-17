@@ -195,3 +195,80 @@ tareas:
     skills_usados: ["free-jt7-global-runtime-audit", "production-code-audit", "seo-audit"]
     resultado: >
       Run finalizado con 2 steps
+  - id: "20260416-ui-provider-models-fix"
+    fecha: "2026-04-16"
+    titulo: "Corregir las 6 areas de proveedor/modelos gratis"
+    descripcion: >
+      Verificar el estado real de las seis areas registradas en la tabla de
+      tareas, corregir la logica rota del QuickPick de modelos gratuitos,
+      arreglar el refresco del catalogo y revalidar build y comandos.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["using-superpowers", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: la tabla se reconcilio con el estado real. Se corrigio la
+      seleccion QuickPick para usar `label/value`, se arreglo la recarga del
+      catalogo para funcionar tambien en `dist/extension.cjs` y la build quedo
+      limpia tras regenerar el bundle.
+  - id: "20260416-visual-provider-indicator-fix"
+    fecha: "2026-04-16"
+    titulo: "Hacer visible proveedor y modelo activo en VS Code"
+    descripcion: >
+      Investigar por que el indicador visual del proveedor/modelo no aparecia
+      en VS Code, corregir la causa raiz en el runtime empaquetado y reforzar
+      la visibilidad del indicador en la barra de estado.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["using-superpowers", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: se detecto que el runtime del VSIX intentaba leer
+      `src-js/free-models-catalog.js` aunque `src-js/**` esta excluido del
+      paquete. Se agrego fallback interno, sincronizacion por cambios de
+      configuracion y un status bar item mas visible en la izquierda con texto
+      explicito `Free JT7: proveedor | modelo`. Ademas se regenero el VSIX
+      4.2.5 y se instalo correctamente con `code --install-extension --force`.
+  - id: "20260416-clone-claurst-target"
+    fecha: "2026-04-16"
+    titulo: "Clonar claurst en ruta solicitada"
+    descripcion: >
+      Crear la carpeta objetivo bajo /home/javier28/Público/copilot vs code-AQUI
+      y clonar ahi el repositorio javiertarazon/claurst sin sobrescribir contenido
+      preexistente del usuario.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["using-superpowers", "bash-linux", "verification-before-completion"]
+    resultado: >
+      Completado: se verifico que /home/javier28/Público/copilot vs code-AQUI/claurst
+      no existia, se clono el repositorio correctamente y se confirmo el contenido
+      final con README.md, spec/ y src-rust/ presentes.
+  - id: "20260416-provider-context-budget-fix"
+    fecha: "2026-04-16"
+    titulo: "Limitar contexto para OpenRouter HF y ZAI"
+    descripcion: >
+      Investigar el error 400 por maximum context length al usar proveedores
+      externos y corregir el adaptador para no reenviar prompts sin presupuesto
+      de contexto ni manejo explicito de errores HTTP del proveedor.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["using-superpowers", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: `src-js/api-provider-adapter.js` ahora normaliza API keys,
+      compacta prompts por proveedor con presupuesto de caracteres/tokens,
+      fija `max_tokens` defensivos, detecta errores remotos de contexto y el
+      bundle fue regenerado con `npm run build:bundle`.
+  - id: "20260417-claurst-freejt7-comparison"
+    fecha: "2026-04-17"
+    titulo: "Analizar Claurst y compararlo con Free JT7"
+    descripcion: >
+      Auditar el repositorio local de Claurst como referencia de runtime agente
+      avanzado, contrastarlo con la arquitectura actual de Free JT7 y dejar una
+      matriz concreta de mejoras recomendadas para roadmap futuro.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["using-superpowers", "wiki-researcher", "architect-review"]
+    resultado: >
+      Completado: se documento la comparativa en
+      `docs/08-ANALISIS-CLAURST-VS-FREEJT7.md`. Las recomendaciones
+      principales son integrar consolidacion automatica de memoria en runtime,
+      scheduler cross-platform, runtime real de plugins con hooks/capacidades y
+      una refactorizacion por capas del runtime JS.

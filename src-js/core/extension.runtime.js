@@ -29,6 +29,9 @@ const path = require("path");
 const fs = require("fs");
 const { spawn, spawnSync } = require("child_process");
 const { runCopilotRouter } = require("./copilot_router.runtime");
+const { createDefaultScheduler } = require('../scheduler/agent-scheduler');
+const { MemoryOrchestrator }     = require('../memory/memory-orchestrator');
+const { getRemoteBridge }        = require('../bridge/remote-bridge');
 
 const FALLBACK_FREE_MODELS = {
   openrouter: [
@@ -63,7 +66,7 @@ const FALLBACK_DEFAULT_MODELS = {
 };
 
 function loadFreeModelsCatalog() {
-  const catalogPath = path.resolve(__dirname, "..", "src-js", "free-models-catalog.js");
+  const catalogPath = path.resolve(__dirname, "../free-models-catalog.js");
   if (fs.existsSync(catalogPath)) {
     delete require.cache[catalogPath];
     return require(catalogPath);
@@ -536,6 +539,7 @@ async function ensureMcpDependencies(extensionPath, output) {
 }
 
 function activate(context) {
+  getRemoteBridge().start();
   let providerStatusBar;
   const output = vscode.window.createOutputChannel("Free JT7");
   const chatDiagnostics = getChatDiagnostics();
@@ -578,6 +582,14 @@ function activate(context) {
   ensureMcpDependencies(context.extensionPath, output).catch(e =>
     output.appendLine(`[freejt7] ensureMcpDependencies error: ${e}`)
   );
+
+  // P4 Wire-C: start memory orchestrator + scheduler (non-fatal)
+  try {
+    const _wp = (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]
+      ? vscode.workspace.workspaceFolders[0].uri.fsPath : null) || context.extensionPath;
+    const _orch = new MemoryOrchestrator({ workspacePath: _wp });
+    createDefaultScheduler({}, _orch);
+  } catch (_) { /* non-fatal — scheduler must never crash extension startup */ }
 
   const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
@@ -732,7 +744,9 @@ function activate(context) {
   context.subscriptions.push(...subscriptions);
 }
 
-function deactivate() {}
+function deactivate() {
+  getRemoteBridge().stop();
+}
 
 // expose helper for external tests
 module.exports = {

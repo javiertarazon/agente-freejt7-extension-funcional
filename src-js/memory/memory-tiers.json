@@ -1,0 +1,81 @@
+{
+  "hot": {
+    "capacity": 50000,
+    "ttl": "session",
+    "compressionEnabled": false,
+    "description": "Current session context (full fidelity)"
+  },
+  "warm": {
+    "capacity": 30000,
+    "ttl": 604800000,
+    "compressionEnabled": true,
+    "compressionType": "hierarchical",
+    "description": "Recent history (7 days, compressed)"
+  },
+  "cold": {
+    "capacity": null,
+    "ttl": null,
+    "compressionEnabled": true,
+    "compressionType": "archival",
+    "format": "jsonl",
+    "description": "Permanent archive (full transcript)"
+  },
+  "compression": {
+    "rules": {
+      "agent-reasoning": {
+        "enabled": true,
+        "extractDecisions": true,
+        "maxDecisionLines": 5,
+        "removeRepeats": true,
+        "targetReduction": "60-70%"
+      },
+      "tool-result": {
+        "enabled": true,
+        "atomicFormat": true,
+        "preservePath": true,
+        "compressOutcome": true,
+        "targetReduction": "85-95%"
+      },
+      "tool-call": {
+        "enabled": true,
+        "preserveSignature": true,
+        "preserveParams": true,
+        "compressExplanation": true,
+        "targetReduction": "40-50%"
+      },
+      "error": {
+        "enabled": true,
+        "preserveStackTrace": true,
+        "compressContext": true,
+        "targetReduction": "30-40%"
+      },
+      "default": {
+        "enabled": true,
+        "removeRepeats": true,
+        "collapseWhitespace": true,
+        "removeRedundantExplanations": true,
+        "targetReduction": "20-30%"
+      }
+    }
+  },
+  "performance": {
+    "autoPromotionThreshold": 0.95,
+    "compactionIntervalMs": 3600000,
+    "compactionTrigger": "time-or-utilization",
+    "cacheWarmSize": 10,
+    "indexingEnabled": true,
+    "indexUpdateIntervalMs": 1800000
+  },
+  "metrics": {
+    "trackCompressionRatio": true,
+    "trackTierUtilization": true,
+    "trackRetrievalLatency": true,
+    "reportingIntervalMs": 300000
+  },
+  "storage": {
+    "coldStoragePath": "./memory-archive.jsonl",
+    "indexPath": "./memory-index.json",
+    "hotMemorySaveInterval": 600000,
+    "persistenceFormat": "jsonl"
+  }
+}

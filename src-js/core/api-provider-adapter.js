@@ -59,7 +59,7 @@ function readProcessEnv(provider) {
 }
 
 function readEnvApiFile(provider) {
-  const base = path.resolve(__dirname, "..");
+  const base = path.resolve(__dirname, "..", "..");
   const candidates = [
     path.join(base, "env api"),
     path.join(base, "env_api"),

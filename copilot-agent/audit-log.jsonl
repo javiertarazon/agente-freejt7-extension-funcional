@@ -69,3 +69,15 @@
 {"ts": "2026-04-16T00:22:10Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
 {"ts": "2026-04-16T00:22:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-16T00:22:23Z", "action": "task-close", "detail": "20260416T002223Z-5d848cba:succeeded"}
+{"ts": "2026-04-17T01:24:09Z", "action": "task-open", "detail": "20260416-ui-provider-models-fix:verificar y corregir las seis areas de proveedor/modelos gratis"}
+{"ts": "2026-04-17T01:26:34Z", "action": "task-close", "detail": "20260416-ui-provider-models-fix:succeeded quickpick-label-value-refresh-bundle-clean"}
+{"ts": "2026-04-17T01:33:03Z", "action": "task-close", "detail": "20260416-visual-provider-indicator-fix:succeeded vsix-catalog-fallback-left-statusbar-config-sync"}
+{"ts": "2026-04-17T01:35:17Z", "action": "vsix-install", "detail": "agente-freejt7-extension-funcional-4.2.5.vsix installed with code --force"}
+{"ts": "2026-04-17T01:45:59Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T01:45:59Z", "action": "install", "detail": "/home/javier28/Público/copilot vs code/agente free jt7 extension/agente-freejt7-extension-funcional"}
+{"ts": "2026-04-16T00:00:00Z", "action": "task-open", "detail": "20260416-clone-claurst-target:clonar repositorio claurst en /home/javier28/Público/copilot vs code-AQUI"}
+{"ts": "2026-04-16T00:00:01Z", "action": "task-close", "detail": "20260416-clone-claurst-target:succeeded clone=/home/javier28/Público/copilot vs code-AQUI/claurst"}
+{"ts": "2026-04-16T00:00:02Z", "action": "task-open", "detail": "20260416-provider-context-budget-fix:acotar contexto y manejar 400 de proveedores externos"}
+{"ts": "2026-04-16T00:00:03Z", "action": "task-close", "detail": "20260416-provider-context-budget-fix:succeeded provider-prompt-compaction-build-bundle"}
+{"ts": "2026-04-17T00:00:00Z", "action": "task-open", "detail": "20260417-claurst-freejt7-comparison:analizar Claurst local y compararlo con Free JT7"}
+{"ts": "2026-04-17T00:00:01Z", "action": "task-close", "detail": "20260417-claurst-freejt7-comparison:succeeded docs-08-analisis-claurst-vs-freejt7"}

@@ -138,3 +138,52 @@
   - [x] Verificacion: `.venv/bin/pytest tests/ -v` → **47/47 passed in 0.97s**
   - [x] Suite vinculada al fix verificado en run `20260416T002223Z-5d848cba`
 
+## Proveedor y modelos gratis en la extension (2026-04-16)
+- [x] Verificar las 6 areas marcadas en la tabla de tareas
+  - [x] Auditar implementacion real en `package.json`, `src-js/extension.runtime.js`, `src-js/free-models-catalog.js` y `src-js/api-provider-adapter.js`
+  - [x] Corregir la seleccion QuickPick para usar `label/value` reales del catalogo
+  - [x] Arreglar `refreshFreeModels` para recargar el catalogo en runtime sin quedar con referencias viejas
+  - [x] Revalidar comandos, build y ausencia de errores relevantes
+
+## Indicador visual de proveedor/modelo (2026-04-16)
+- [x] Restaurar y reforzar la visibilidad del proveedor/modelo activo en VS Code
+  - [x] Identificar la causa raiz en el runtime empaquetado (`src-js/**` excluido del VSIX)
+  - [x] Agregar fallback interno para el catalogo cuando el archivo fuente no existe en el paquete
+  - [x] Mover el status bar item a la izquierda y hacerlo mas explicito (`Free JT7: proveedor | modelo`)
+  - [x] Sincronizar el indicador con cambios de `freejt7.apiProvider` y `freejt7.apiProviderModel`
+  - [x] Revalidar sintaxis, build y presencia del texto final en `dist/extension.cjs`
+
+## Configuracion global VS Code desde la extension (2026-04-16)
+- [x] Exponer un flujo global real dentro de VS Code
+  - [x] Confirmar que `skills_manager.py` ya soportaba `--update-user-settings` con rutas absolutas de usuario
+  - [x] Agregar comando `Free JT7: Aplicar configuracion global en VS Code`
+  - [x] Hacer que `@freejt7 /install` degrade a configuracion global cuando no hay workspace
+  - [x] Agregar atajo explicito `@freejt7 /global`
+  - [x] Revalidar bundle, VSIX, instalacion y escritura de `~/.config/Code/User/settings.json`
+
+## Presupuesto de contexto para proveedores externos (2026-04-16)
+- [x] Identificar la causa raiz del 400 por `maximum context length`
+  - [x] Confirmar que `request.prompt` se reenviaba casi en bruto al adaptador externo
+  - [x] Confirmar que `src-js/api-provider-adapter.js` no tenia recorte ni manejo HTTP >= 400
+- [x] Corregir el adaptador de proveedores
+  - [x] Normalizar API keys y remover comillas residuales
+  - [x] Compactar prompts por proveedor con presupuesto defensivo
+  - [x] Fijar `max_tokens` de salida para OpenRouter, HF y ZAI
+  - [x] Traducir errores remotos de contexto a mensajes accionables
+- [x] Verificacion
+  - [x] `node -e "require('./src-js/api-provider-adapter.js')"`
+  - [x] `npm run build:bundle`
+
+## Analisis comparativo Claurst vs Free JT7 (2026-04-17)
+- [x] Auditar Claurst local como referencia de arquitectura avanzada
+  - [x] Revisar `spec/` y el workspace Rust de `src-rust/`
+  - [x] Confirmar capacidades reales en memoria, cron, plugins, bridge y command/tool system
+- [x] Contrastar con el runtime actual de Free JT7
+  - [x] Revisar `src-js/`, `skills_manager.py`, `tools/agent_autolearn/` y el servidor MCP local
+  - [x] Distinguir fortalezas actuales vs brechas estructurales
+- [x] Sintetizar una matriz de adopcion
+  - [x] Priorizar que patrones conviene incorporar primero
+  - [x] Separar lo recomendable de lo que no conviene copiar ahora
+- [x] Persistir el analisis para roadmap futuro
+  - [x] Crear `docs/08-ANALISIS-CLAURST-VS-FREEJT7.md`
+

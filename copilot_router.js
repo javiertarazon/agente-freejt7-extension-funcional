@@ -2,7 +2,7 @@ let bundle;
 try {
   bundle = require("./dist/extension.cjs");
 } catch {
-  bundle = require("./src-js/copilot_router.runtime.js");
+  bundle = require("./src-js/core/copilot_router.runtime.js");
 }
 
 if (require.main === module) {

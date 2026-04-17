@@ -1,6 +1,8 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { setupContextInRouter, recordStepWithCompression, finalizeContextSystem } = require("../memory/context-integration");
+const { getPluginRuntime } = require('../plugins/plugin-runtime');
 const { randomUUID } = require("crypto");
 
 const ROUTER_DEFAULTS = {
@@ -491,6 +493,9 @@ async function runCopilotRouter(options) {
   const authInfo = getCopilotAuthInfo();
   const permissionHandler = createPermissionHandler(routing.autoApproveSafeTools);
   const run = buildRunSkeleton(runId, goal, workspacePath, routing, authInfo);
+  // Initialize context management system for compression
+  const contextSystem = setupContextInRouter(options);
+  // Initialize context management system for compression
   writeJson(runPaths.json, run);
   appendLine(runPaths.events, JSON.stringify({
     ts: nowIso(),
@@ -521,6 +526,9 @@ async function runCopilotRouter(options) {
   }
   // --- End API Provider Delegation ---
 
+  const _pr = getPluginRuntime();
+  await _pr.emit('onRouteStart', { goal, runId, workspacePath });
+
   let client;
   try {
     const sdk = await import("@github/copilot-sdk");
@@ -547,7 +555,7 @@ async function runCopilotRouter(options) {
       timeoutMs: routing.sessionWaitTimeoutMs,
     });
 
-    recordStep(run, runPaths.events, {
+    recordStepWithCompression(contextSystem, run, runPaths.events, {
       step_id: "planner",
       action: "copilot-planner",
       command: routing.plannerModel,
@@ -589,7 +597,7 @@ async function runCopilotRouter(options) {
         parsedResult.model = model;
         executionResults.push(parsedResult);
 
-        recordStep(run, runPaths.events, {
+        recordStepWithCompression(contextSystem, run, runPaths.events, {
           step_id: task.id,
           action: "copilot-executor",
           command: model,
@@ -610,7 +618,7 @@ async function runCopilotRouter(options) {
           verification: [],
           residualRisks: [fallbackText],
         });
-        recordStep(run, runPaths.events, {
+        recordStepWithCompression(contextSystem, run, runPaths.events, {
           step_id: task.id,
           action: "copilot-executor",
           command: model,
@@ -634,7 +642,7 @@ async function runCopilotRouter(options) {
       timeoutMs: routing.sessionWaitTimeoutMs,
     });
 
-    recordStep(run, runPaths.events, {
+    recordStepWithCompression(contextSystem, run, runPaths.events, {
       step_id: "synthesis",
       action: "copilot-synthesis",
       command: routing.synthesisModel,
@@ -659,6 +667,7 @@ async function runCopilotRouter(options) {
     run.summary = final.summary || "Free JT7 Copilot router finished.";
     run.quality_gate.passed = run.status === "completed";
     writeJson(runPaths.json, run);
+    await _pr.emit('onRouteEnd', { goal, runId, status: run.status });
     return {
       runId,
       run,
@@ -673,7 +682,7 @@ async function runCopilotRouter(options) {
     run.status = "blocked";
     run.summary = message;
     run.quality_gate.passed = false;
-    recordStep(run, runPaths.events, {
+    recordStepWithCompression(contextSystem, run, runPaths.events, {
       step_id: "router-error",
       action: "copilot-router-error",
       command: cli.label,
@@ -687,9 +696,13 @@ async function runCopilotRouter(options) {
     if (/No authentication information found|Session was not created with authentication info or custom provider/i.test(message)) {
       throw new Error("Copilot CLI/SDK no tiene autenticacion utilizable. Ejecuta `copilot login`, o configura `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN` con un token valido para Copilot.");
     }
+    await _pr.emit('onError', { goal, runId, error }).catch(() => {});
     throw error;
   } finally {
     if (client && typeof client.stop === "function") {
+    if (contextSystem) {
+      await finalizeContextSystem(contextSystem, workspacePath);
+    }
       await client.stop().catch(() => {});
     }
   }
