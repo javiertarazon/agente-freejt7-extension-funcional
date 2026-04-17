@@ -30,6 +30,56 @@ const fs = require("fs");
 const { spawn, spawnSync } = require("child_process");
 const { runCopilotRouter } = require("./copilot_router.runtime");
 
+const FALLBACK_FREE_MODELS = {
+  openrouter: [
+    { label: "Gemma 2 9B (Google)", value: "google/gemma-2-9b-it:free" },
+    { label: "Llama 3.1 8B (Meta)", value: "meta-llama/llama-3.1-8b-instruct:free" },
+    { label: "Mistral 7B (Mistral)", value: "mistralai/mistral-7b-instruct:free" },
+    { label: "Phi-3 Mini 128k (Microsoft)", value: "microsoft/phi-3-mini-128k-instruct:free" },
+    { label: "Qwen 2 7B (Alibaba)", value: "qwen/qwen-2-7b-instruct:free" },
+    { label: "DeepSeek R1 0528 (DeepSeek)", value: "deepseek/deepseek-r1-0528:free" },
+    { label: "Gemma 3 4B (Google)", value: "google/gemma-3-4b-it:free" },
+  ],
+  hf: [
+    { label: "Mistral 7B Instruct v0.3", value: "mistralai/Mistral-7B-Instruct-v0.3" },
+    { label: "Llama 3.1 8B Instruct", value: "meta-llama/Llama-3.1-8B-Instruct" },
+    { label: "Phi-3.5 Mini Instruct", value: "microsoft/Phi-3.5-mini-instruct" },
+    { label: "Qwen 2.5 7B Instruct", value: "Qwen/Qwen2.5-7B-Instruct" },
+    { label: "Gemma 2 9B Instruct", value: "google/gemma-2-9b-it" },
+  ],
+  zai: [
+    { label: "GLM-4-Flash", value: "glm-4-flash" },
+    { label: "GLM-4-AirX", value: "glm-4-airx" },
+    { label: "CodeGeeX-4", value: "codegeex-4" },
+  ],
+  copilot: [],
+};
+
+const FALLBACK_DEFAULT_MODELS = {
+  openrouter: "google/gemma-2-9b-it:free",
+  hf: "mistralai/Mistral-7B-Instruct-v0.3",
+  zai: "glm-4-flash",
+  copilot: "",
+};
+
+function loadFreeModelsCatalog() {
+  const catalogPath = path.resolve(__dirname, "..", "src-js", "free-models-catalog.js");
+  if (fs.existsSync(catalogPath)) {
+    delete require.cache[catalogPath];
+    return require(catalogPath);
+  }
+  return {
+    getModelsForProvider(provider) {
+      return FALLBACK_FREE_MODELS[provider] || [];
+    },
+    getDefaultModel(provider) {
+      return FALLBACK_DEFAULT_MODELS[provider] || "";
+    },
+  };
+}
+
+let freeModelsCatalog = loadFreeModelsCatalog();
+
 function runCommand(bin, args, options, output) {
   return new Promise((resolve) => {
     const child = spawn(bin, args, { ...options, shell: false });
@@ -196,6 +246,46 @@ async function installWorkspace(context, output) {
   }
 }
 
+async function installGlobalVsCode(context, output) {
+  const managerPath = path.join(context.extensionPath, "skills_manager.py");
+  if (!fs.existsSync(managerPath)) {
+    const message = `Free JT7: no se encontro ${managerPath}.`;
+    vscode.window.showErrorMessage(message);
+    return { ok: false, message };
+  }
+
+  const config = vscode.workspace.getConfiguration("freejt7");
+  const force = config.get("install.force", false);
+  const py = pythonCommand(context.extensionPath);
+  const args = [
+    ...py.args,
+    managerPath,
+    "install",
+    context.extensionPath,
+    "--ide",
+    "vscode",
+    "--update-user-settings",
+  ];
+  if (force) {
+    args.push("--force");
+  }
+
+  output.appendLine("[freejt7] Aplicando configuracion global de VS Code...");
+  output.appendLine(`[freejt7] ${[py.bin, ...args].map((a) => `"${a}"`).join(" ")}`);
+  output.show(true);
+
+  const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
+  if (result.code === 0) {
+    const message = "Free JT7: configuracion global de VS Code aplicada correctamente.";
+    vscode.window.showInformationMessage(message);
+    return { ok: true, message };
+  }
+
+  const message = "Free JT7: fallo la configuracion global. Revisa el Output 'Free JT7'.";
+  vscode.window.showErrorMessage(message);
+  return { ok: false, message };
+}
+
 async function runtimeDoctor(context, output) {
   const managerPath = path.join(context.extensionPath, "skills_manager.py");
   if (!fs.existsSync(managerPath)) {
@@ -254,6 +344,52 @@ function formatRouterMarkdown(result) {
   return lines.join("\n");
 }
 
+function getModelsForProvider(provider) {
+  return freeModelsCatalog.getModelsForProvider(provider);
+}
+
+function getDefaultModel(provider) {
+  return freeModelsCatalog.getDefaultModel(provider);
+}
+
+function buildModelQuickPickItems(provider, currentModel) {
+  const defaultModel = getDefaultModel(provider);
+  const activeModel = currentModel || defaultModel;
+  return getModelsForProvider(provider).map((model) => ({
+    label: model.label,
+    description: model.value === defaultModel ? "(default)" : "",
+    detail: model.value,
+    modelValue: model.value,
+    picked: model.value === activeModel,
+  }));
+}
+
+function formatProviderStatusBarText(provider, model) {
+  if (provider === "copilot") {
+    return "$(copilot) Free JT7: Copilot";
+  }
+  const shortModel = model && model.length > 34 ? `${model.slice(0, 31)}...` : model;
+  return `$(radio-tower) Free JT7: ${provider}${shortModel ? ` | ${shortModel}` : ""}`;
+}
+
+function formatProviderStatusBarTooltip(provider, model) {
+  if (provider === "copilot") {
+    return "Free JT7\nProveedor activo: Copilot\nModelo: integrado\nClick para cambiar proveedor o modelo.";
+  }
+  return `Free JT7\nProveedor activo: ${provider}\nModelo activo: ${model || "default"}\nClick para cambiar proveedor o modelo.`;
+}
+
+function updateProviderStatusBar(providerStatusBar) {
+  if (!providerStatusBar) {
+    return;
+  }
+  const config = vscode.workspace.getConfiguration("freejt7");
+  const provider = config.get("apiProvider") || "copilot";
+  const model = config.get("apiProviderModel") || "";
+  providerStatusBar.text = formatProviderStatusBarText(provider, model);
+  providerStatusBar.tooltip = formatProviderStatusBarTooltip(provider, model);
+}
+
 async function routeTaskWithGoal(context, output, goal) {
   if (!goal) {
     return null;
@@ -272,6 +408,7 @@ async function routeTaskWithGoal(context, output, goal) {
     vscode,
     output,
     extensionPath: context.extensionPath,
+    secretStorage: context.secrets,
   });
 }
 
@@ -345,9 +482,17 @@ async function handleChatRequest(context, output, request, chatContext, stream) 
   }
 
   if (command === "install") {
-    stream.progress("Instalando Free JT7 en el workspace actual...");
-    const result = await installWorkspace(context, output);
+    const workspacePath = getPrimaryWorkspacePath();
+    stream.progress(workspacePath ? "Instalando Free JT7 en el workspace actual..." : "Aplicando configuracion global de VS Code...");
+    const result = workspacePath ? await installWorkspace(context, output) : await installGlobalVsCode(context, output);
     stream.markdown(result?.message || "Instalacion finalizada.");
+    return { metadata: { command, ok: Boolean(result?.ok) } };
+  }
+
+  if (command === "global") {
+    stream.progress("Aplicando configuracion global de VS Code...");
+    const result = await installGlobalVsCode(context, output);
+    stream.markdown(result?.message || "Configuracion global finalizada.");
     return { metadata: { command, ok: Boolean(result?.ok) } };
   }
 
@@ -391,6 +536,7 @@ async function ensureMcpDependencies(extensionPath, output) {
 }
 
 function activate(context) {
+  let providerStatusBar;
   const output = vscode.window.createOutputChannel("Free JT7");
   const chatDiagnostics = getChatDiagnostics();
   if (!chatDiagnostics.ok) {
@@ -435,6 +581,7 @@ function activate(context) {
 
   const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
+    vscode.commands.registerCommand("freejt7.installGlobalVsCode", () => installGlobalVsCode(context, output)),
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
     vscode.commands.registerCommand("freejt7.openRuntimeDocs", () => openRuntimeDocs(context)),
     vscode.commands.registerCommand("freejt7.routeTaskWithCopilot", () => routeTaskWithCopilot(context, output)),
@@ -471,8 +618,109 @@ function activate(context) {
       }
     }),
     vscode.commands.registerCommand("freejt7.openClawChannelsLogin", () => runOpenClaw(["channels","login"], output)),
+    vscode.commands.registerCommand("freejt7.selectApiProvider", async () => {
+      const providers = [
+        { label: "$(copilot) GitHub Copilot (default)", value: "copilot" },
+        { label: "$(cloud) OpenRouter", value: "openrouter" },
+        { label: "$(hubot) HuggingFace", value: "hf" },
+        { label: "$(zap) ZAI (ZhipuAI)", value: "zai" },
+      ];
+      const picked = await vscode.window.showQuickPick(providers, { placeHolder: "Selecciona el proveedor de API" });
+      if (!picked) return;
+      let model = "";
+      if (picked.value !== "copilot") {
+        const currentModel = vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "";
+        const items = buildModelQuickPickItems(picked.value, currentModel);
+        if (items.length > 0) {
+          items.push({ label: "✏️ Escribir manualmente...", description: "" });
+          const selection = await vscode.window.showQuickPick(items, {
+            placeHolder: `Modelo gratis para ${picked.value} (actual: ${currentModel || "ninguno"})`,
+          });
+          if (!selection) return;
+          if (selection.label === "✏️ Escribir manualmente...") {
+            model = await vscode.window.showInputBox({
+              prompt: `Modelo para ${picked.value}`,
+              value: currentModel,
+            }) || "";
+          } else {
+            model = selection.modelValue || "";
+          }
+        } else {
+          model = await vscode.window.showInputBox({
+            prompt: `Modelo para ${picked.value} (deja vacío para usar el predeterminado)`,
+            value: currentModel,
+          }) || "";
+        }
+      }
+      const config = vscode.workspace.getConfiguration("freejt7");
+      await config.update("apiProvider", picked.value, vscode.ConfigurationTarget.Global);
+      await config.update("apiProviderModel", model, vscode.ConfigurationTarget.Global);
+      updateProviderStatusBar(providerStatusBar);
+      output.appendLine(`[freejt7] Proveedor cambiado a: ${picked.value} ${model ? `(${model})` : ""}`);
+      vscode.window.showInformationMessage(`Free JT7: proveedor → ${picked.value}${model ? ` / ${model}` : ""}`);
+    }),
+    vscode.commands.registerCommand("freejt7.setApiKey", async () => {
+      const providers = [
+        { label: "OpenRouter", value: "openrouter" },
+        { label: "HuggingFace", value: "hf" },
+        { label: "ZAI (ZhipuAI)", value: "zai" },
+      ];
+      const picked = await vscode.window.showQuickPick(providers, { placeHolder: "¿Para qué proveedor deseas configurar la API key?" });
+      if (!picked) return;
+      const key = await vscode.window.showInputBox({
+        prompt: `API Key para ${picked.label}`,
+        password: true,
+        ignoreFocusOut: true,
+      });
+      if (!key) return;
+      await context.secrets.store(`freejt7.apiKey.${picked.value}`, key);
+      output.appendLine(`[freejt7] API key guardada para: ${picked.value}`);
+      vscode.window.showInformationMessage(`Free JT7: API key configurada para ${picked.label}`);
+    }),
+    vscode.commands.registerCommand("freejt7.selectFreeModel", async () => {
+      const config = vscode.workspace.getConfiguration("freejt7");
+      const provider = config.get("apiProvider") || "copilot";
+      if (provider === "copilot") {
+        vscode.window.showInformationMessage("Copilot usa su modelo integrado. Cambia de proveedor primero.");
+        return;
+      }
+      const freeModels = getModelsForProvider(provider);
+      if (freeModels.length === 0) {
+        vscode.window.showWarningMessage(`No hay modelos gratuitos catalogados para ${provider}.`);
+        return;
+      }
+      const currentModel = config.get("apiProviderModel") || "";
+      const items = buildModelQuickPickItems(provider, currentModel);
+      const selection = await vscode.window.showQuickPick(items, { placeHolder: `Selecciona modelo gratis para ${provider}` });
+      if (!selection) return;
+      await config.update("apiProviderModel", selection.modelValue, vscode.ConfigurationTarget.Global);
+      updateProviderStatusBar(providerStatusBar);
+      output.appendLine(`[freejt7] Modelo cambiado a: ${selection.modelValue}`);
+      vscode.window.showInformationMessage(`Free JT7: modelo → ${selection.modelValue}`);
+    }),
+    vscode.commands.registerCommand("freejt7.refreshFreeModels", () => {
+      freeModelsCatalog = loadFreeModelsCatalog();
+      updateProviderStatusBar(providerStatusBar);
+      output.appendLine("[freejt7] Catálogo de modelos gratuitos recargado en runtime.");
+      vscode.window.showInformationMessage("Free JT7: catálogo de modelos actualizado.");
+    }),
     output,
   ];
+
+  // Status bar del proveedor activo
+  providerStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1000);
+  providerStatusBar.command = "freejt7.selectApiProvider";
+  updateProviderStatusBar(providerStatusBar);
+  providerStatusBar.show();
+  subscriptions.push(providerStatusBar);
+
+  if (vscode.workspace?.onDidChangeConfiguration) {
+    subscriptions.push(vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("freejt7.apiProvider") || event.affectsConfiguration("freejt7.apiProviderModel")) {
+        updateProviderStatusBar(providerStatusBar);
+      }
+    }));
+  }
 
   if (vscode.chat?.createChatParticipant) {
     const participant = vscode.chat.createChatParticipant("freejt7.chat", (request, chatContext, stream, token) => (

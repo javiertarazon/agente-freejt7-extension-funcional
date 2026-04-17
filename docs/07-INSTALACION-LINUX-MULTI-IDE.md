@@ -105,6 +105,18 @@ python3 skills_manager.py gateway-status
 
 ### 6. Instalar el bridge en un workspace o IDE
 
+Si quieres dejar VS Code preparado a nivel global de usuario desde la propia extension, usa el comando:
+
+```text
+Free JT7: Aplicar configuracion global en VS Code
+```
+
+o en Copilot Chat:
+
+```text
+@freejt7 /global
+```
+
 VS Code:
 
 ```bash

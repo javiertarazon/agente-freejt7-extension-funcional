@@ -182,12 +182,36 @@ esperado en un entorno de desarrollo.
 3. Seleccionar el archivo `.vsix` generado
 4. Ejecutar el comando:
    - `Free JT7: Instalar en workspace actual`
+  - `Free JT7: Aplicar configuracion global en VS Code`
 
 En Linux o Windows tambien puedes abrir Copilot Chat y usar:
 
 - `@freejt7 /doctor`
 - `@freejt7 /install`
+- `@freejt7 /global`
 - `@freejt7 /route analiza este proyecto y aplica la solucion`
+
+### Uso con proveedores externos
+
+Free JT7 puede trabajar con `OpenRouter`, `HuggingFace` y `ZAI` ademas de Copilot.
+
+Dentro de VS Code puedes usar:
+
+- `Free JT7: Seleccionar Proveedor de API`
+- `Free JT7: Configurar API Key de Proveedor`
+- `Free JT7: Seleccionar Modelo Gratuito`
+- `Free JT7: Actualizar Catálogo de Modelos Gratuitos`
+
+Las credenciales no deben guardarse en el repositorio. La extension usa `SecretStorage` de VS Code y tambien puede leer variables de entorno o archivos locales ignorados por git como `env api` o `.env`.
+
+### Configuracion global dentro de VS Code
+
+Si quieres que Free JT7 quede operativo a nivel de usuario en VS Code, sin depender de un workspace concreto, usa:
+
+- comando `Free JT7: Aplicar configuracion global en VS Code`
+- o en Copilot Chat: `@freejt7 /global`
+
+Ese flujo actualiza el `settings.json` del perfil de VS Code con las rutas absolutas necesarias para instrucciones, agentes, skills y policy de Free JT7.
 
 ## Servicios fundamentales despues de instalar la extension
 

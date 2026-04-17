@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local, router Copilot y gateway OpenClaw.",
-  "version": "4.2.5",
+  "version": "4.2.6",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -50,6 +50,10 @@
         "title": "Free JT7: Instalar en workspace actual"
       },
       {
+        "command": "freejt7.installGlobalVsCode",
+        "title": "Free JT7: Aplicar configuracion global en VS Code"
+      },
+      {
         "command": "freejt7.runtimeDoctor",
         "title": "Free JT7: Validar runtime"
       },
@@ -88,6 +92,22 @@
       {
         "command": "freejt7.openClawChannelsLogin",
         "title": "Free JT7: OpenClaw Channels Login"
+      },
+      {
+        "command": "freejt7.selectApiProvider",
+        "title": "Free JT7: Seleccionar Proveedor de API"
+      },
+      {
+        "command": "freejt7.setApiKey",
+        "title": "Free JT7: Configurar API Key de Proveedor"
+      },
+      {
+        "command": "freejt7.selectFreeModel",
+        "title": "Free JT7: Seleccionar Modelo Gratuito"
+      },
+      {
+        "command": "freejt7.refreshFreeModels",
+        "title": "Free JT7: Actualizar Catálogo de Modelos Gratuitos"
       }
     ],
     "chatParticipants": [
@@ -109,6 +129,10 @@
           {
             "name": "install",
             "description": "Instala o adapta Free JT7 en el workspace actual"
+          },
+          {
+            "name": "global",
+            "description": "Aplica la configuracion global de Free JT7 en VS Code"
           },
           {
             "name": "docs",
@@ -180,6 +204,23 @@
           "type": "boolean",
           "default": true,
           "description": "Aprueba automaticamente tools seguras del SDK y bloquea shells destructivas conocidas."
+        },
+        "freejt7.apiProvider": {
+          "type": "string",
+          "enum": ["copilot", "openrouter", "hf", "zai"],
+          "enumDescriptions": [
+            "GitHub Copilot (default)",
+            "OpenRouter",
+            "HuggingFace",
+            "ZAI (ZhipuAI)"
+          ],
+          "default": "copilot",
+          "description": "Proveedor de API activo para el agente Free JT7"
+        },
+        "freejt7.apiProviderModel": {
+          "type": "string",
+          "default": "",
+          "description": "Modelo específico del proveedor seleccionado (ej: openai/gpt-4o-mini, glm-4-flash)"
         }
       }
     }

@@ -1,5 +1,19 @@
 ﻿# Changelog
 
+## [Unreleased]
+
+## [4.2.6] - 2026-04-17
+
+- Agregado selector visual de proveedor y modelo activo en VS Code, con barra de estado y comandos para cambiar proveedor, API key, modelo gratuito y recargar catálogo.
+- Integrado routing hacia proveedores externos `OpenRouter`, `HuggingFace` y `ZAI` desde el runtime del router cuando el proveedor activo no es `copilot`.
+- Añadido `src-js/api-provider-adapter.js` con presupuestos defensivos de contexto, compactación automática del prompt, `max_tokens` de salida y traducción de errores remotos de longitud de contexto.
+- Añadido `src-js/free-models-catalog.js` y fallback en runtime para que la selección de modelos gratuitos siga funcionando también en el bundle empaquetado.
+- Mejorada la resiliencia del runtime empaquetado para no depender de archivos excluidos del VSIX al mostrar proveedor y modelo activo.
+- Eliminados fallbacks con credenciales embebidas; el runtime ahora usa solo `SecretStorage`, variables de entorno o archivos locales ignorados por git.
+- Agregado comando `Free JT7: Aplicar configuracion global en VS Code` para escribir la configuracion de usuario sin depender de un workspace abierto.
+- `@freejt7 /install` ahora degrada a configuracion global cuando no hay workspace, y se agrega `@freejt7 /global` como atajo explicito.
+
+
 ## [4.2.5] - 2026-04-15
 
 - Corregido: `extensionDependencies` con `github.copilot-chat` faltaba en `package.json` pese a que el CHANGELOG 4.2.4 lo declaraba. Sin esta dependencia VS Code no garantizaba que la API `vscode.chat.createChatParticipant` estuviese disponible al activar la extension, impidiendo que `@freejt7` apareciese en Copilot Chat.

@@ -507,6 +507,20 @@ async function runCopilotRouter(options) {
   cliLog(options.output, `[freejt7-router] run_id=${runId}`);
   cliLog(options.output, `[freejt7-router] cli=${cli.label}`);
 
+  // --- API Provider Delegation ---
+  const _activeProvider = options.vscode
+    ? (options.vscode.workspace.getConfiguration("freejt7").get("apiProvider") || "copilot")
+    : "copilot";
+  if (_activeProvider !== "copilot") {
+    const { callProvider } = require("./api-provider-adapter");
+    const _activeModel = options.vscode
+      ? (options.vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "")
+      : "";
+    cliLog(options.output, `[freejt7-router] delegating to provider=${_activeProvider} model=${_activeModel || "default"}`);
+    return callProvider(goal, { provider: _activeProvider, model: _activeModel }, options.secretStorage);
+  }
+  // --- End API Provider Delegation ---
+
   let client;
   try {
     const sdk = await import("@github/copilot-sdk");
