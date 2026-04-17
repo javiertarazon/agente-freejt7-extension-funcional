@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+## [4.2.7] - 2026-04-19
+
+### Added
+- Refactorización del directorio `src-js/` en subdirectorios especializados:
+  `core/`, `memory/`, `scheduler/`, `bridge/`, `plugins/` — patrón arquitectónico
+  inspirado en la separación de crates de Claurst (core, api, tools, query, commands,
+  bridge, plugins). Cierra brecha de "agent core no separado" identificada en el análisis
+  comparativo (`docs/08-ANALISIS-CLAURST-VS-FREEJT7.md`).
+- `src-js/bridge/remote-bridge.js`: singleton EventEmitter con cola de comandos,
+  loop de polling asíncrono y canal bidireccional configurable — equivalente directo
+  al crate `bridge` de Claurst (device fingerprint, JWT, polling, canal web/mobile).
+  Cierra brecha de "capa remota nativa" identificada en el análisis.
+- Integración del RemoteBridge en el ciclo de vida de la extensión (activate/deactivate)
+  en `src-js/core/extension.runtime.js`.
+- Base para sistemas runtime integrados al loop principal:
+  - `src-js/memory/memory-orchestrator.js` — consolidación automática por umbrales
+    (inspirado en `auto_dream.rs` y `session_memory.rs` de Claurst).
+  - `src-js/scheduler/agent-scheduler.js` — scheduler transversal de tareas/prompts
+    (inspirado en `cron_scheduler.rs` de Claurst).
+  - `src-js/plugins/plugin-runtime.js` — runtime de plugins con hooks y manifests
+    (inspirado en el crate `plugins` de Claurst).
+
+### Changed
+- Arquitectura src-js migrada de archivos planos a estructura modular por dominio.
+- `extension.runtime.js` movido a `src-js/core/` y reducido en responsabilidad;
+  delega ciclo de vida de bridges y schedulers a sus módulos propios.
+
 ## [4.2.6] - 2026-04-17
 
 - Agregado selector visual de proveedor y modelo activo en VS Code, con barra de estado y comandos para cambiar proveedor, API key, modelo gratuito y recargar catálogo.
