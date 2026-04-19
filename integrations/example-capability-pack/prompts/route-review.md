@@ -1,0 +1,1 @@
+Revisa la ruta activa y prioriza seguridad operativa antes de ejecutar shell.

@@ -1,5 +1,24 @@
 # Analisis comparativo: Claurst vs Free JT7
 
+## Estado de vigencia
+
+Actualizado tras la integracion correctiva del 2026-04-19.
+
+Este documento ya no debe leerse como una lista de brechas totalmente abiertas.
+Ahora funciona como:
+
+- comparativa arquitectonica base entre Claurst y Free JT7;
+- registro de las capacidades que faltaban al momento del analisis original;
+- referencia de que partes ya quedaron cerradas o parcialmente cerradas en el runtime actual.
+
+Estado resumido tras esta pasada:
+
+- memoria runtime: cerrada a nivel estructural;
+- scheduler runtime: cerrado y ya arrancado desde la extension;
+- plugins runtime: cerrado a nivel de hooks principales, aunque todavia con margen para evolucionar el discovery/carga viva;
+- bridge remoto: elevado a una base persistente con sesiones, eventos y aprobaciones;
+- refactor por capas: parcialmente cerrado con fachadas canonicas `runtime/` y `providers/`, todavia sin una separacion completa `router/` e `integrations/`.
+
 ## Objetivo
 
 Comparar el repositorio local de Claurst con el runtime actual de Free JT7 para identificar modos avanzados, capacidades de arquitectura y formas de trabajo que valga la pena incorporar.
@@ -132,6 +151,8 @@ Pero en la evidencia revisada no aparece una capa equivalente a `PluginRegistry`
 
 ### Brecha 1. Free JT7 no tiene un "agent core" claramente separado
 
+Estado 2026-04-19: parcial.
+
 La extension y el router concentran mucha responsabilidad en pocos puntos:
 
 - `src-js/extension.runtime.js`
@@ -142,23 +163,33 @@ Eso acelera cambios pequeños, pero complica introducir capacidades persistentes
 
 ### Brecha 2. La memoria sigue siendo una convencion operativa
 
+Estado 2026-04-19: cerrada en lo esencial.
+
 Hoy Free JT7 depende de que el agente lea y escriba documentación y datasets. Claurst va un paso mas alla: su consolidacion automatica existe como modulo propio del loop.
 
 ### Brecha 3. No hay scheduler de prompts/tareas integrado al runtime
+
+Estado 2026-04-19: cerrada.
 
 Free JT7 tiene arranque automatico y scripts nocturnos, pero no un scheduler transversal en el loop del agente equivalente al cron interno de Claurst.
 
 ### Brecha 4. El soporte de plugins no esta cerrado extremo a extremo
 
+Estado 2026-04-19: parcialmente cerrada.
+
 Hay CLI de administracion, pero no vi una cadena completa de carga, registro, hooks y enforcement en el runtime del agente como si ocurre en Claurst.
 
 ### Brecha 5. Falta una capa remota nativa
+
+Estado 2026-04-19: parcialmente cerrada.
 
 Free JT7 tiene extension, gateway y MCP local, pero no una sesion remota unificada tipo bridge para control web/mobile con protocolo propio.
 
 ## Recomendaciones priorizadas para Free JT7
 
 ## P1. Convertir memoria y aprendizaje en subsistema runtime
+
+Estado 2026-04-19: implementado en la base del runtime.
 
 Objetivo:
 
@@ -183,6 +214,8 @@ Impacto:
 
 ## P2. Elevar plugins a runtime real
 
+Estado 2026-04-19: implementado en hooks base, pendiente evolucion de carga viva end-to-end.
+
 Objetivo:
 
 - pasar de plugin management a plugin runtime.
@@ -205,6 +238,8 @@ Impacto:
 
 ## P3. Introducir scheduler cross-platform dentro del runtime
 
+Estado 2026-04-19: implementado y activado desde la extension.
+
 Objetivo:
 
 - programar prompts, validaciones, reintentos, recollections y maintenance tasks dentro del agente, no solo via scripts externos.
@@ -226,6 +261,8 @@ Impacto:
 
 ## P4. Refactor por capas del runtime JS
 
+Estado 2026-04-19: parcialmente implementado.
+
 Objetivo:
 
 - acercar Free JT7 a una separacion tipo core/router/tools/runtime/integrations.
@@ -243,7 +280,15 @@ Impacto:
 - medio/alto;
 - habilita crecer sin seguir cargando `extension.runtime.js`.
 
+Avance real tras la pasada correctiva:
+
+- ya existen fachadas canonicas en `src-js/runtime/`;
+- ya existe fachada canonica en `src-js/providers/`;
+- el router y la extension consumen esas fachadas sin romper compatibilidad hacia atras.
+
 ## P5. Crear un bridge remoto real, no solo gateway local
+
+Estado 2026-04-19: implementado en version base util.
 
 Objetivo:
 
@@ -263,6 +308,14 @@ Impacto:
 
 - alto potencial;
 - mas costoso que P1-P3.
+
+Avance real tras la pasada correctiva:
+
+- bridge con persistencia en `copilot-agent/remote-bridge-state.json`;
+- sesiones registradas por `run_id`;
+- eventos de ruta y tareas;
+- cola de comandos con acknowledgement;
+- tickets de aprobacion/revision remota para corridas bloqueadas o con riesgos residuales.
 
 ## P6. Companion/Buddy: no prioritario
 

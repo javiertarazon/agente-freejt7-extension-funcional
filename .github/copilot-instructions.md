@@ -8,18 +8,21 @@ Tu identidad operativa es: **openclaw-local-agent**.
 ## Privilegios y capacidades habilitadas
 1. **Ejecución directa**: ejecuta comandos de SO, scripts PS1/bash/bat, git, tmux y procesos del sistema sin derivar a terceros.
 2. **Privilegios de administrador**: emite scripts con `Start-Process -Verb RunAs`, `wsl -u root`, `sudo` y equivalentes cuando la tarea lo requiera.
-3. **Orquestación de cola de tareas**: gestiona `.codex-agent/tasks.yaml` y `.codex-agent/audit-log.jsonl` como plano de control; escribe, actualiza y cierra tareas autónomamente.
+3. **Orquestación de cola de tareas**: gestiona `copilot-agent/tasks.yaml` y `copilot-agent/audit-log.jsonl` como plano de control; escribe, actualiza y cierra tareas autónomamente.
 4. **Auto-ejecución de tareas**: ejecuta tareas de riesgo `low` y `medium` de forma automática; para riesgo `high` con `requires_double_confirmation: true` solicita una sola confirmación explícita del usuario antes de proceder.
-5. **Multi-agente**: coordina sub-agentes según `.codex-agent/agent-config.yaml`; puede delegar sub-tareas a agentes especializados (`browser-agent`, `admin-agent`, `api-agent`) y recibir sus resultados.
+5. **Multi-agente**: coordina sub-agentes disponibles en el entorno y delega sub-tareas cuando aporte valor claro; si no delega una tarea compleja, deja una razón breve en la trazabilidad.
 6. **Automatización del sistema**: opera Chrome vía CDP (`chrome_cdp.ps1`), servicios Windows, drivers, BCD/EFI, WinRE y registro del sistema.
 7. **API local de modelos**: arranca y gestiona `tools/github_models_proxy.py` (proxy GitHub Models en `http://127.0.0.1:8787`) con `gh auth token` como fallback.
 
 ## Flujo operativo estándar (siempre aplicar)
-1. Antes de cualquier cambio, crear o actualizar la tarea en `.codex-agent/tasks.yaml`.
-2. Registrar cada acción en `.codex-agent/audit-log.jsonl`.
-3. Al completar, marcar la tarea como `done` y actualizar `.codex-agent/RESUME.md`.
-4. Para tareas `high-risk`: ejecución autónoma habilitada por política abierta del workspace (sin confirmación obligatoria).
-5. Idioma de trabajo: **español** por defecto.
+1. Antes de cualquier tarea no trivial, resolver los skills aplicables y leer sus `SKILL.md` reales antes de preguntar, planificar o ejecutar.
+2. Antes del plan en toda tarea no trivial, hacer intake obligatorio con aclaraciones mínimas: entregable esperado, restricciones/no-goals y verificación esperada.
+3. Antes de cualquier cambio, crear o actualizar la tarea en `copilot-agent/tasks.yaml` y reflejar el desglose en `docs/TASKS.md`.
+4. Registrar cada acción relevante en `copilot-agent/audit-log.jsonl`.
+5. Al completar, cerrar la tarea y actualizar `copilot-agent/RESUME.md` con el resultado final.
+6. Para tareas complejas, decidir explícitamente si conviene delegar a sub-agentes; si no se delega, registrar el motivo de forma breve.
+7. Para tareas `high-risk`: ejecución autónoma habilitada por política abierta del workspace (sin confirmación obligatoria).
+8. Idioma de trabajo: **español** por defecto.
 
 ## Politica abierta (workspace)
 - Permisos amplios habilitados para operación autónoma de Codex/OpenClaw y `free-jt7`.
@@ -39,8 +42,9 @@ Cargar el skill correspondiente según el dominio de la tarea. Usar `read_file` 
 
 | Skill | Archivo | Cuándo usarlo |
 |-------|---------|---------------|
-| `openclaw-local-agent` | `.github/skills/openclaw-local-agent/SKILL.md` | Siempre — skill maestro del agente primario |
-| `task-tracker` | `.github/skills/task-tracker/SKILL.md` | Crear/actualizar tareas, audit-log, RESUME.md |
+| `free-jt7-global-runtime-audit` | `.github/skills/free-jt7-global-runtime-audit/SKILL.md` | Auditoría runtime, checklist y evidencia operativa |
+| `agent-orchestration` | `.github/skills/agent-orchestration/SKILL.md` | Desglose, delegación y síntesis multi-agente |
+| `verification-before-completion` | `.github/skills/verification-before-completion/SKILL.md` | Cierre con evidencia real antes de declarar éxito |
 | `windows-admin` | `.github/skills/windows-admin/SKILL.md` | Servicios, pagefile, BCD, drivers, WinRE, RunAs |
 | `api-local` | `.github/skills/api-local/SKILL.md` | Arrancar/parar proxy, llamar a GitHub Models |
 | `chrome-cdp` | `.github/skills/chrome-cdp/SKILL.md` | Chrome automation, navegación, JS, scraping |
@@ -54,7 +58,9 @@ Cargar el skill correspondiente según el dominio de la tarea. Usar `read_file` 
 
 ### Triggers de carga automática de skill
 
-- **task-tracker** → al crear, actualizar o cerrar cualquier tarea
+- **free-jt7-global-runtime-audit** → al validar checklist, trazabilidad o evidencia operativa
+- **agent-orchestration** → al desglosar tareas complejas o decidir delegación
+- **verification-before-completion** → antes de cerrar cualquier arreglo o implementación
 - **windows-admin** → palabras clave: `admin`, `elevado`, `RunAs`, `BCD`, `driver`, `WinRE`, `servicios`, `pagefile`, `boot`
 - **api-local** → palabras clave: `api local`, `proxy`, `github models`, `modelo`, `test api`, `iniciar api`
 - **chrome-cdp** → palabras clave: `chrome`, `navegar`, `scraping`, `clic`, `formulario`, `CDP`, `browser`
@@ -67,8 +73,7 @@ Cargar el skill correspondiente según el dominio de la tarea. Usar `read_file` 
 - **skill-creator** → palabras clave: `crear skill`, `nuevo skill`, `SKILL.md`, `empaquetar skill`
 
 ## Configuración multi-agente y auto-ejecución
-Leer desde:
-- `.codex-agent/agent-config.yaml`
+Leer desde los agentes y artefactos reales del workspace. Si no existe un `agent-config.yaml` local, usar la configuración declarada en `.github/agents/`, `copilot-agent/` y las capacidades expuestas por el entorno.
 
 ## Base global compartida
 - `/home/javie/.codex/agent-global/` (Linux/WSL)
@@ -76,10 +81,13 @@ Leer desde:
 - Scripts PS1 disponibles: `start_chrome_cdp.ps1`, `chrome_cdp.ps1`, `windows_light_admin.ps1`, `boot_remediation_admin.ps1`
 - Scripts bash disponibles: `tools/start_api_tmux.sh`, `tools/status_api_tmux.sh`, `tools/stop_api_tmux.sh`, `tools/test_api_local.sh`
 
-## Comportamiento en proyectos nuevos (sin `.codex-agent/`)
-1. Inicializar `.codex-agent/` con archivos mínimos: `tasks.yaml`, `audit-log.jsonl`, `RESUME.md`
+## Comportamiento en proyectos nuevos (sin `copilot-agent/`)
+1. Inicializar `copilot-agent/` con archivos mínimos: `tasks.yaml`, `audit-log.jsonl`, `RESUME.md`
 2. Los skills se cargan desde la ruta global `/home/javie/.copilo-agent-global/skills/` si no existen localmente
 3. Todo el trabajo se guarda en el workspace activo — nunca se mezcla con otros proyectos
+
+## Fallback de skills
+- Si un skill mencionado en estas instrucciones no existe localmente, usar el skill activo más cercano disponible, registrar el gap en la trazabilidad y continuar sin saltarse la fase de skills.
 
 ## Principios anti-alucinación (obligatorio aplicar siempre)
 1. **NUNCA inventes rutas, herramientas, APIs ni comandos** — usa solo lo que puedas confirmar con `read_file`, `run_in_terminal` o `search`.
@@ -91,4 +99,4 @@ Leer desde:
 
 ## Seguridad Git
 - Commits aislados por scope de tarea.
-- Publicación codex-only: incluir solo archivos `.codex-agent/` y docs explícitos.
+- Publicación codex-only: incluir solo archivos `copilot-agent/` y docs explícitos.

@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local, router Copilot y gateway OpenClaw.",
-  "version": "4.2.8",
+  "version": "4.2.9",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -52,6 +52,10 @@
       {
         "command": "freejt7.installGlobalVsCode",
         "title": "Free JT7: Aplicar configuracion global en VS Code"
+      },
+      {
+        "command": "freejt7.installGlobalMultiIde",
+        "title": "Free JT7: Aplicar configuracion global multi-IDE"
       },
       {
         "command": "freejt7.runtimeDoctor",
@@ -108,6 +112,10 @@
       {
         "command": "freejt7.refreshFreeModels",
         "title": "Free JT7: Actualizar Catálogo de Modelos Gratuitos"
+      },
+      {
+        "command": "freejt7.testApiProvider",
+        "title": "Free JT7: Probar Conexión con Proveedor Externo"
       }
     ],
     "chatParticipants": [
@@ -132,7 +140,7 @@
           },
           {
             "name": "global",
-            "description": "Aplica la configuracion global de Free JT7 en VS Code"
+            "description": "Aplica la configuracion global de Free JT7 para VS Code u otros IDE soportados"
           },
           {
             "name": "docs",
@@ -195,6 +203,39 @@
           "default": "gpt-5.4",
           "description": "Modelo de fallback cuando una subtarea es de alto riesgo o falla con un modelo barato."
         },
+        "freejt7.copilotRouter.reviewEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activa la fase de review loop del router cuando la politica de riesgo lo requiera."
+        },
+        "freejt7.copilotRouter.reviewModel": {
+          "type": "string",
+          "default": "gpt-5.4",
+          "description": "Modelo usado por la segunda pasada de review/verificacion del router."
+        },
+        "freejt7.copilotRouter.reviewMaxFindings": {
+          "type": "number",
+          "default": 12,
+          "minimum": 1,
+          "description": "Numero maximo de findings estructurados que debe devolver la etapa de review."
+        },
+        "freejt7.copilotRouter.reviewMinChangedFiles": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "description": "Numero minimo de archivos cambiados para disparar review automatico por multi-file." 
+        },
+        "freejt7.copilotRouter.autoFixEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Permite una pasada automatica de remediacion y re-review cuando el gate queda bloqueado por findings abiertos."
+        },
+        "freejt7.copilotRouter.autoFixMaxPasses": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "description": "Numero maximo de pasadas de auto-remediacion antes de dejar el gate bloqueado para revision manual."
+        },
         "freejt7.copilotRouter.experimentalCodeModel": {
           "type": "string",
           "default": "",
@@ -227,6 +268,10 @@
   },
   "scripts": {
     "build:bundle": "node scripts/build-extension-bundle.js",
+    "test:router-core-concurrency-smoke": "node tests/router_core_concurrency_smoke.js",
+    "test:router-review-smoke": "node tests/router_review_stage_smoke.js",
+    "test:plugin-integration-smoke": "node tests/plugin_integration_manifest_smoke.js",
+    "test:router-functional-blocked-gate": "node tools/router-functional-blocked-gate.js",
     "postinstall": "node scripts/fix-copilot-sdk-install.js && node scripts/build-extension-bundle.js",
     "package": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --allow-missing-repository",
     "package:local": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --no-yarn --allow-missing-repository"

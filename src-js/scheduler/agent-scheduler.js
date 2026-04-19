@@ -490,18 +490,18 @@ function createDefaultScheduler(opts = {}, orchestrator = null) {
   // ---------------------------------------------------------------------------
   scheduler.addJob(
     'nightlyTrain',
-    cfg.intervals.nightlyTrain ?? DEFAULTS.intervals.nightlyTrain,
+    scheduler.cfg.intervals.nightlyTrain ?? DEFAULTS.intervals.nightlyTrain,
     async () => {
-      const logDir  = path.join(cfg.rootDir, '.agent-learning', 'logs');
+      const logDir  = path.join(scheduler.cfg.rootDir, '.agent-learning', 'logs');
       const logFile = path.join(logDir, 'nightly_train.log');
-      const cfgFile = path.join(cfg.rootDir, 'tools', 'agent_autolearn', 'config.json');
+      const cfgFile = path.join(scheduler.cfg.rootDir, 'tools', 'agent_autolearn', 'config.json');
       fs.mkdirSync(logDir, { recursive: true });
       scheduler._info('nightlyTrain: iniciando entrenamiento LoRA...');
       await new Promise((resolve) => {
         const proc = spawn(
           'python3',
           ['tools/agent_autolearn/auto_trainer.py', '--config', cfgFile],
-          { cwd: cfg.rootDir, stdio: ['ignore', 'pipe', 'pipe'] }
+          { cwd: scheduler.cfg.rootDir, stdio: ['ignore', 'pipe', 'pipe'] }
         );
         const log = fs.createWriteStream(logFile, { flags: 'a' });
         log.write(`\n--- nightlyTrain ${new Date().toISOString()} ---\n`);
@@ -515,7 +515,7 @@ function createDefaultScheduler(opts = {}, orchestrator = null) {
           }
           log.end();
           try {
-            const statePath = path.join(cfg.rootDir, cfg.stateFile);
+            const statePath = path.join(scheduler.cfg.rootDir, scheduler.cfg.stateFile);
             const existing  = fs.existsSync(statePath)
               ? JSON.parse(fs.readFileSync(statePath, 'utf8'))
               : {};

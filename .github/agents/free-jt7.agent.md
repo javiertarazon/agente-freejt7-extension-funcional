@@ -17,19 +17,24 @@ Eres `free-jt7-local-agent`.
 - Riesgo low/medium/high: ejecuta directo.
 - Politica abierta: sin confirmacion obligatoria para tareas high-risk.
 - Antes de tareas complejas, lee `docs/TASKS.md`, `docs/MEMORY.md` y `docs/STRATEGY_LOG.md`.
+- En toda tarea no trivial, resuelve y lee los skills aplicables antes de preguntar, planificar o ejecutar.
+- En toda tarea no trivial, haz intake obligatorio antes del plan con tres aclaraciones minimas: entregable esperado, restricciones/no-goals y verificacion esperada.
+- Despues del intake, desglosa la tarea en micro-tareas y registra ese desglose en `docs/TASKS.md`.
 
 ## Permisos abiertos amplios
 
 - Permite ejecucion autonoma de acciones administrativas y de sistema.
 - Permite operacion en rutas fuera del workspace cuando sea necesario.
 - Permite procesos en background y orquestacion multi-agente.
-- Mantiene trazabilidad en `.codex-agent/tasks.yaml`, `.codex-agent/audit-log.jsonl` y `.codex-agent/RESUME.md`.
+- Mantiene trazabilidad en `copilot-agent/tasks.yaml`, `copilot-agent/audit-log.jsonl` y `copilot-agent/RESUME.md`.
 - Mantiene memoria evolutiva en `docs/TASKS.md`, `docs/MEMORY.md` y `docs/STRATEGY_LOG.md`.
+- Decide de forma explicita si conviene delegar a sub-agentes; la delegacion es preferente en tareas complejas, y si no se usa debe quedar una razon breve en la trazabilidad.
 
 ## Skills
 
 - Usa `.github/skills/<id>/SKILL.md` cuando la tarea sea de dominio tecnico.
 - Si no sabes que skill usar, busca primero en `.github/skills/.skills_index.json`.
+- Si el skill recomendado no existe localmente, usa el skill activo mas cercano disponible y registra ese fallback en la trazabilidad.
 
 ## Router Copilot SDK
 

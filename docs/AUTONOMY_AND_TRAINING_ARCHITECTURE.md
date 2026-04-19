@@ -17,12 +17,16 @@ Unificar dos capas de mejora:
 - En ventanas de tiempo (nocturno o por umbral) se entrena LoRA por lotes.
 
 ## Bucle recomendado
-1. Planificar en `docs/TASKS.md`.
-2. Ejecutar y validar soluciones (tests, lint, backtest, scripts).
-3. Si falla: corregir y registrar leccion en `docs/MEMORY.md`.
-4. Siempre: guardar ejemplo en `.agent-learning/dataset.jsonl` tras cada run, exitosa o no. El campo `score` distingue aciertos (1.0) de fallos (0.0).  El recolector lo hace automáticamente.
-5. Cuando hay suficientes ejemplos nuevos: ejecutar `tools/agent_autolearn/auto_trainer.py`.
-6. Registrar resultados de estrategia en `docs/STRATEGY_LOG.md`.
+1. Resolver skills aplicables y hacer intake obligatorio antes del plan.
+2. Planificar en `docs/TASKS.md` y abrir trazabilidad en `copilot-agent/`.
+3. Decidir si conviene delegar a sub-agentes; registrar la decisión.
+4. Ejecutar y validar soluciones (tests, lint, backtest, scripts).
+5. Si falla: corregir y registrar leccion en `docs/MEMORY.md`.
+6. Siempre: evaluar cada run/ejemplo y registrar el veredicto en `.agent-learning/logs/evaluations.jsonl`.
+7. Guardar en `.agent-learning/dataset.jsonl` solo ejemplos aceptados por score y sin señales de fallo estructural.
+8. Regenerar `.agent-learning/regression-packs/` y `.agent-learning/routing_hints.json` desde el historial validado.
+9. Cuando hay suficientes ejemplos nuevos: ejecutar `tools/agent_autolearn/auto_trainer.py`.
+10. Registrar resultados de estrategia en `docs/STRATEGY_LOG.md`.
 
 ## Implementacion en este repo
 - Memoria persistente:
@@ -32,6 +36,8 @@ Unificar dos capas de mejora:
 - Auto-entrenamiento:
   - `tools/agent_autolearn/collector.py`
   - `tools/agent_autolearn/validate_and_collect.py`
+  - `tools/agent_autolearn/evaluator.py`
+  - `tools/agent_autolearn/regression_packs.py`
   - `tools/agent_autolearn/auto_trainer.py`
   - `tools/agent_autolearn/lora_train_unsloth.py`
   - `tools/agent_autolearn/nightly_train.ps1`
@@ -42,7 +48,7 @@ Unificar dos capas de mejora:
   - `.github/agents/free-jt7.agent.md`
   - `.github/agents/openclaw.agent.md`
   - `.github/copilot-instructions.md`
-  - `.codex-agent/agent-config.yaml`
+  - `copilot-agent/`
 
 ## Criterio de calidad minimo para trading
 - Profit Factor > 1.5

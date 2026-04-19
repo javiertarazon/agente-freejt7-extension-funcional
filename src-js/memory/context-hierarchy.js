@@ -6,6 +6,8 @@
  * Purpose: Autonomously manage context tokens across three memory tiers
  */
 
+const { estimateTokens, stringifyBudgetInput } = require('../core/context-budget');
+
 class ContextHierarchy {
   constructor(config = {}) {
     this.hotCapacity = config.hotCapacity || 50000;      // Current turn context
@@ -25,8 +27,11 @@ class ContextHierarchy {
    * Estimate token count (rough heuristic: 4 chars ≈ 1 token)
    */
   estimateTokens(text) {
-    if (!text) return 0;
-    return Math.ceil(text.length / 4);
+    return estimateTokens(text);
+  }
+
+  _normalizeMessageContent(message) {
+    return stringifyBudgetInput(message);
   }
 
   /**
@@ -34,11 +39,13 @@ class ContextHierarchy {
    * Automatically promotes old hot entries to warm if needed
    */
   pushHotMemory(message) {
+    const content = this._normalizeMessageContent(message);
     this.hotMemory.push({
       timestamp: Date.now(),
-      content: message,
-      type: this._detectType(message),
-      tokens: this.estimateTokens(message)
+      content,
+      raw: message,
+      type: this._detectType(content),
+      tokens: this.estimateTokens(content)
     });
 
     // Check if we need promotion
@@ -93,7 +100,7 @@ class ContextHierarchy {
     
     if (!rules) return entry.content;
 
-    let compressed = entry.content;
+    let compressed = this._normalizeMessageContent(entry.content);
 
     // Rule 1: Remove repeated explanations
     compressed = compressed.replace(/(\b\w{10,}\b)(.{0,100})\1/g, '$1 [repeated]');
@@ -176,10 +183,11 @@ class ContextHierarchy {
    * Identify message type for compression selection
    */
   _detectType(message) {
-    if (message.includes('deciding') || message.includes('analyzing')) return 'agent-reasoning';
-    if (message.includes('<function_calls>')) return 'tool-call';
-    if (message.includes('function_results')) return 'tool-result';
-    if (message.includes('error') || message.includes('Error')) return 'error';
+    const text = this._normalizeMessageContent(message);
+    if (text.includes('deciding') || text.includes('analyzing')) return 'agent-reasoning';
+    if (text.includes('<function_calls>')) return 'tool-call';
+    if (text.includes('function_results')) return 'tool-result';
+    if (text.includes('error') || text.includes('Error')) return 'error';
     return 'default';
   }
 

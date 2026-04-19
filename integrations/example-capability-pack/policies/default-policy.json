@@ -1,0 +1,8 @@
+{
+  "id": "example-policy",
+  "mode": "trusted",
+  "description": "Policy de ejemplo para capability packs externos.",
+  "rules": [
+    "annotate-shell-context"
+  ]
+}

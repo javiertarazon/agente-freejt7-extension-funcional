@@ -2,19 +2,31 @@
 
 ## [Unreleased]
 
-## [4.2.8] - 2026-04-26
-
-### Added
-- `tools/skill_creator.py` — CLI para gestión de skills (argparse, CRUD)
-- `start_mt5_wine.sh` — script de lanzamiento Wine/MT5 para Linux
-- `INSTALL_WINE_MT5.md` — guía de instalación Wine + MetaTrader5 en Linux
-- `tools/agent_autolearn/nightly_train.sh` — script de entrenamiento nocturno autolearn
+## [4.2.9] - 2026-04-19
 
 ### Changed
-- `mcp-servers/mt5/mt5_server.py` — compatibilidad Wine/Linux añadida
-- `src-js/scheduler/agent-scheduler.js` — actualizaciones del scheduler
-- Skills index files (`.github/skills/`, `skills/`) — índices actualizados
-- `CLAUDE.md`, `copilot-agent/RESUME.md`, `copilot-agent/audit-log.jsonl` — documentación actualizada
+- Reemisión correlativa del paquete para liberar la publicación de la línea actual sin reutilizar el tag local `v4.2.8`.
+- Metadatos de versión alineados en `package.json`, `package-lock.json`, `VERSION` y `README.md`.
+
+### Notes
+- No hay delta funcional respecto a `4.2.8`; esta versión existe para destrabar el versionado de release.
+
+## [4.2.8] - 2026-04-19
+
+### Added
+- `tests/router_core_concurrency_smoke.js` — smoke test mínimo para validar el guard de concurrencia del router core.
+- `tests/router_review_stage_smoke.js` — verificación ligera del review stage nativo del router.
+- `docs/11-AUDITORIA-AVANZADA-FREEJT7-CLAURST-CODEX.md` — auditoría comparativa avanzada y roadmap operativo.
+
+### Changed
+- `src-js/core/copilot_router.runtime.js` — review stage endurecido, trazabilidad operativa integrada y guard de concurrencia movido al núcleo compartido para cubrir extensión y ejecución directa.
+- `src-js/runtime/`, `src-js/providers/` y `src-js/bridge/remote-bridge.js` — fachadas de runtime/proveedores y bridge remoto persistente alineados con la integración avanzada post-análisis Claurst.
+- `scripts/add-free-jt7-agent.ps1`, `scripts/openclaw-start.cmd`, `README.md` y documentación operativa — simplificación de wrappers, instalación global multi-IDE y comandos reales del runtime.
+- `package-lock.json` — versionado alineado con `package.json` y `VERSION` en `4.2.8`.
+
+### Fixed
+- Error recurrente `No lowest priority node found` al lanzar tareas casi simultáneas: el lock de ejecución dejó de depender solo de la capa de extensión y ahora protege el router core común.
+- Desfase entre metadatos de release: la entrada `4.2.8` deja de apuntar a una fecha futura y queda coherente con el estado real que se empaqueta/publica.
 
 ## [4.2.7] - 2026-04-19
 

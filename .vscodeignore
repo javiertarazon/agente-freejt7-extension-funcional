@@ -1,10 +1,23 @@
 .git/**
+.antigravity/**
+.claude/**
+.cursor/**
+.gemini/**
+.kiro/**
 .venv/**
 __pycache__/**
 **/__pycache__/**
 *.pyc
+.vscode/**
 .tmp-test/**
 docs/**
+copilot-agent/**
+integrations/**
+mcp-servers/**
+temp_install_test/**
+env api/**
+memory-archive.jsonl
+E:\javie\agente-freejt7-extension-funcional/**
 copilot-agent/runs/**
 tests/**
 open-claw-multiroot.code-workspace

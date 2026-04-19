@@ -17,6 +17,7 @@
 
 const fs   = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 // ---------------------------------------------------------------------------
 // Configuración — rutas relativas a la raíz del workspace
@@ -127,76 +128,73 @@ class MemoryOrchestrator {
    */
   extractExamples() {
     this._loadState();
-    const runsDir  = path.join(this.cfg.rootDir, this.cfg.runsDir);
-    const dsPath   = path.join(this.cfg.rootDir, this.cfg.datasetFile);
-
+    const runsDir = path.join(this.cfg.rootDir, this.cfg.runsDir);
     if (!fs.existsSync(runsDir)) {
       this._warn(`runsDir no encontrado: ${runsDir}`);
       return { extracted: 0, skipped: 0, files: [] };
     }
 
-    // IDs ya presentes en el dataset para deduplicar
-    const seenIds = new Set();
-    const existing = readText(dsPath);
-    if (existing) {
-      existing.split('\n').filter(Boolean).forEach(line => {
-        try {
-          const obj = JSON.parse(line);
-          if (obj.runId) seenIds.add(obj.runId);
-        } catch { /* ignorar líneas corruptas */ }
-      });
+    const scriptPath = path.join(this.cfg.rootDir, 'tools', 'agent_autolearn', 'collect_from_runs.py');
+    if (!fs.existsSync(scriptPath)) {
+      this._warn(`collect_from_runs.py no encontrado: ${scriptPath}`);
+      return { extracted: 0, skipped: 0, files: [] };
     }
 
-    const runFiles = fs.readdirSync(runsDir)
-      .filter(f => f.endsWith('.json') && !f.endsWith('.events.jsonl'))
-      .sort();
+    const args = [
+      scriptPath,
+      '--runs-dir', runsDir,
+      '--dataset', path.join(this.cfg.rootDir, this.cfg.datasetFile),
+      '--state', path.join(this.cfg.rootDir, '.agent-learning', 'logs', 'processed_runs.json'),
+      '--evaluations', path.join(this.cfg.rootDir, '.agent-learning', 'logs', 'evaluations.jsonl'),
+      '--regression-packs', path.join(this.cfg.rootDir, '.agent-learning', 'regression-packs'),
+      '--routing-hints', path.join(this.cfg.rootDir, '.agent-learning', 'routing_hints.json'),
+      '--json',
+    ];
+    const pythonCandidates = process.platform === 'win32'
+      ? [['py', ['-3', ...args]], ['python', args]]
+      : [['python3', args], ['python', args]];
 
-    let extracted = 0;
-    let skipped   = 0;
-    const processedFiles = [];
-
-    for (const fname of runFiles) {
-      const runId = fname.replace(/\.json$/, '');
-      if (seenIds.has(runId)) { skipped++; continue; }
-
-      const runData = readJson(path.join(runsDir, fname));
-      if (!runData) { skipped++; continue; }
-
-      // Construir ejemplos desde steps del run
-      const steps = Array.isArray(runData.steps) ? runData.steps : [];
-      const examples = steps
-        .filter(s => s.input && s.output)
-        .slice(0, this.cfg.maxExamplesPerRun)
-        .map(s => ({
-          runId,
-          ts:     s.ts || nowIso(),
-          input:  s.input,
-          output: s.output,
-          tags:   s.tags || [],
-          source: 'runs',
-        }));
-
-      if (examples.length === 0) { skipped++; continue; }
-
-      // Append al dataset
-      const lines = examples.map(e => JSON.stringify(e)).join('\n') + '\n';
+    let result = null;
+    let lastError = '';
+    for (const [candidate, candidateArgs] of pythonCandidates) {
+      const proc = spawnSync(candidate, candidateArgs, {
+        cwd: this.cfg.rootDir,
+        encoding: 'utf8',
+        env: process.env,
+      });
+      if (proc.error) {
+        lastError = proc.error.message;
+        continue;
+      }
+      if (proc.status !== 0) {
+        lastError = (proc.stderr || proc.stdout || `exit=${proc.status}`).trim();
+        continue;
+      }
       try {
-        fs.mkdirSync(path.dirname(dsPath), { recursive: true });
-        fs.appendFileSync(dsPath, lines, 'utf8');
-        extracted += examples.length;
-        processedFiles.push(fname);
-        seenIds.add(runId);
-      } catch (err) {
-        this._warn(`Error escribiendo dataset para ${fname}: ${err.message}`);
+        result = JSON.parse((proc.stdout || '').trim());
+        break;
+      } catch (error) {
+        lastError = error.message;
       }
     }
 
-    this._state.totalExamplesExtracted += extracted;
-    this._state.runCountSinceLast += processedFiles.length;
+    if (!result) {
+      this._warn(`extractExamples: no se pudo ejecutar pipeline evaluado (${lastError || 'sin detalle'})`);
+      return { extracted: 0, skipped: 0, files: [] };
+    }
+
+    this._state.totalExamplesExtracted += Number(result.accepted || 0);
+    this._state.runCountSinceLast += Number(result.processed || 0);
     this._saveState();
 
-    this._info(`extractExamples: ${extracted} ejemplos de ${processedFiles.length} runs, ${skipped} omitidos`);
-    return { extracted, skipped, files: processedFiles };
+    this._info(`extractExamples: ${result.accepted || 0} aceptados de ${result.evaluated || 0} runs evaluados`);
+    return {
+      extracted: Number(result.accepted || 0),
+      skipped: Math.max(0, Number(result.evaluated || 0) - Number(result.accepted || 0)),
+      files: [`${result.processed || 0} runs via evaluator`],
+      evaluated: Number(result.evaluated || 0),
+      regressionPacks: Number(result.packs || 0),
+    };
   }
 
   // ── Consolidación de memoria ─────────────────────────────────────────────

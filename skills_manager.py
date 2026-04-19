@@ -30,6 +30,7 @@ Comandos:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -389,6 +390,86 @@ def _platform_family() -> str:
     if sys_name == "darwin":
         return "darwin"
     return "linux"
+
+
+def _host_fingerprint(platform_family: str | None = None) -> str:
+    family = platform_family or _platform_family()
+    host = socket.gethostname().strip().lower() or "unknown-host"
+    return hashlib.sha256(f"{family}:{host}".encode("utf-8")).hexdigest()[:16]
+
+
+def _looks_like_windows_path(raw: str) -> bool:
+    value = str(raw or "").strip()
+    return bool(re.match(r"^[a-zA-Z]:[\\/]", value)) or value.startswith("\\\\")
+
+
+def _looks_like_posix_path(raw: str) -> bool:
+    return str(raw or "").strip().startswith("/")
+
+
+def _build_active_project_identity(project: Path, platform_family: str | None = None) -> dict[str, str]:
+    family = platform_family or _platform_family()
+    resolved = project.expanduser().resolve()
+    canonical_path = _to_posix(resolved)
+    project_id = hashlib.sha256(canonical_path.encode("utf-8")).hexdigest()[:16]
+    return {
+        "canonical_path": canonical_path,
+        "project_id": project_id,
+        "platform": family,
+        "host_fingerprint": _host_fingerprint(family),
+    }
+
+
+def _resolve_active_project_record(active: dict[str, Any] | None, platform_family: str | None = None) -> dict[str, Any]:
+    family = platform_family or _platform_family()
+    record = active if isinstance(active, dict) else {}
+    raw = str(record.get("canonical_path") or record.get("path") or "").strip()
+    expected_platform = str(record.get("platform") or "").strip().lower()
+    expected_host = str(record.get("host_fingerprint") or "").strip().lower()
+
+    if not raw:
+        return {"path": None, "requested_path": "", "stale_reason": "missing-path", "identity": {}}
+
+    if family != "windows" and _looks_like_windows_path(raw):
+        return {"path": None, "requested_path": raw, "stale_reason": "foreign-windows-path", "identity": {}}
+    if family == "windows" and _looks_like_posix_path(raw):
+        return {"path": None, "requested_path": raw, "stale_reason": "foreign-posix-path", "identity": {}}
+
+    try:
+        candidate = Path(raw).expanduser().resolve()
+    except Exception:
+        return {"path": None, "requested_path": raw, "stale_reason": "invalid-path", "identity": {}}
+
+    if not candidate.exists():
+        stale_reason = "missing-path"
+        if expected_platform and expected_platform != family:
+            stale_reason = "platform-mismatch"
+        elif expected_host and expected_host != _host_fingerprint(family):
+            stale_reason = "host-mismatch"
+        return {
+            "path": None,
+            "requested_path": raw,
+            "stale_reason": stale_reason,
+            "identity": {},
+        }
+
+    resolved_identity = _build_active_project_identity(candidate, family)
+    mismatches: list[str] = []
+    if expected_platform and expected_platform != family:
+        mismatches.append("platform")
+    if expected_host and expected_host != resolved_identity["host_fingerprint"]:
+        mismatches.append("host")
+    expected_project_id = str(record.get("project_id") or "").strip().lower()
+    if expected_project_id and expected_project_id != resolved_identity["project_id"]:
+        mismatches.append("project_id")
+
+    return {
+        "path": candidate,
+        "requested_path": raw,
+        "stale_reason": "",
+        "identity": resolved_identity,
+        "mismatches": mismatches,
+    }
 
 
 def _codex_home() -> Path:
@@ -1342,15 +1423,9 @@ def _resolve_model_for_ide(
 
 def _active_project_path() -> Path | None:
     active = load_json(COPILOT_AGENT / "active-project.json", {})
-    if not isinstance(active, dict):
-        return None
-    raw = str(active.get("path", "")).strip()
-    if not raw:
-        return None
-    try:
-        return Path(raw).expanduser().resolve()
-    except Exception:
-        return None
+    resolved = _resolve_active_project_record(active)
+    path_value = resolved.get("path")
+    return path_value if isinstance(path_value, Path) else None
 
 
 def _resolve_target_project(path_raw: str = "") -> Path:
@@ -2267,9 +2342,11 @@ def _preflight(require_index: bool = False, strict_active_project: bool = False)
         _rebuild_index_from_disk()
     if strict_active_project:
         active_project = load_json(COPILOT_AGENT / "active-project.json", {})
-        if not active_project.get("path"):
+        resolved_active = _resolve_active_project_record(active_project)
+        if not resolved_active.get("path"):
+            reason = resolved_active.get("stale_reason") or "missing-path"
             raise RuntimeError(
-                "Proyecto activo no configurado. Ejecuta: python skills_manager.py set-project <ruta>"
+                f"Proyecto activo no resoluble ({reason}). Ejecuta: python skills_manager.py set-project <ruta>"
             )
 
 
@@ -3289,12 +3366,26 @@ def cmd_set_project(args: argparse.Namespace) -> int:
         except Exception:
             pass
     history = existing.get("history", [])
+    if not isinstance(history, list):
+        history = []
     if existing.get("path"):
-        history.insert(0, {"path": existing["path"], "set_at": existing.get("set_at", "")})
+        history.insert(0, {
+            "path": existing["path"],
+            "canonical_path": existing.get("canonical_path", ""),
+            "project_id": existing.get("project_id", ""),
+            "platform": existing.get("platform", ""),
+            "host_fingerprint": existing.get("host_fingerprint", ""),
+            "set_at": existing.get("set_at", ""),
+        })
     history = history[:10]  # keep last 10
+    identity = _build_active_project_identity(ruta)
     config = {
         "_description": "Proyecto activo donde se aplican los cambios. Edita 'path' o usa: python skills_manager.py set-project <ruta>",
         "path": str(ruta),
+        "canonical_path": identity["canonical_path"],
+        "project_id": identity["project_id"],
+        "platform": identity["platform"],
+        "host_fingerprint": identity["host_fingerprint"],
         "name": ruta.name,
         "set_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "notes": args.description or "",
@@ -4903,8 +4994,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         errors.append("falta .github/instructions/")
 
     active_project = load_json(COPILOT_AGENT / "active-project.json", {})
-    if not active_project.get("path"):
-        warnings.append("active-project.json sin ruta (set-project recomendado)")
+    resolved_active = _resolve_active_project_record(active_project)
+    if not resolved_active.get("path"):
+        reason = resolved_active.get("stale_reason") or "missing-path"
+        warnings.append(f"active-project.json no resoluble en este host ({reason}); usa set-project")
+    elif resolved_active.get("mismatches"):
+        mismatch_text = ",".join(resolved_active["mismatches"])
+        warnings.append(f"active-project.json con identidad heredada parcial ({mismatch_text})")
 
     policy = _load_policy()
     policy_errors = _validate_policy(policy)

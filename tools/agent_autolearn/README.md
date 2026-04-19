@@ -3,9 +3,11 @@
 Este modulo implementa el bucle recomendado para auto-mejora sin olvido catastrofico:
 
 1. El agente trabaja normalmente.
-2. Se valida la solucion con un comando real.
-3. Solo los exitos se guardan en `dataset.jsonl`.
-4. Un entrenamiento nocturno por lotes consume ejemplos nuevos y genera un adaptador LoRA.
+2. Un evaluator puntua cada ejemplo antes de guardarlo.
+3. Las evaluaciones completas se registran en `logs/evaluations.jsonl`.
+4. Solo los ejemplos aceptados por score se guardan en `dataset.jsonl`.
+5. Se regeneran `regression packs` e `routing_hints.json` desde el historial validado.
+6. Un entrenamiento nocturno por lotes consume ejemplos nuevos y genera un adaptador LoRA.
 
 ## Politica activa de almacenamiento
 
@@ -20,6 +22,8 @@ La arquitectura completa de operacion autonoma + memoria persistente esta en:
 
 - `tools/agent_autolearn/collector.py`: inserta ejemplos exitosos (deduplicados por hash).
 - `tools/agent_autolearn/validate_and_collect.py`: valida una respuesta y guarda solo si pasa.
+- `tools/agent_autolearn/evaluator.py`: puntua, etiqueta y decide aceptación/regression-candidate.
+- `tools/agent_autolearn/regression_packs.py`: materializa regression packs e hints de routing.
 - `tools/agent_autolearn/auto_trainer.py`: ejecuta entrenamiento por lotes cuando hay X ejemplos nuevos.
 - `tools/agent_autolearn/lora_train_unsloth.py`: stub listo para reemplazar con entrenamiento real Unsloth/PEFT.
 - `tools/agent_autolearn/config.json`: configuracion de rutas, umbral y comandos.
@@ -43,13 +47,19 @@ python tools/agent_autolearn/validate_and_collect.py `
   --tag python
 ```
 
-### 3) Entrenamiento por lote (dry run)
+### 3) Regenerar regression packs e hints de routing
+
+```powershell
+python tools/agent_autolearn/regression_packs.py
+```
+
+### 4) Entrenamiento por lote (dry run)
 
 ```powershell
 python tools/agent_autolearn/auto_trainer.py --dry-run
 ```
 
-### 4) Entrenamiento real por lote
+### 5) Entrenamiento real por lote
 
 ```powershell
 python tools/agent_autolearn/auto_trainer.py
@@ -75,5 +85,6 @@ powershell -ExecutionPolicy Bypass -File "E:\javie\bot nueva estarategia\tools\a
 ## Notas tecnicas
 
 - Este enfoque evita entrenar "en vivo" tras cada error.
-- Minimiza olvido catastrofico al entrenar por lotes de exitos.
+- Minimiza olvido catastrofico al entrenar por lotes de ejemplos aceptados.
 - Mantiene trazabilidad en `.agent-learning/logs/`.
+- `routing_hints.json` resume qué tipos de tarea/stack muestran mejor historial validado.

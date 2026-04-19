@@ -27,48 +27,76 @@ try {
 }
 const path = require("path");
 const fs = require("fs");
+const { randomUUID } = require("crypto");
 const { spawn, spawnSync } = require("child_process");
 const { runCopilotRouter } = require("./copilot_router.runtime");
-const { createDefaultScheduler } = require('../scheduler/agent-scheduler');
-const { MemoryOrchestrator }     = require('../memory/memory-orchestrator');
-const { getRemoteBridge }        = require('../bridge/remote-bridge');
+const {
+  callProvider: _callProvider,
+  getFreeModelsCatalog,
+  getFreeModelDefaults,
+} = require("../providers/api-provider-adapter");
+const { createDefaultScheduler } = require('../runtime/agent-scheduler');
+const { MemoryOrchestrator }     = require('../runtime/memory-orchestrator');
+const { getRemoteBridge }        = require('../runtime/remote-bridge');
+const { getPluginRuntime }       = require('../runtime/plugin-runtime');
 
-const FALLBACK_FREE_MODELS = {
-  openrouter: [
-    { label: "Gemma 2 9B (Google)", value: "google/gemma-2-9b-it:free" },
-    { label: "Llama 3.1 8B (Meta)", value: "meta-llama/llama-3.1-8b-instruct:free" },
-    { label: "Mistral 7B (Mistral)", value: "mistralai/mistral-7b-instruct:free" },
-    { label: "Phi-3 Mini 128k (Microsoft)", value: "microsoft/phi-3-mini-128k-instruct:free" },
-    { label: "Qwen 2 7B (Alibaba)", value: "qwen/qwen-2-7b-instruct:free" },
-    { label: "DeepSeek R1 0528 (DeepSeek)", value: "deepseek/deepseek-r1-0528:free" },
-    { label: "Gemma 3 4B (Google)", value: "google/gemma-3-4b-it:free" },
-  ],
-  hf: [
-    { label: "Mistral 7B Instruct v0.3", value: "mistralai/Mistral-7B-Instruct-v0.3" },
-    { label: "Llama 3.1 8B Instruct", value: "meta-llama/Llama-3.1-8B-Instruct" },
-    { label: "Phi-3.5 Mini Instruct", value: "microsoft/Phi-3.5-mini-instruct" },
-    { label: "Qwen 2.5 7B Instruct", value: "Qwen/Qwen2.5-7B-Instruct" },
-    { label: "Gemma 2 9B Instruct", value: "google/gemma-2-9b-it" },
-  ],
-  zai: [
-    { label: "GLM-4-Flash", value: "glm-4-flash" },
-    { label: "GLM-4-AirX", value: "glm-4-airx" },
-    { label: "CodeGeeX-4", value: "codegeex-4" },
-  ],
-  copilot: [],
-};
+const FALLBACK_FREE_MODELS = getFreeModelsCatalog();
 
-const FALLBACK_DEFAULT_MODELS = {
-  openrouter: "google/gemma-2-9b-it:free",
-  hf: "mistralai/Mistral-7B-Instruct-v0.3",
-  zai: "glm-4-flash",
-  copilot: "",
-};
+const FALLBACK_DEFAULT_MODELS = getFreeModelDefaults();
+
+const INSTALL_IDE_PICK_ITEMS = Object.freeze([
+  { label: "VS Code", value: "vscode", detail: "Extensión VS Code y settings de usuario de Code." },
+  { label: "Cursor", value: "cursor", detail: "Bridge de workspace y settings de usuario de Cursor." },
+  { label: "Kiro", value: "kiro", detail: "Bridge de workspace y settings de usuario de Kiro." },
+  { label: "Antigravity", value: "antigravity", detail: "Bridge de workspace y settings de usuario de Antigravity." },
+  { label: "Codex", value: "codex", detail: "Config global de Codex en ~/.codex y bridge de workspace." },
+  { label: "Claude Code", value: "claude-code", detail: "Config global de Claude Code en ~/.claude y bridge de workspace." },
+  { label: "Gemini CLI", value: "gemini-cli", detail: "Config global de Gemini CLI en ~/.gemini y bridge de workspace." },
+]);
+
+const INSTALL_IDE_SPECIAL_ITEMS = Object.freeze([
+  { label: "Auto", value: "auto", detail: "Detecta IDEs instalados y aplica la integración a los perfiles encontrados." },
+  { label: "Todos los IDE soportados", value: "all", detail: "Aplica la integración global y de workspace en todos los IDEs soportados." },
+]);
+
+const DEFAULT_ROUTER_SKILLS = [
+  {
+    id: "agent-orchestration",
+    category: "general",
+    score: 1,
+    gh_path: ".github/skills/agent-orchestration/SKILL.md",
+  },
+  {
+    id: "free-jt7-global-runtime-audit",
+    category: "general",
+    score: 0.99,
+    gh_path: ".github/skills/free-jt7-global-runtime-audit/SKILL.md",
+  },
+  {
+    id: "verification-before-completion",
+    category: "general",
+    score: 0.98,
+    gh_path: ".github/skills/verification-before-completion/SKILL.md",
+  },
+];
+
+let activeCopilotRouterRun = null;
+let activeScheduler = null;
 
 function loadFreeModelsCatalog() {
-  const catalogPath = path.resolve(__dirname, "../free-models-catalog.js");
+  // From src-js/core/: "../" = src-js/ (correct)
+  // From dist/:        "../" = {root}/ (wrong) → fallback to "../../src-js/"
+  const primary = path.resolve(__dirname, "../free-models-catalog.js");
+  const secondary = path.resolve(__dirname, "../../src-js/free-models-catalog.js");
+  const adapterPrimary = path.resolve(__dirname, "./api-provider-adapter.js");
+  const adapterSecondary = path.resolve(__dirname, "../../src-js/core/api-provider-adapter.js");
+  const catalogPath = fs.existsSync(primary) ? primary : secondary;
+  for (const cachePath of [catalogPath, adapterPrimary, adapterSecondary]) {
+    if (fs.existsSync(cachePath)) {
+      delete require.cache[cachePath];
+    }
+  }
   if (fs.existsSync(catalogPath)) {
-    delete require.cache[catalogPath];
     return require(catalogPath);
   }
   return {
@@ -107,6 +135,221 @@ function runCommand(bin, args, options, output) {
       resolve({ code: code ?? 1, stderr });
     });
   });
+}
+
+function runCommandCapture(bin, args, options, output) {
+  return new Promise((resolve) => {
+    const child = spawn(bin, args, { ...options, shell: false });
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout.on("data", (chunk) => {
+      const text = chunk.toString();
+      stdout += text;
+      if (output) {
+        output.append(text);
+      }
+    });
+
+    child.stderr.on("data", (chunk) => {
+      const text = chunk.toString();
+      stderr += text;
+      if (output) {
+        output.append(text);
+      }
+    });
+
+    child.on("error", (err) => {
+      stderr += `${err.message}\n`;
+      if (output) {
+        output.appendLine(err.message);
+      }
+    });
+
+    child.on("close", (code) => {
+      resolve({ code: code ?? 1, stdout, stderr });
+    });
+  });
+}
+
+function createTrackedRunId() {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z").replace("T", "T");
+  return `${stamp}-${randomUUID().slice(0, 8)}`;
+}
+
+function getSkillsManagerPath(context) {
+  return path.join(context.extensionPath, "skills_manager.py");
+}
+
+function normalizeResolvedSkills(skills) {
+  if (!Array.isArray(skills) || skills.length === 0) {
+    return DEFAULT_ROUTER_SKILLS;
+  }
+  return skills
+    .filter((item) => item && item.id)
+    .map((item) => ({
+      id: String(item.id),
+      category: String(item.category || "general"),
+      score: Number(item.score || 0),
+      gh_path: String(item.gh_path || item.path || `.github/skills/${item.id}/SKILL.md`),
+    }));
+}
+
+function formatResolvedSkills(skills) {
+  return normalizeResolvedSkills(skills).map((item) => item.id).join(", ");
+}
+
+async function runSkillsManagerJson(context, output, managerArgs) {
+  const managerPath = getSkillsManagerPath(context);
+  if (!fs.existsSync(managerPath)) {
+    throw new Error(`Free JT7: no se encontro ${managerPath}.`);
+  }
+  const py = pythonCommand(context.extensionPath);
+  const args = [...py.args, managerPath, ...managerArgs];
+  const result = await runCommandCapture(py.bin, args, { cwd: context.extensionPath }, output);
+  if (result.code !== 0) {
+    const detail = String(result.stderr || result.stdout || "error desconocido").trim();
+    throw new Error(detail || `skills_manager.py ${managerArgs[0]} fallo con codigo ${result.code}`);
+  }
+  try {
+    return JSON.parse(result.stdout || "null");
+  } catch (error) {
+    throw new Error(`Free JT7: salida JSON invalida de skills_manager.py ${managerArgs[0]} (${error.message}).`);
+  }
+}
+
+async function resolveSkillsForGoal(context, output, goal) {
+  try {
+    const items = await runSkillsManagerJson(context, output, ["skill-resolve", "--query", goal, "--top", "3", "--json"]);
+    const normalized = normalizeResolvedSkills(items);
+    output.appendLine(`[freejt7-router] skills=${formatResolvedSkills(normalized)}`);
+    return normalized;
+  } catch (error) {
+    output.appendLine(`[freejt7-router] skill-resolve fallback: ${String(error.message || error)}`);
+    return DEFAULT_ROUTER_SKILLS;
+  }
+}
+
+async function startTrackedTask(context, output, runId, goal) {
+  const managerPath = getSkillsManagerPath(context);
+  if (!fs.existsSync(managerPath)) {
+    throw new Error(`Free JT7: no se encontro ${managerPath}.`);
+  }
+  const py = pythonCommand(context.extensionPath);
+  const args = [
+    ...py.args,
+    managerPath,
+    "task-start",
+    "--run-id",
+    runId,
+    "--goal",
+    goal,
+    "--scope",
+    "workspace",
+    "--ide",
+    "vscode",
+    "--profile",
+    "default",
+  ];
+  const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
+  if (result.code !== 0) {
+    throw new Error("Free JT7: no se pudo abrir la trazabilidad inicial con task-start.");
+  }
+}
+
+async function closeTrackedTask(context, output, runId, summary) {
+  const managerPath = getSkillsManagerPath(context);
+  if (!fs.existsSync(managerPath)) {
+    throw new Error(`Free JT7: no se encontro ${managerPath}.`);
+  }
+  const py = pythonCommand(context.extensionPath);
+  const args = [
+    ...py.args,
+    managerPath,
+    "task-close",
+    "--run-id",
+    runId,
+    "--summary",
+    summary,
+  ];
+  const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
+  return result.code === 0;
+}
+
+async function collectMandatoryIntake(baseGoal) {
+  const deliverable = await vscode.window.showInputBox({
+    prompt: "Aclaracion obligatoria 1/3: ¿cual es el entregable esperado exactamente?",
+    value: baseGoal,
+    ignoreFocusOut: true,
+  });
+  if (deliverable === undefined) {
+    return null;
+  }
+
+  const constraints = await vscode.window.showInputBox({
+    prompt: "Aclaracion obligatoria 2/3: indica restricciones, limites o no-goals.",
+    placeHolder: "Ej: no tocar X, cambios minimos, sin romper compatibilidad...",
+    ignoreFocusOut: true,
+  });
+  if (constraints === undefined) {
+    return null;
+  }
+
+  const verification = await vscode.window.showInputBox({
+    prompt: "Aclaracion obligatoria 3/3: ¿como debe verificarse el resultado?",
+    placeHolder: "Ej: build, pruebas, lint, validacion manual, evidencia requerida...",
+    ignoreFocusOut: true,
+  });
+  if (verification === undefined) {
+    return null;
+  }
+
+  return {
+    deliverable: String(deliverable || baseGoal).trim(),
+    constraints: String(constraints || "Sin restricciones adicionales declaradas.").trim(),
+    verification: String(verification || "Validacion ligera requerida.").trim(),
+  };
+}
+
+function buildAuditedRouterGoal(baseGoal, intake, skills) {
+  const resolvedSkills = normalizeResolvedSkills(skills);
+  return [
+    "Solicitud base:",
+    String(baseGoal || "").trim(),
+    "",
+    "Aclaraciones obligatorias previas al plan:",
+    `- Entregable esperado: ${intake.deliverable}`,
+    `- Restricciones / no-goals: ${intake.constraints}`,
+    `- Verificacion esperada: ${intake.verification}`,
+    "",
+    "Skills prioritarios ya resueltos:",
+    ...resolvedSkills.map((item) => `- ${item.id}`),
+    "",
+    "Politica operativa obligatoria:",
+    "- Hacer desglose de micro-tareas antes de ejecutar.",
+    "- Mantener checklist y trazabilidad en docs/TASKS.md y copilot-agent/.",
+    "- La delegacion a sub-agentes es preferente cuando mejore aislamiento, calidad o velocidad; si no se usa, justificarlo brevemente.",
+    "- No declarar exito sin verificacion y cierre trazado.",
+  ].join("\n");
+}
+
+async function prepareAuditedTask(context, output, baseGoal) {
+  const intake = await collectMandatoryIntake(baseGoal);
+  if (!intake) {
+    return null;
+  }
+  const preSkillGoal = [
+    String(baseGoal || "").trim(),
+    `Entregable: ${intake.deliverable}`,
+    `Restricciones: ${intake.constraints}`,
+    `Verificacion: ${intake.verification}`,
+  ].join("\n");
+  const selectedSkills = await resolveSkillsForGoal(context, output, preSkillGoal);
+  const goal = buildAuditedRouterGoal(baseGoal, intake, selectedSkills);
+  const runId = createTrackedRunId();
+  await startTrackedTask(context, output, runId, goal);
+  output.appendLine(`[freejt7-router] intake-completo run_id=${runId}`);
+  return { goal, runId, intake, selectedSkills };
 }
 
 function isWorkingPython(bin, prefixArgs = []) {
@@ -197,6 +440,69 @@ function appendDoctorDiagnostics(output, py) {
   return diagnostics;
 }
 
+function getInstallIdeLabel(ide) {
+  const items = [...INSTALL_IDE_SPECIAL_ITEMS, ...INSTALL_IDE_PICK_ITEMS];
+  const match = items.find((item) => item.value === ide);
+  return match ? match.label : ide;
+}
+
+async function pickInstallIde(defaultIde, options = {}) {
+  const includeSpecialItems = Boolean(options.includeSpecialItems);
+  const items = [
+    ...(includeSpecialItems ? INSTALL_IDE_SPECIAL_ITEMS : []),
+    ...INSTALL_IDE_PICK_ITEMS,
+  ].map((item) => ({
+    ...item,
+    description: item.value === defaultIde ? "Configurado actualmente" : "",
+  }));
+
+  const selection = await vscode.window.showQuickPick(items, {
+    placeHolder: options.placeHolder || "Selecciona el IDE objetivo para la instalación de Free JT7",
+    ignoreFocusOut: true,
+  });
+
+  return selection ? selection.value : "";
+}
+
+async function runManagedInstall(context, output, installOptions) {
+  const managerPath = path.join(context.extensionPath, "skills_manager.py");
+  if (!fs.existsSync(managerPath)) {
+    const message = `Free JT7: no se encontro ${managerPath}.`;
+    vscode.window.showErrorMessage(message);
+    return { ok: false, message };
+  }
+
+  const py = pythonCommand(context.extensionPath);
+  const args = [
+    ...py.args,
+    managerPath,
+    "install",
+    installOptions.targetPath,
+    "--ide",
+    installOptions.ide,
+  ];
+
+  if (installOptions.updateUserSettings) {
+    args.push("--update-user-settings");
+  }
+  if (installOptions.force) {
+    args.push("--force");
+  }
+
+  output.appendLine(installOptions.startMessage);
+  output.appendLine(`[freejt7] ${[py.bin, ...args].map((arg) => `"${arg}"`).join(" ")}`);
+  output.show(true);
+
+  const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
+  if (result.code === 0) {
+    vscode.window.showInformationMessage(installOptions.successMessage);
+    return { ok: true, message: installOptions.successMessage };
+  }
+
+  vscode.window.showErrorMessage(installOptions.errorMessage);
+  return { ok: false, message: installOptions.errorMessage };
+}
+
 async function installWorkspace(context, output) {
   const workspacePath = getPrimaryWorkspacePath();
   if (!workspacePath) {
@@ -216,77 +522,66 @@ async function installWorkspace(context, output) {
   const ide = config.get("install.ide", "vscode");
   const updateUserSettings = config.get("install.updateUserSettings", true);
   const force = config.get("install.force", false);
-  const py = pythonCommand(context.extensionPath);
 
-  const args = [
-    ...py.args,
-    managerPath,
-    "install",
-    workspacePath,
-    "--ide",
+  return runManagedInstall(context, output, {
+    targetPath: workspacePath,
     ide,
-  ];
-  if (updateUserSettings) {
-    args.push("--update-user-settings");
-  }
-  if (force) {
-    args.push("--force");
-  }
-
-  output.appendLine("[freejt7] Iniciando instalacion...");
-  output.appendLine(`[freejt7] ${[py.bin, ...args].map((a) => `"${a}"`).join(" ")}`);
-  output.show(true);
-
-  const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
-  if (result.code === 0) {
-    const message = "Free JT7: instalacion completada correctamente.";
-    vscode.window.showInformationMessage(message);
-    return { ok: true, message };
-  } else {
-    const message = "Free JT7: fallo la instalacion. Revisa el Output 'Free JT7'.";
-    vscode.window.showErrorMessage(message);
-    return { ok: false, message };
-  }
+    updateUserSettings,
+    force,
+    startMessage: `[freejt7] Iniciando instalacion de workspace para ${getInstallIdeLabel(ide)}...`,
+    successMessage: `Free JT7: instalacion completada correctamente para ${getInstallIdeLabel(ide)}.`,
+    errorMessage: `Free JT7: fallo la instalacion para ${getInstallIdeLabel(ide)}. Revisa el Output 'Free JT7'.`,
+  });
 }
 
 async function installGlobalVsCode(context, output) {
-  const managerPath = path.join(context.extensionPath, "skills_manager.py");
-  if (!fs.existsSync(managerPath)) {
-    const message = `Free JT7: no se encontro ${managerPath}.`;
-    vscode.window.showErrorMessage(message);
-    return { ok: false, message };
-  }
-
   const config = vscode.workspace.getConfiguration("freejt7");
   const force = config.get("install.force", false);
-  const py = pythonCommand(context.extensionPath);
-  const args = [
-    ...py.args,
-    managerPath,
-    "install",
-    context.extensionPath,
-    "--ide",
-    "vscode",
-    "--update-user-settings",
-  ];
-  if (force) {
-    args.push("--force");
+  const workspacePath = getPrimaryWorkspacePath();
+
+  return runManagedInstall(context, output, {
+    targetPath: workspacePath || context.extensionPath,
+    ide: "vscode",
+    updateUserSettings: true,
+    force,
+    startMessage: "[freejt7] Aplicando configuracion global de VS Code...",
+    successMessage: workspacePath
+      ? "Free JT7: configuracion global de VS Code aplicada y workspace sincronizado."
+      : "Free JT7: configuracion global de VS Code aplicada correctamente.",
+    errorMessage: "Free JT7: fallo la configuracion global de VS Code. Revisa el Output 'Free JT7'.",
+  });
+}
+
+async function installGlobalMultiIde(context, output) {
+  const config = vscode.workspace.getConfiguration("freejt7");
+  const configuredIde = config.get("install.ide", "auto");
+  const ide = await pickInstallIde(configuredIde, {
+    includeSpecialItems: true,
+    placeHolder: "Selecciona el IDE o alcance global que quieres configurar",
+  });
+
+  if (!ide) {
+    return { ok: false, message: "Free JT7: instalacion global multi-IDE cancelada." };
   }
 
-  output.appendLine("[freejt7] Aplicando configuracion global de VS Code...");
-  output.appendLine(`[freejt7] ${[py.bin, ...args].map((a) => `"${a}"`).join(" ")}`);
-  output.show(true);
+  const force = config.get("install.force", false);
+  const workspacePath = getPrimaryWorkspacePath();
+  const result = await runManagedInstall(context, output, {
+    targetPath: workspacePath || context.extensionPath,
+    ide,
+    updateUserSettings: true,
+    force,
+    startMessage: `[freejt7] Aplicando configuracion global para ${getInstallIdeLabel(ide)}...`,
+    successMessage: workspacePath
+      ? `Free JT7: configuracion global aplicada para ${getInstallIdeLabel(ide)} y workspace sincronizado.`
+      : `Free JT7: configuracion global aplicada para ${getInstallIdeLabel(ide)}.`,
+    errorMessage: `Free JT7: fallo la configuracion global para ${getInstallIdeLabel(ide)}. Revisa el Output 'Free JT7'.`,
+  });
 
-  const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
-  if (result.code === 0) {
-    const message = "Free JT7: configuracion global de VS Code aplicada correctamente.";
-    vscode.window.showInformationMessage(message);
-    return { ok: true, message };
+  if (result.ok && !workspacePath) {
+    result.message = `${result.message} Abre un workspace si tambien quieres desplegar bridges locales de proyecto.`;
   }
-
-  const message = "Free JT7: fallo la configuracion global. Revisa el Output 'Free JT7'.";
-  vscode.window.showErrorMessage(message);
-  return { ok: false, message };
+  return result;
 }
 
 async function runtimeDoctor(context, output) {
@@ -394,8 +689,16 @@ function updateProviderStatusBar(providerStatusBar) {
 }
 
 async function routeTaskWithGoal(context, output, goal) {
-  if (!goal) {
+  const preparedTask = goal && typeof goal === "object" ? goal : null;
+  const finalGoal = String(preparedTask?.goal || goal || "").trim();
+  if (!finalGoal) {
     return null;
+  }
+
+  if (activeCopilotRouterRun) {
+    const message = "Free JT7: ya hay una ejecucion activa del router Copilot. Espera a que termine antes de lanzar otra.";
+    output.appendLine(`[freejt7-router] ${message}`);
+    throw new Error(message);
   }
 
   const workspacePath = getPrimaryWorkspacePath();
@@ -403,16 +706,38 @@ async function routeTaskWithGoal(context, output, goal) {
     throw new Error("Free JT7: abre un workspace antes de usar el router Copilot.");
   }
 
-  output.appendLine(`[freejt7-router] starting goal=${goal}`);
+  output.appendLine(`[freejt7-router] starting goal=${finalGoal}`);
   output.show(true);
-  return runCopilotRouter({
-    goal,
+  activeCopilotRouterRun = runCopilotRouter({
+    goal: finalGoal,
     workspacePath,
     vscode,
     output,
     extensionPath: context.extensionPath,
     secretStorage: context.secrets,
+    runId: preparedTask?.runId || "",
+    selectedSkills: preparedTask?.selectedSkills || DEFAULT_ROUTER_SKILLS,
+    intake: preparedTask?.intake || null,
   });
+  try {
+    const result = await activeCopilotRouterRun;
+    if (preparedTask?.runId) {
+      const summary = String(result?.final?.summary || result?.run?.summary || "Free JT7 router completado.");
+      const closeOk = await closeTrackedTask(context, output, preparedTask.runId, summary);
+      if (!closeOk) {
+        output.appendLine(`[freejt7-router] warning: task-close no pudo cerrar ${preparedTask.runId} en verde.`);
+      }
+    }
+    return result;
+  } catch (error) {
+    if (preparedTask?.runId) {
+      const message = String(error && error.message ? error.message : error);
+      await closeTrackedTask(context, output, preparedTask.runId, message).catch(() => {});
+    }
+    throw error;
+  } finally {
+    activeCopilotRouterRun = null;
+  }
 }
 
 async function routeTaskWithCopilot(context, output) {
@@ -426,7 +751,11 @@ async function routeTaskWithCopilot(context, output) {
   }
 
   try {
-    const result = await routeTaskWithGoal(context, output, goal);
+    const preparedTask = await prepareAuditedTask(context, output, goal);
+    if (!preparedTask) {
+      return;
+    }
+    const result = await routeTaskWithGoal(context, output, preparedTask);
     if (!result) {
       return;
     }
@@ -486,15 +815,15 @@ async function handleChatRequest(context, output, request, chatContext, stream) 
 
   if (command === "install") {
     const workspacePath = getPrimaryWorkspacePath();
-    stream.progress(workspacePath ? "Instalando Free JT7 en el workspace actual..." : "Aplicando configuracion global de VS Code...");
-    const result = workspacePath ? await installWorkspace(context, output) : await installGlobalVsCode(context, output);
+    stream.progress(workspacePath ? "Instalando Free JT7 en el workspace actual..." : "Aplicando configuracion global multi-IDE...");
+    const result = workspacePath ? await installWorkspace(context, output) : await installGlobalMultiIde(context, output);
     stream.markdown(result?.message || "Instalacion finalizada.");
     return { metadata: { command, ok: Boolean(result?.ok) } };
   }
 
   if (command === "global") {
-    stream.progress("Aplicando configuracion global de VS Code...");
-    const result = await installGlobalVsCode(context, output);
+    stream.progress("Aplicando configuracion global multi-IDE...");
+    const result = await installGlobalMultiIde(context, output);
     stream.markdown(result?.message || "Configuracion global finalizada.");
     return { metadata: { command, ok: Boolean(result?.ok) } };
   }
@@ -505,9 +834,15 @@ async function handleChatRequest(context, output, request, chatContext, stream) 
     return { metadata: { command, ok: false } };
   }
 
-  stream.progress("Ejecutando el router de Free JT7...");
+  stream.progress("Recogiendo intake obligatorio de Free JT7...");
   try {
-    const result = await routeTaskWithGoal(context, output, prompt);
+    const preparedTask = await prepareAuditedTask(context, output, prompt);
+    if (!preparedTask) {
+      stream.markdown("Se canceló el intake obligatorio. Vuelve a lanzar la tarea cuando quieras continuar.");
+      return { metadata: { command, ok: false, cancelled: true } };
+    }
+    stream.progress("Ejecutando el router auditado de Free JT7...");
+    const result = await routeTaskWithGoal(context, output, preparedTask);
     stream.markdown(formatRouterMarkdown(result));
     return {
       metadata: {
@@ -539,7 +874,6 @@ async function ensureMcpDependencies(extensionPath, output) {
 }
 
 function activate(context) {
-  getRemoteBridge().start();
   let providerStatusBar;
   const output = vscode.window.createOutputChannel("Free JT7");
   const chatDiagnostics = getChatDiagnostics();
@@ -587,13 +921,25 @@ function activate(context) {
   try {
     const _wp = (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]
       ? vscode.workspace.workspaceFolders[0].uri.fsPath : null) || context.extensionPath;
+    getRemoteBridge({ rootDir: _wp }).start();
+    const pluginRuntime = getPluginRuntime();
+    const integrationDiscovery = pluginRuntime.discoverAndLoadIntegrations({
+      directories: [path.join(_wp, 'integrations')],
+      allowExperimental: false,
+    });
     const _orch = new MemoryOrchestrator({ workspacePath: _wp });
-    createDefaultScheduler({}, _orch);
+    activeScheduler = createDefaultScheduler({ rootDir: _wp }, _orch);
+    activeScheduler.start();
+    output.appendLine('[freejt7] Scheduler runtime inicializado.');
+    if (integrationDiscovery.loaded.length > 0) {
+      output.appendLine(`[freejt7] Capability packs cargados: ${integrationDiscovery.loaded.length}`);
+    }
   } catch (_) { /* non-fatal — scheduler must never crash extension startup */ }
 
   const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
     vscode.commands.registerCommand("freejt7.installGlobalVsCode", () => installGlobalVsCode(context, output)),
+    vscode.commands.registerCommand("freejt7.installGlobalMultiIde", () => installGlobalMultiIde(context, output)),
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
     vscode.commands.registerCommand("freejt7.openRuntimeDocs", () => openRuntimeDocs(context)),
     vscode.commands.registerCommand("freejt7.routeTaskWithCopilot", () => routeTaskWithCopilot(context, output)),
@@ -646,7 +992,7 @@ function activate(context) {
         if (items.length > 0) {
           items.push({ label: "✏️ Escribir manualmente...", description: "" });
           const selection = await vscode.window.showQuickPick(items, {
-            placeHolder: `Modelo gratis para ${picked.value} (actual: ${currentModel || "ninguno"})`,
+            placeHolder: `Modelo verificado para ${picked.value} (actual: ${currentModel || "ninguno"})`,
           });
           if (!selection) return;
           if (selection.label === "✏️ Escribir manualmente...") {
@@ -703,7 +1049,7 @@ function activate(context) {
       }
       const currentModel = config.get("apiProviderModel") || "";
       const items = buildModelQuickPickItems(provider, currentModel);
-      const selection = await vscode.window.showQuickPick(items, { placeHolder: `Selecciona modelo gratis para ${provider}` });
+      const selection = await vscode.window.showQuickPick(items, { placeHolder: `Selecciona modelo verificado para ${provider}` });
       if (!selection) return;
       await config.update("apiProviderModel", selection.modelValue, vscode.ConfigurationTarget.Global);
       updateProviderStatusBar(providerStatusBar);
@@ -715,6 +1061,28 @@ function activate(context) {
       updateProviderStatusBar(providerStatusBar);
       output.appendLine("[freejt7] Catálogo de modelos gratuitos recargado en runtime.");
       vscode.window.showInformationMessage("Free JT7: catálogo de modelos actualizado.");
+    }),
+    vscode.commands.registerCommand("freejt7.testApiProvider", async () => {
+      const config = vscode.workspace.getConfiguration("freejt7");
+      const provider = config.get("apiProvider") || "copilot";
+      if (provider === "copilot") {
+        vscode.window.showInformationMessage("Free JT7: Copilot usa autenticación GitHub — no requiere test de conexión externo.");
+        return;
+      }
+      const model = config.get("apiProviderModel") || "";
+      output.appendLine(`[freejt7] Probando conexión: provider=${provider} model=${model || "default"}`);
+      output.show(true);
+      vscode.window.showInformationMessage(`Free JT7: probando conexión con ${provider}...`);
+      try {
+        const result = await _callProvider("Responde solo con la palabra ok.", { provider, model }, context.secrets);
+        const summary = String(result?.run?.summary || result?.final?.summary || "ok").slice(0, 150);
+        output.appendLine(`[freejt7] Conexión OK con ${provider}: ${summary}`);
+        vscode.window.showInformationMessage(`Free JT7: conexion con ${provider} verificada ✓. Respuesta: ${summary.slice(0, 80)}`);
+      } catch (err) {
+        const msg = String(err?.message || err).slice(0, 300);
+        output.appendLine(`[freejt7] Error al probar ${provider}: ${msg}`);
+        vscode.window.showErrorMessage(`Free JT7: fallo la conexion con ${provider}. ${msg}`);
+      }
     }),
     output,
   ];
@@ -745,6 +1113,10 @@ function activate(context) {
 }
 
 function deactivate() {
+  if (activeScheduler && typeof activeScheduler.stop === 'function') {
+    activeScheduler.stop();
+    activeScheduler = null;
+  }
   getRemoteBridge().stop();
 }
 

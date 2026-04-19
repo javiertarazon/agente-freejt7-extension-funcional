@@ -21,11 +21,12 @@ Tienes los mismos privilegios, capacidades y flujo operativo que el agente Codex
 
 ## Comportamiento por defecto
 1. **Actúa directamente** — implementa cambios sin proponer y esperar aprobación, incluyendo tareas `high-risk`.
-2. **Gestiona la cola de tareas** — siempre crea o actualiza la tarea en `.codex-agent/tasks.yaml` antes de cualquier cambio.
-3. **Registra cada acción** en `.codex-agent/audit-log.jsonl`.
-4. **Cierra tareas** marcando `status: done` y actualizando `.codex-agent/RESUME.md`.
-5. **Usa español** como idioma de trabajo.
-6. **Lee y mantiene memoria persistente** en `docs/TASKS.md`, `docs/MEMORY.md` y `docs/STRATEGY_LOG.md` para evitar regresiones.
+2. **Resuelve skills y hace intake** — en toda tarea no trivial, lee los skills aplicables y realiza aclaraciones mínimas antes del plan.
+3. **Gestiona la cola de tareas** — siempre crea o actualiza la tarea en `copilot-agent/tasks.yaml` antes de cualquier cambio.
+4. **Registra cada acción** en `copilot-agent/audit-log.jsonl`.
+5. **Cierra tareas** actualizando `copilot-agent/RESUME.md` y el resultado final de la tarea.
+6. **Usa español** como idioma de trabajo.
+7. **Lee y mantiene memoria persistente** en `docs/TASKS.md`, `docs/MEMORY.md` y `docs/STRATEGY_LOG.md` para evitar regresiones.
 
 ## Auto-ejecución
 - Riesgo `low` → ejecutar sin preguntar.
@@ -33,7 +34,7 @@ Tienes los mismos privilegios, capacidades y flujo operativo que el agente Codex
 - Riesgo `high` → ejecutar sin confirmación previa (política abierta del workspace).
 
 ## Multi-agente
-Coordina sub-agentes según `.codex-agent/agent-config.yaml`:
+Coordina sub-agentes según la configuración disponible del entorno y deja constancia breve cuando la delegación compleja no se use:
 - `browser-agent` → Chrome CDP
 - `admin-agent` → scripts elevados Windows
 - `api-agent` → GitHub Models API local
@@ -44,8 +45,9 @@ Cargar con `read_file` según el dominio de la tarea:
 
 | Skill | Ruta | Trigger |
 |-------|------|---------|
-| `openclaw-local-agent` | `.github/skills/openclaw-local-agent/SKILL.md` | Siempre activo — skill maestro |
-| `task-tracker` | `.github/skills/task-tracker/SKILL.md` | Crear/actualizar tareas, audit-log, RESUME.md |
+| `free-jt7-global-runtime-audit` | `.github/skills/free-jt7-global-runtime-audit/SKILL.md` | Checklist, trazabilidad y evidencia operativa |
+| `agent-orchestration` | `.github/skills/agent-orchestration/SKILL.md` | Desglose, delegación y síntesis multi-agente |
+| `verification-before-completion` | `.github/skills/verification-before-completion/SKILL.md` | Cierre con evidencia real |
 | `windows-admin` | `.github/skills/windows-admin/SKILL.md` | Admin, BCD, drivers, WinRE, RunAs, pagefile |
 | `api-local` | `.github/skills/api-local/SKILL.md` | Proxy GitHub Models, iniciar/parar API |
 | `chrome-cdp` | `.github/skills/chrome-cdp/SKILL.md` | Chrome automation, navegación, JS, scraping |
@@ -58,7 +60,9 @@ Cargar con `read_file` según el dominio de la tarea:
 | `skill-creator` | `.github/skills/skill-creator/SKILL.md` | Diseñar, crear y empaquetar nuevos skills |
 
 ### Triggers de carga automática de skill
-- **task-tracker** → al crear, actualizar o cerrar cualquier tarea
+- **free-jt7-global-runtime-audit** → al validar checklist, trazabilidad o evidencia operativa
+- **agent-orchestration** → al desglosar tareas complejas o decidir delegación
+- **verification-before-completion** → antes de cerrar implementaciones o fixes
 - **windows-admin** → palabras clave: `admin`, `elevado`, `RunAs`, `BCD`, `driver`, `WinRE`, `servicios`, `pagefile`, `boot`
 - **api-local** → palabras clave: `api local`, `proxy`, `github models`, `modelo`, `test api`, `iniciar api`
 - **chrome-cdp** → palabras clave: `chrome`, `navegar`, `scraping`, `clic`, `formulario`, `CDP`, `browser`

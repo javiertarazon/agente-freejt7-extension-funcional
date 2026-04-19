@@ -9,20 +9,77 @@
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const {
+  getModelLimits,
+  compactPrompt,
+} = require('./context-budget');
 
-const PROVIDER_LIMITS = {
-  openrouter: {
-    promptCharsBudget: 32000,
-    maxOutputTokens: 1500,
-  },
-  hf: {
-    promptCharsBudget: 18000,
-    maxOutputTokens: 1200,
-  },
-  zai: {
-    promptCharsBudget: 24000,
-    maxOutputTokens: 1500,
-  },
+const FREE_PROVIDER_MODELS = Object.freeze({
+  openrouter: [
+    { label: "Hermes 3 Llama 405B (NousResearch)", value: "nousresearch/hermes-3-llama-3.1-405b:free" },
+    { label: "Nemotron Super 120B (NVIDIA)", value: "nvidia/nemotron-3-super-120b-a12b:free" },
+    { label: "GPT-OSS 120B (OpenAI)", value: "openai/gpt-oss-120b:free" },
+    { label: "Gemma 4 31B (Google)", value: "google/gemma-4-31b-it:free" },
+    { label: "Gemma 4 26B (Google)", value: "google/gemma-4-26b-a4b-it:free" },
+    { label: "Qwen3 Coder (Alibaba)", value: "qwen/qwen3-coder:free" },
+    { label: "Llama 3.3 70B (Meta)", value: "meta-llama/llama-3.3-70b-instruct:free" },
+    { label: "MiniMax M2.5 (MiniMax)", value: "minimax/minimax-m2.5:free" },
+    { label: "Qwen3 80B (Alibaba)", value: "qwen/qwen3-next-80b-a3b-instruct:free" },
+    { label: "Gemma 3 27B (Google)", value: "google/gemma-3-27b-it:free" },
+    { label: "GPT-OSS 20B (OpenAI)", value: "openai/gpt-oss-20b:free" },
+    { label: "Gemma 3 12B (Google)", value: "google/gemma-3-12b-it:free" },
+    { label: "Gemma 3 4B (Google)", value: "google/gemma-3-4b-it:free" },
+    { label: "Nemotron Nano 30B (NVIDIA)", value: "nvidia/nemotron-3-nano-30b-a3b:free" },
+    { label: "GLM 4.5 Air (ZAI)", value: "z-ai/glm-4.5-air:free" },
+  ],
+  hf: [
+    { label: "Qwen 2.5 7B Turbo", value: "Qwen/Qwen2.5-7B-Instruct-Turbo" },
+    { label: "Llama 3.3 70B Turbo (Meta)", value: "meta-llama/Llama-3.3-70B-Instruct-Turbo" },
+    { label: "DeepSeek V3", value: "deepseek-ai/DeepSeek-V3" },
+    { label: "DeepSeek R1", value: "deepseek-ai/DeepSeek-R1" },
+  ],
+  zai: [
+    { label: "GLM-4.5-Flash (gratuito)", value: "glm-4.5-flash" },
+    { label: "GLM-4.7-Flash (gratuito)", value: "glm-4.7-flash" },
+  ],
+  copilot: [],
+});
+
+const FREE_PROVIDER_DEFAULT_MODELS = Object.freeze({
+  openrouter: "meta-llama/llama-3.3-70b-instruct:free",
+  hf: "Qwen/Qwen2.5-7B-Instruct-Turbo",
+  zai: "glm-4.5-flash",
+  copilot: "",
+});
+
+function cloneModelEntries(entries) {
+  return Array.isArray(entries)
+    ? entries.map((entry) => ({ label: entry.label, value: entry.value }))
+    : [];
+}
+
+function getFreeModelsCatalog(provider) {
+  if (provider) {
+    return cloneModelEntries(FREE_PROVIDER_MODELS[provider]);
+  }
+  return Object.fromEntries(
+    Object.entries(FREE_PROVIDER_MODELS).map(([key, entries]) => [key, cloneModelEntries(entries)])
+  );
+}
+
+function getFreeModelDefault(provider) {
+  return FREE_PROVIDER_DEFAULT_MODELS[provider] || "";
+}
+
+function getFreeModelDefaults() {
+  return { ...FREE_PROVIDER_DEFAULT_MODELS };
+}
+
+// Límites de salida por proveedor cuando no se conoce el modelo exacto
+const PROVIDER_OUTPUT_TOKENS = {
+  openrouter: 1500,
+  hf:         1200,
+  zai:        1500,
 };
 
 // ---------------------------------------------------------------------------
@@ -70,14 +127,30 @@ function readEnvApiFile(provider) {
     hf: "HUGGINGFACE_API_KEY",
     zai: "ZAI_API_KEY",
   };
+  // Patrones alternativos para formato legible: "email provider: key" o "provider:key"
+  // Cada patrón es específico para evitar falsos positivos (ej: modelos como openrouter:anthropic/claude)
+  const altPatterns = {
+    openrouter: /\bopenrouter:(sk-or-v1-\S+)/i,
+    hf:         /\bhf:(hf_\S+)/i,
+    zai:        /\bzai:\s*([a-f0-9]{32}\.\S+)/i,
+  };
   for (const filePath of candidates) {
     if (!fs.existsSync(filePath)) continue;
     const lines = fs.readFileSync(filePath, "utf8").split("\n");
     for (const line of lines) {
+      if (!line.trim()) continue;
+      // Formato 1: KEY=VALUE (estándar .env)
       const eqIdx = line.indexOf("=");
-      if (eqIdx === -1) continue;
-      const k = line.slice(0, eqIdx).trim();
-      if (k === keyMap[provider]) return line.slice(eqIdx + 1).trim();
+      if (eqIdx !== -1) {
+        const k = line.slice(0, eqIdx).trim();
+        if (k === keyMap[provider]) return line.slice(eqIdx + 1).trim();
+      }
+      // Formato 2: formato legible "email provider: key" o "provider:key"
+      const pat = altPatterns[provider];
+      if (pat) {
+        const m = line.match(pat);
+        if (m && m[1]) return m[1].trim();
+      }
     }
   }
   return null;
@@ -87,38 +160,12 @@ function normalizeApiKey(value) {
   return String(value || "").trim().replace(/^['"]|['"]$/g, "");
 }
 
-function estimateTokens(text) {
-  return Math.ceil(String(text || "").length / 4);
-}
-
-function compactGoal(goal, provider) {
-  const limits = PROVIDER_LIMITS[provider] || PROVIDER_LIMITS.openrouter;
-  const normalized = String(goal || "").replace(/\r\n/g, "\n").trim();
-  if (!normalized) {
-    return { text: "", truncated: false, estimatedTokens: 0 };
-  }
-
-  if (normalized.length <= limits.promptCharsBudget) {
-    return {
-      text: normalized,
-      truncated: false,
-      estimatedTokens: estimateTokens(normalized),
-    };
-  }
-
-  const headSize = Math.floor(limits.promptCharsBudget * 0.65);
-  const tailSize = Math.max(0, limits.promptCharsBudget - headSize);
-  const compacted = [
-    normalized.slice(0, headSize).trimEnd(),
-    "\n\n[... contexto recortado automaticamente por Free JT7 para respetar el limite del proveedor ...]\n\n",
-    normalized.slice(-tailSize).trimStart(),
-  ].join("");
-
-  return {
-    text: compacted,
-    truncated: true,
-    estimatedTokens: estimateTokens(compacted),
-  };
+/**
+ * Detecta si un error es por exceso de contexto para activar retry.
+ */
+function isContextError(err) {
+  const msg = String(err && err.message ? err.message : err);
+  return /maximum context length|context length|too many tokens|input is too long|prompt is too long|context_length_exceeded/i.test(msg);
 }
 
 function normalizeProviderError(provider, statusCode, payload, goalInfo) {
@@ -130,11 +177,14 @@ function normalizeProviderError(provider, statusCode, payload, goalInfo) {
       || `HTTP ${statusCode || 500}`
   );
 
-  if (/maximum context length|context length|too many tokens|input is too long|prompt is too long/i.test(message)) {
+  if (/maximum context length|context length|too many tokens|input is too long|prompt is too long|context_length_exceeded/i.test(message)) {
+    const modelInfo = goalInfo?.model ? ` (modelo: ${goalInfo.model}, budget: ${goalInfo.promptCharsBudget} chars)` : "";
     const detail = goalInfo?.truncated
-      ? "Free JT7 recortó el prompt automáticamente, pero el proveedor aún rechazó la solicitud por contexto excesivo. Reduce el tamaño del hilo o abre un chat nuevo."
-      : "El proveedor rechazó la solicitud por exceso de contexto. Free JT7 necesita recortar este prompt antes de reenviarlo.";
-    return new Error(`Free JT7 (${provider}): ${detail}\n\nDetalle remoto: ${message}`);
+      ? `Free JT7 ya recortó el prompt${modelInfo}, pero el proveedor sigue rechazando por contexto excesivo. Intenta abrir un chat nuevo o usar un modelo con mayor ventana de contexto (ej: meta-llama/llama-3.1-8b-instruct:free con 128k tokens).`
+      : `El proveedor rechazó la solicitud por exceso de contexto${modelInfo}. Free JT7 activará retry con prompt reducido automáticamente.`;
+    const err = new Error(`Free JT7 (${provider}): ${detail}\n\nDetalle remoto: ${message}`);
+    err.isContextError = true;
+    return err;
   }
 
   return new Error(`Free JT7 (${provider}): error HTTP ${statusCode || 500}. ${message}`);
@@ -144,6 +194,10 @@ function normalizeProviderError(provider, statusCode, payload, goalInfo) {
 // HTTP helper
 // ---------------------------------------------------------------------------
 
+// Timeout de socket para llamadas a proveedores externos (ms).
+// Los modelos thinking de ZAI pueden tardar más — se usa 90s para darles margen.
+const HTTP_TIMEOUT_MS = 90000;
+
 function httpsPost(url, headers, body) {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
@@ -152,6 +206,7 @@ function httpsPost(url, headers, body) {
       hostname: parsed.hostname,
       path: parsed.pathname + (parsed.search || ""),
       method: "POST",
+      timeout: HTTP_TIMEOUT_MS,
       headers: {
         "Content-Type": "application/json",
         "Content-Length": Buffer.byteLength(data),
@@ -169,6 +224,9 @@ function httpsPost(url, headers, body) {
         }
       });
     });
+    req.on("timeout", () => {
+      req.destroy(new Error(`Free JT7: timeout (${HTTP_TIMEOUT_MS / 1000}s) al llamar a ${parsed.hostname}. El modelo puede ser lento — intenta con un modelo más pequeño.`));
+    });
     req.on("error", reject);
     req.write(data);
     req.end();
@@ -180,7 +238,8 @@ function httpsPost(url, headers, body) {
 // ---------------------------------------------------------------------------
 
 async function callOpenRouter(goalInfo, model, apiKey) {
-  const m = model || "google/gemma-2-9b-it:free";
+  const m = model || "google/gemma-3-4b-it:free";
+  const limits = getModelLimits(m);
   const resp = await httpsPost(
     "https://openrouter.ai/api/v1/chat/completions",
     {
@@ -190,7 +249,7 @@ async function callOpenRouter(goalInfo, model, apiKey) {
     },
     {
       model: m,
-      max_tokens: PROVIDER_LIMITS.openrouter.maxOutputTokens,
+      max_tokens: limits.outputTokens,
       messages: [{ role: "user", content: goalInfo.text }],
     }
   );
@@ -201,42 +260,80 @@ async function callOpenRouter(goalInfo, model, apiKey) {
 }
 
 async function callHuggingFace(goalInfo, model, apiKey) {
-  const m = model || "mistralai/Mistral-7B-Instruct-v0.3";
+  // HF serverless inference now routes through router.huggingface.co.
+  // The "together" provider supports the confirmed-working models in the catalog.
+  const m = model || "Qwen/Qwen2.5-7B-Instruct-Turbo";
+  const limits = getModelLimits(m);
   const resp = await httpsPost(
-    `https://api-inference.huggingface.co/models/${m}/v1/chat/completions`,
+    "https://router.huggingface.co/together/v1/chat/completions",
     { "Authorization": `Bearer ${apiKey}` },
     {
       model: m,
       messages: [{ role: "user", content: goalInfo.text }],
-      max_tokens: PROVIDER_LIMITS.hf.maxOutputTokens,
+      max_tokens: limits.outputTokens,
     }
   );
   if ((resp.statusCode || 0) >= 400 || resp.body?.error) {
     throw normalizeProviderError("hf", resp.statusCode, resp.body, goalInfo);
   }
-  return resp.body?.choices?.[0]?.message?.content || resp.body?.generated_text || JSON.stringify(resp.body);
+  return resp.body?.choices?.[0]?.message?.content || JSON.stringify(resp.body);
 }
 
 async function callZai(goalInfo, model, apiKey) {
-  const m = model || "glm-4-flash";
+  const m = model || "glm-4.5-flash";
+  const limits = getModelLimits(m);
   const resp = await httpsPost(
     "https://open.bigmodel.cn/api/paas/v4/chat/completions",
     { "Authorization": `Bearer ${apiKey}` },
     {
       model: m,
-      max_tokens: PROVIDER_LIMITS.zai.maxOutputTokens,
+      max_tokens: limits.outputTokens,
       messages: [{ role: "user", content: goalInfo.text }],
     }
   );
   if ((resp.statusCode || 0) >= 400 || resp.body?.error) {
     throw normalizeProviderError("zai", resp.statusCode, resp.body, goalInfo);
   }
-  return resp.body?.choices?.[0]?.message?.content || JSON.stringify(resp.body);
+  const msg = resp.body?.choices?.[0]?.message;
+  // glm-4.7-flash y modelos thinking devuelven el texto en reasoning_content cuando content está vacío
+  const text = (msg?.content && msg.content.trim()) ? msg.content : (msg?.reasoning_content || "");
+  return text || JSON.stringify(resp.body);
 }
 
 // ---------------------------------------------------------------------------
 // Punto de entrada principal — devuelve el mismo shape que runCopilotRouter
 // ---------------------------------------------------------------------------
+
+/**
+ * Ejecuta la llamada al proveedor con retry automático si hay error de contexto.
+ * En el primer fallo HTTP 400 por contexto, reintenta con el 50% del budget.
+ */
+async function callProviderWithRetry(provider, goalInfo, model, apiKey) {
+  let callFn;
+  if (provider === "openrouter") callFn = callOpenRouter;
+  else if (provider === "hf")    callFn = callHuggingFace;
+  else if (provider === "zai")   callFn = callZai;
+  else throw new Error(`Free JT7: Proveedor desconocido: "${provider}"`);
+
+  try {
+    return { text: await callFn(goalInfo, model, apiKey), retried: false, goalInfo };
+  } catch (firstErr) {
+    // Retry automático si es error de contexto y el prompt aún no está en mínimo
+    if ((firstErr.isContextError || isContextError(firstErr)) && goalInfo.promptCharsBudget > 1500) {
+      // Pasar el goal original si está disponible a través de la clave interna
+      const originalGoal = goalInfo._originalGoal || goalInfo.text;
+      const retryGoalInfo = compactPrompt(originalGoal, { provider, model, factor: 0.4, label: 'Free JT7 provider retry' });
+      try {
+        const retryText = await callFn(retryGoalInfo, model, apiKey);
+        return { text: retryText, retried: true, goalInfo: retryGoalInfo };
+      } catch (retryErr) {
+        // Si sigue fallando, lanzar el error más descriptivo
+        throw retryErr.isContextError || isContextError(retryErr) ? retryErr : firstErr;
+      }
+    }
+    throw firstErr;
+  }
+}
 
 async function callProvider(goal, config, secretStorage) {
   const { provider, model } = config;
@@ -247,22 +344,24 @@ async function callProvider(goal, config, secretStorage) {
     );
   }
 
-  const goalInfo = compactGoal(goal, provider);
+  // Pasar el modelo para calcular el budget real según el contexto del modelo elegido
+  const goalInfo = compactPrompt(goal, { provider, model, label: 'Free JT7 provider call' });
+  goalInfo._originalGoal = goal; // Guardar original para retry
 
-  let responseText;
-  if (provider === "openrouter") {
-    responseText = await callOpenRouter(goalInfo, model, apiKey);
-  } else if (provider === "hf") {
-    responseText = await callHuggingFace(goalInfo, model, apiKey);
-  } else if (provider === "zai") {
-    responseText = await callZai(goalInfo, model, apiKey);
-  } else {
-    throw new Error(`Free JT7: Proveedor desconocido: "${provider}"`);
+  const { text: responseText, retried, goalInfo: finalGoalInfo } = await callProviderWithRetry(provider, goalInfo, model, apiKey);
+
+  const usedGoalInfo = finalGoalInfo || goalInfo;
+  let summary = responseText;
+  const notices = [];
+  if (usedGoalInfo.truncated) {
+    notices.push(`⚠️ **Free JT7 recortó el prompt automáticamente** para ajustarlo a la ventana de contexto del modelo \`${model || provider}\` (budget: ${usedGoalInfo.promptCharsBudget} chars, original: ${usedGoalInfo.originalLength} chars, enviado: ~${usedGoalInfo.estimatedTokens} tokens).`);
   }
-
-  const summary = goalInfo.truncated
-    ? `${responseText}\n\n[Free JT7 recortó automáticamente el prompt de entrada para ajustarlo al presupuesto de contexto de ${provider}. Tokens estimados enviados: ${goalInfo.estimatedTokens}.]`
-    : responseText;
+  if (retried) {
+    notices.push(`🔄 **Retry automático activado**: el primer intento falló por exceso de contexto. Se reintentó con prompt reducido al 40% del budget.`);
+  }
+  if (notices.length > 0) {
+    summary = `${responseText}\n\n---\n${notices.join("\n")}`;
+  }
 
   const runId = `ext-${provider}-${Date.now()}`;
   const now = new Date().toISOString();
@@ -285,8 +384,17 @@ async function callProvider(goal, config, secretStorage) {
       summary: summary,
       completedTasks: ["main"],
       changedFiles: [],
-      verification: goalInfo.truncated ? [`Prompt recortado automaticamente para ${provider} (${goalInfo.estimatedTokens} tokens estimados enviados).`] : [],
+      verification: usedGoalInfo.truncated ? [`Prompt recortado automaticamente para ${provider} (${usedGoalInfo.estimatedTokens} tokens estimados enviados).`] : [],
       residualRisks: [],
+      contextBudget: {
+        provider,
+        model: model || 'default',
+        promptCharsBudget: usedGoalInfo.promptCharsBudget,
+        originalLength: usedGoalInfo.originalLength,
+        finalLength: usedGoalInfo.finalLength,
+        truncated: Boolean(usedGoalInfo.truncated),
+        retried,
+      },
     },
     plan: { tasks: [], summary: goal },
     executionResults: [],
@@ -294,4 +402,9 @@ async function callProvider(goal, config, secretStorage) {
   };
 }
 
-module.exports = { callProvider };
+module.exports = {
+  callProvider,
+  getFreeModelsCatalog,
+  getFreeModelDefault,
+  getFreeModelDefaults,
+};

@@ -1,0 +1,5 @@
+{
+  "id": "example-health-check",
+  "command": "freejt7.example.healthCheck",
+  "description": "Chequeo declarativo de ejemplo expuesto por capability pack externo."
+}

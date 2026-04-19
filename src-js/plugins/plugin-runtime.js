@@ -20,6 +20,7 @@
 
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 
 // ---------------------------------------------------------------------------
@@ -32,6 +33,19 @@ const VALID_CAPABILITIES = new Set([
   'memory-reader',     // lectura de memoria
   'memory-writer',     // escritura de memoria (capacidad elevada)
   'scheduler-jobs',    // puede registrar jobs en el scheduler
+]);
+
+const PLUGIN_RUNTIME_API_VERSION = '1.0.0';
+const INTEGRATION_MANIFEST_FILENAME = 'freejt7.integration.json';
+const VALID_INTEGRATION_TIERS = new Set(['trusted', 'experimental']);
+const VALID_IMPORTABLE_CAPABILITIES = new Set([
+  'commands',
+  'tools',
+  'policies',
+  'docs',
+  'prompts',
+  'evaluators',
+  'plugin',
 ]);
 
 // Hooks y las capacidades mínimas que requieren
@@ -86,6 +100,121 @@ function validateManifest(manifest) {
   return { ok: errors.length === 0, errors };
 }
 
+function _major(version) {
+  const match = String(version || '').trim().match(/^(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+function _isRuntimeCompatible(range) {
+  if (!range) return true;
+  const runtimeMajor = _major(PLUGIN_RUNTIME_API_VERSION);
+  const requested = String(range).trim();
+  if (/^\d+\.x$/.test(requested)) {
+    return _major(requested) === runtimeMajor;
+  }
+  return _major(requested) === runtimeMajor;
+}
+
+function _walkForManifestFiles(rootDir) {
+  const manifests = [];
+  if (!rootDir || !fs.existsSync(rootDir)) return manifests;
+  const stack = [path.resolve(rootDir)];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    let entries = [];
+    try {
+      entries = fs.readdirSync(current, { withFileTypes: true });
+    } catch (_) {
+      continue;
+    }
+    for (const entry of entries) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(fullPath);
+        continue;
+      }
+      if (entry.isFile() && entry.name === INTEGRATION_MANIFEST_FILENAME) {
+        manifests.push(fullPath);
+      }
+    }
+  }
+  manifests.sort();
+  return manifests;
+}
+
+function _resolvePathWithinRoot(rootDir, relativePath) {
+  const root = path.resolve(rootDir);
+  const resolved = path.resolve(root, relativePath);
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+    throw new Error(`ruta fuera del root del capability pack: ${relativePath}`);
+  }
+  if (!fs.existsSync(resolved)) {
+    throw new Error(`ruta declarada no existe: ${relativePath}`);
+  }
+  return resolved;
+}
+
+function _normalizeCapabilityEntries(capabilityName, entries, rootDir, errors) {
+  if (!Array.isArray(entries)) {
+    errors.push(`capabilities.${capabilityName}: debe ser array`);
+    return [];
+  }
+  return entries.map((entry, index) => {
+    if (typeof entry === 'string') {
+      return {
+        id: `${capabilityName}-${index + 1}`,
+        path: _resolvePathWithinRoot(rootDir, entry),
+      };
+    }
+    if (!entry || typeof entry !== 'object') {
+      errors.push(`capabilities.${capabilityName}[${index}]: descriptor inválido`);
+      return null;
+    }
+    const normalized = { ...entry, id: entry.id || `${capabilityName}-${index + 1}` };
+    if (normalized.path) {
+      normalized.path = _resolvePathWithinRoot(rootDir, normalized.path);
+    }
+    return normalized;
+  }).filter(Boolean);
+}
+
+function validateIntegrationManifest(manifest) {
+  const errors = [];
+
+  if (!manifest || typeof manifest !== 'object') {
+    return { ok: false, errors: ['integration manifest debe ser un objeto'] };
+  }
+  if (manifest.manifestVersion !== 1) {
+    errors.push('manifestVersion: se soporta solo la version 1');
+  }
+  if (!manifest.id || typeof manifest.id !== 'string') {
+    errors.push('id: string requerido');
+  }
+  if (!manifest.version || typeof manifest.version !== 'string') {
+    errors.push('version: string requerido');
+  }
+  if (!manifest.tier || !VALID_INTEGRATION_TIERS.has(manifest.tier)) {
+    errors.push(`tier: debe ser uno de ${Array.from(VALID_INTEGRATION_TIERS).join(', ')}`);
+  }
+  if (!_isRuntimeCompatible(manifest.compatibility && manifest.compatibility.pluginRuntimeApi)) {
+    errors.push(`compatibility.pluginRuntimeApi incompatible con runtime ${PLUGIN_RUNTIME_API_VERSION}`);
+  }
+  if (!manifest.capabilities || typeof manifest.capabilities !== 'object') {
+    errors.push('capabilities: objeto requerido');
+  } else {
+    for (const capabilityName of Object.keys(manifest.capabilities)) {
+      if (!VALID_IMPORTABLE_CAPABILITIES.has(capabilityName)) {
+        errors.push(`capability importable no valida: ${capabilityName}`);
+      }
+    }
+    if (manifest.capabilities.plugin && typeof manifest.capabilities.plugin !== 'object') {
+      errors.push('capabilities.plugin: debe ser objeto');
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}
+
 // ---------------------------------------------------------------------------
 // Clase PluginRuntime
 // ---------------------------------------------------------------------------
@@ -102,6 +231,9 @@ class PluginRuntime {
       ['onRouteEnd',   []],
       ['onError',      []],
     ]);
+
+    /** @type {Map<string, object>} */
+    this._integrations = new Map();
 
     this._log = [];
   }
@@ -159,6 +291,141 @@ class PluginRuntime {
     }
 
     return { ok: true, errors: [] };
+  }
+
+  loadIntegrationManifest(manifestPath, options = {}) {
+    const allowExperimental = Boolean(options.allowExperimental);
+    const resolvedManifestPath = path.resolve(manifestPath);
+    let manifest;
+    try {
+      manifest = JSON.parse(fs.readFileSync(resolvedManifestPath, 'utf8'));
+    } catch (error) {
+      return { ok: false, errors: [`manifest no legible: ${error.message}`] };
+    }
+
+    const validated = validateIntegrationManifest(manifest);
+    if (!validated.ok) {
+      this._warn(`loadIntegrationManifest(${resolvedManifestPath}): inválido — ${validated.errors.join('; ')}`);
+      return validated;
+    }
+    if (manifest.tier === 'experimental' && !allowExperimental) {
+      return { ok: false, errors: ['integration experimental bloqueada por politica'] };
+    }
+    if (this._integrations.has(manifest.id)) {
+      return { ok: true, errors: [], duplicate: true, integration: this._integrations.get(manifest.id) };
+    }
+
+    const rootDir = path.dirname(resolvedManifestPath);
+    const capabilityIndex = {};
+    const errors = [];
+    const capabilities = manifest.capabilities || {};
+
+    for (const capabilityName of ['commands', 'tools', 'policies', 'docs', 'prompts', 'evaluators']) {
+      capabilityIndex[capabilityName] = capabilities[capabilityName]
+        ? _normalizeCapabilityEntries(capabilityName, capabilities[capabilityName], rootDir, errors)
+        : [];
+    }
+
+    let pluginLoaded = false;
+    if (capabilities.plugin) {
+      try {
+        const pluginEntry = _resolvePathWithinRoot(rootDir, capabilities.plugin.entry);
+        const pluginModule = require(pluginEntry);
+        let handlers = {};
+        if (typeof pluginModule.activate === 'function') {
+          handlers = pluginModule.activate({ manifest, rootDir, runtime: this }) || {};
+        } else if (pluginModule.hooks && typeof pluginModule.hooks === 'object') {
+          handlers = pluginModule.hooks;
+        } else if (typeof pluginModule === 'function') {
+          handlers = pluginModule({ manifest, rootDir, runtime: this }) || {};
+        }
+        const pluginManifest = {
+          id: manifest.id,
+          version: manifest.version,
+          capabilities: Array.isArray(capabilities.plugin.capabilities)
+            ? capabilities.plugin.capabilities
+            : ((pluginModule.manifest && pluginModule.manifest.capabilities) || []),
+        };
+        const loadResult = this.loadPlugin(pluginManifest, handlers);
+        if (!loadResult.ok) {
+          errors.push(...loadResult.errors);
+        } else {
+          pluginLoaded = true;
+          capabilityIndex.plugin = {
+            entry: pluginEntry,
+            capabilities: pluginManifest.capabilities,
+          };
+        }
+      } catch (error) {
+        errors.push(`capabilities.plugin: ${error.message}`);
+      }
+    }
+
+    if (errors.length > 0) {
+      return { ok: false, errors };
+    }
+
+    const record = {
+      id: manifest.id,
+      manifestPath: resolvedManifestPath,
+      rootDir,
+      tier: manifest.tier,
+      version: manifest.version,
+      pluginLoaded,
+      compatibility: manifest.compatibility || {},
+      capabilityIndex,
+    };
+    this._integrations.set(manifest.id, record);
+    this._info(`loadIntegrationManifest: '${manifest.id}' (${manifest.tier}) cargado desde ${resolvedManifestPath}`);
+    return { ok: true, errors: [], integration: record };
+  }
+
+  discoverAndLoadIntegrations(options = {}) {
+    const directories = Array.isArray(options.directories) ? options.directories : [];
+    const allowExperimental = Boolean(options.allowExperimental);
+    const discovered = [];
+    const loaded = [];
+    const errors = [];
+
+    for (const directory of directories) {
+      for (const manifestPath of _walkForManifestFiles(directory)) {
+        discovered.push(manifestPath);
+        const result = this.loadIntegrationManifest(manifestPath, { allowExperimental });
+        if (result.ok) {
+          if (!result.duplicate) loaded.push(manifestPath);
+        } else {
+          errors.push({ manifestPath, errors: result.errors });
+        }
+      }
+    }
+
+    if (loaded.length > 0) {
+      this._info(`discoverAndLoadIntegrations: ${loaded.length} capability packs cargados`);
+    }
+    return { discovered, loaded, errors };
+  }
+
+  getCapabilityIndex() {
+    const aggregate = {
+      commands: [],
+      tools: [],
+      policies: [],
+      docs: [],
+      prompts: [],
+      evaluators: [],
+      plugin: [],
+    };
+    for (const integration of this._integrations.values()) {
+      for (const [key, value] of Object.entries(integration.capabilityIndex || {})) {
+        if (!(key in aggregate)) continue;
+        if (Array.isArray(value)) {
+          aggregate[key].push(...value.map((item) => ({ ...item, integrationId: integration.id, tier: integration.tier })));
+        } else if (value) {
+          aggregate[key].push({ ...value, integrationId: integration.id, tier: integration.tier });
+        }
+      }
+    }
+    return aggregate;
   }
 
   /**
@@ -309,17 +576,31 @@ class PluginRuntime {
 
     return {
       totalPlugins:   this._registry.size,
+      totalIntegrations: this._integrations.size,
       plugins,
+      integrations: Array.from(this._integrations.values()).map((item) => ({
+        id: item.id,
+        manifestPath: item.manifestPath,
+        tier: item.tier,
+        version: item.version,
+        pluginLoaded: item.pluginLoaded,
+        capabilities: Object.fromEntries(Object.entries(item.capabilityIndex || {}).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.length : (value ? 1 : 0),
+        ])),
+      })),
+      capabilityIndex: this.getCapabilityIndex(),
       hookCounts,
       recentLog:      this._log.slice(-30),
     };
   }
 
   summary() {
-    const { totalPlugins, hookCounts } = this.getStatus();
+    const { totalPlugins, totalIntegrations, hookCounts } = this.getStatus();
     const lines = [
       `PluginRuntime:`,
       `  plugins cargados: ${totalPlugins}`,
+      `  integrations:     ${totalIntegrations}`,
       `  hooks activos:    ${Object.entries(hookCounts).map(([k, v]) => `${k}=${v}`).join(', ')}`,
     ];
     return lines.join('\n');
@@ -335,4 +616,12 @@ function getPluginRuntime() {
   return _instance;
 }
 
-module.exports = { PluginRuntime, validateManifest, VALID_CAPABILITIES, getPluginRuntime };
+module.exports = {
+  PluginRuntime,
+  validateManifest,
+  validateIntegrationManifest,
+  VALID_CAPABILITIES,
+  INTEGRATION_MANIFEST_FILENAME,
+  PLUGIN_RUNTIME_API_VERSION,
+  getPluginRuntime,
+};
