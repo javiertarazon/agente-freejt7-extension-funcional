@@ -398,12 +398,12 @@
   - [x] Confirmar rama local/remota final y dejar trazabilidad cerrada
 
 ## Release 4.2.10 con agente de diseño (2026-04-21)
-- [ ] Objetivo principal: publicar en `feature/agente-diseno` una nueva versión correlativa empaquetada que incluya el agente de diseño
+- [x] Objetivo principal: publicar en `feature/agente-diseno` una nueva versión correlativa empaquetada que incluya el agente de diseño
   - [x] Confirmar alcance de release, rama destino y validación mínima con el usuario
   - [x] Abrir trazabilidad específica para commit, push y empaquetado de la nueva versión
   - [x] Renumerar metadatos de release de `4.2.9` a `4.2.10`
   - [x] Revalidar `doctor` y `pytest tests/test_design_agent.py -q` sobre el estado final de release
   - [x] Generar el VSIX `4.2.10` y comprobar que el artefacto existe
-  - [ ] Crear commit convencional de release y empujarlo a `origin/feature/agente-diseno`
-  - [ ] Cerrar la trazabilidad operativa final con evidencia fresca
+  - [x] Crear commit convencional de release y empujarlo a `origin/feature/agente-diseno`
+  - [x] Cerrar la trazabilidad operativa final con evidencia fresca
 

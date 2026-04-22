@@ -289,3 +289,6 @@
 {"ts": "2026-04-22T03:05:00Z", "action": "release-version-bump", "detail": "20260421-release-4-2-10-design-agent:metadatos públicos alineados a 4.2.10 en package.json, package-lock.json, VERSION, README.md y CHANGELOG.md antes de validar y empaquetar"}
 {"ts": "2026-04-22T03:08:00Z", "action": "verification", "detail": "20260421-release-4-2-10-design-agent:doctor --json ok=true canvaConfigured=true canvaTokenPresent=true; pytest tests/test_design_agent.py -q => 5 passed; npm run build:bundle OK"}
 {"ts": "2026-04-22T03:10:00Z", "action": "package-vsix", "detail": "20260421-release-4-2-10-design-agent:npm run package:local OK -> agente-freejt7-extension-funcional-4.2.10.vsix (258 MB); contenido verificado con extension/tools/design_agent/* dentro del VSIX"}
+{"ts": "2026-04-22T03:14:00Z", "action": "git-commit", "detail": "20260421-release-4-2-10-design-agent:commit creado -> 636705b1b4d1e5d03131e33fc7cb75daa80631a2 feat: add design agent and release v4.2.10"}
+{"ts": "2026-04-22T03:15:00Z", "action": "git-push", "detail": "20260421-release-4-2-10-design-agent:push OK a origin/feature/agente-diseno; remoto avanzó 01f7012..636705b"}
+{"ts": "2026-04-22T03:16:00Z", "action": "task-close", "detail": "20260421-release-4-2-10-design-agent:succeeded version-bump+doctor-green+pytest-green+bundle-green+vsix-4.2.10+git-push"}

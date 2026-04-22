@@ -1,12 +1,12 @@
 # copilot-agent â€” Estado del sistema
 
-*Actualizado: 2026-04-22 03:10 UTC*
+*Actualizado: 2026-04-22 03:16 UTC*
 
 ## Ãšltima acciÃ³n
-- **package-vsix**: 20260421-release-4-2-10-design-agent:validación verde y VSIX 4.2.10 generado con runtime del agente de diseño incluido
+- **git-push**: 20260421-release-4-2-10-design-agent:commit de release 4.2.10 publicado en `origin/feature/agente-diseno`
 
 ## Resultado reciente
-- La release correlativa `4.2.10` ya quedó materializada a nivel de artefacto: `doctor --json`, `pytest tests/test_design_agent.py -q` y `npm run build:bundle` pasaron; `npm run package:local` generó `agente-freejt7-extension-funcional-4.2.10.vsix` y una inspección del paquete confirmó entradas bajo `extension/tools/design_agent/`. Queda pendiente solo consolidar el commit y empujarlo a `origin/feature/agente-diseno`.
+- La release correlativa `4.2.10` quedó publicada en la rama `feature/agente-diseno`: el commit `636705b1b4d1e5d03131e33fc7cb75daa80631a2` consolidó el working tree actual con el agente de diseño, y el push a `origin/feature/agente-diseno` avanzó el remoto desde `01f7012` hasta `636705b`. El artefacto generado es `agente-freejt7-extension-funcional-4.2.10.vsix` y ya fue verificado con contenido `extension/tools/design_agent/*`.
 
 ## Estado del catÃ¡logo
 - Total skills: **964**

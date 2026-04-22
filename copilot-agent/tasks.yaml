@@ -771,19 +771,19 @@ tareas:
       metadatos a una nueva versión correlativa, validar el design agent,
       generar un nuevo VSIX instalable y publicar el commit resultante en el
       remoto de la misma rama con trazabilidad cerrada.
-    estado: "en_progreso"
+    estado: "completada"
     riesgo: "medium"
     skills_usados: ["make-repo-contribution", "agent-orchestration", "verification-before-completion"]
     resultado: >
-      En progreso: alcance fijado a todo el working tree actual de
-      `feature/agente-diseno`, destino de publicación fijado a
-      `origin/feature/agente-diseno`, y metadatos de release alineándose hacia
-      la versión correlativa 4.2.10. La validación fresca cerró con
-      `doctor --json` OK, `pytest tests/test_design_agent.py -q` => 5 passed,
-      `npm run build:bundle` OK, y el VSIX
-      `agente-freejt7-extension-funcional-4.2.10.vsix` ya fue generado y
-      verificado con contenido `extension/tools/design_agent/*`; queda pendiente
-      solo el commit y push final sobre `origin/feature/agente-diseno`.
+      Completada: se alinearon los metadatos a 4.2.10, la validación fresca
+      cerró con `doctor --json` OK, `pytest tests/test_design_agent.py -q` =>
+      5 passed y `npm run build:bundle` OK; luego `npm run package:local`
+      generó `agente-freejt7-extension-funcional-4.2.10.vsix` y se verificó
+      dentro del VSIX el árbol `extension/tools/design_agent/*`. El working
+      tree completo se consolidó en el commit
+      `636705b1b4d1e5d03131e33fc7cb75daa80631a2` con mensaje
+      `feat: add design agent and release v4.2.10`, y ese commit ya quedó
+      publicado en `origin/feature/agente-diseno`.
   - id: "20260421-feature-agente-diseno-branch"
     fecha: "2026-04-21"
     titulo: "Crear rama feature/agente-diseno local y remota"
