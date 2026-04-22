@@ -27,6 +27,9 @@ const ROUTER_DEFAULTS = {
   sessionWaitTimeoutMs: 180000,
 };
 
+const DEFAULT_EXTERNAL_PROVIDER = "openrouter";
+const DEFAULT_EXTERNAL_PROVIDER_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+
 const ROUTER_CONCURRENCY_ERROR = "Free JT7: ya hay una ejecucion activa del router Copilot. Espera a que termine antes de lanzar otra.";
 
 let activeRouterCoreRunToken = null;
@@ -1243,13 +1246,15 @@ async function runCopilotRouter(options) {
 
   // --- API Provider Delegation ---
   const _activeProvider = options.vscode
-    ? (options.vscode.workspace.getConfiguration("freejt7").get("apiProvider") || "copilot")
-    : "copilot";
+    ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim() || DEFAULT_EXTERNAL_PROVIDER
+    : DEFAULT_EXTERNAL_PROVIDER;
   if (_activeProvider !== "copilot") {
-    const { callProvider } = require("../providers/api-provider-adapter");
+    const { callProvider, getFreeModelDefaults } = require("../providers/api-provider-adapter");
+    const providerDefaults = getFreeModelDefaults();
+    const resolvedDefaultModel = providerDefaults[_activeProvider] || DEFAULT_EXTERNAL_PROVIDER_MODEL;
     const _activeModel = options.vscode
-      ? (options.vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "")
-      : "";
+      ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "").trim() || resolvedDefaultModel
+      : resolvedDefaultModel;
     cliLog(options.output, `[freejt7-router] delegating to provider=${_activeProvider} model=${_activeModel || "default"}`);
     const providerResult = await callProvider(goal, { provider: _activeProvider, model: _activeModel }, options.secretStorage);
     const providerSummary = String(providerResult?.final?.summary || providerResult?.run?.summary || `Delegado a ${_activeProvider}`);

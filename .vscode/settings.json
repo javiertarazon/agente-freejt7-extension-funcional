@@ -1,14 +1,10 @@
 {
   "github.copilot.chat.codeGeneration.instructions": [
     {
-      "file": "${workspaceFolder}/.github/copilot-instructions.md"
-    },
-    {
       "file": ".github/copilot-instructions.md"
     }
   ],
   "chat.agentFilesLocations": {
-    "${workspaceFolder}/.github/agents": true,
     ".github/agents": true
   },
   "github.copilot.chat.codeGeneration.useInstructionFiles": true,

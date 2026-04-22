@@ -1,17 +1,9 @@
 ---
+name: openclaw
 description: Agente primario openclaw-local-agent con privilegios de administrador, auto-ejecución de tareas y coordinación multi-agente.
-tools:
-  - githubRepo
-  - codebase
-  - terminalLastCommand
-  - runInTerminal
-  - createFile
-  - editFiles
-  - readFile
-  - search
-  - fetch
-  - problems
-  - changes
+tools: ["read", "edit", "search", "execute", "agent"]
+argument-hint: Describe la tarea, el alcance y el riesgo operativo.
+user-invokable: true
 ---
 
 # Agente: openclaw-local-agent

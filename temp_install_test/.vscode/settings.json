@@ -1,0 +1,19 @@
+{
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": ".github/copilot-instructions.md"
+    }
+  ],
+  "chat.agentFilesLocations": {
+    ".github/agents": true
+  },
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.customInstructionsInSystemMessage": true,
+  "chat.agent.enabled": true,
+  "freejt7.enabled": true,
+  "freejt7.integrations.vscode.enabled": true,
+  "freejt7.skills.index": ".github/skills/.skills_index.json",
+  "freejt7.policy.file": ".github/free-jt7-policy.yaml",
+  "freejt7.models.routing": ".github/free-jt7-model-routing.json",
+  "freejt7.models.ide": "vscode"
+}

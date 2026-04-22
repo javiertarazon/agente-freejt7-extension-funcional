@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [4.2.10] - 2026-04-21
+
+### Added
+- Agente de diseño Canva + Remotion integrado en la extensión con el comando `Free JT7: Generar video con agente de diseño` y el runtime Python asociado en `tools/design_agent/`.
+- Suite focalizada `tests/test_design_agent.py` para cubrir carga de configuración Canva y el override de endpoints OAuth MCP.
+
+### Changed
+- Versionado alineado en `package.json`, `package-lock.json`, `VERSION` y `README.md` para publicar una nueva release instalable sobre la rama `feature/agente-diseno`.
+
+### Fixed
+- La carga de credenciales Canva ahora hidrata variables desde `.env.free-jt7` sin pisar exportaciones previas.
+- El flujo OAuth del design agent fuerza `https://mcp.canva.com/authorize` y `https://mcp.canva.com/token`, corrigiendo el error de `client id no valida` del host legacy.
+
 ## [4.2.9] - 2026-04-19
 
 ### Changed

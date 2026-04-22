@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local, router Copilot y gateway OpenClaw.",
-  "version": "4.2.9",
+  "version": "4.2.10",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -70,6 +70,10 @@
         "title": "Free JT7: Routed Copilot Task"
       },
       {
+        "command": "freejt7.launchDesignAgent",
+        "title": "Free JT7: Generar video con agente de diseño"
+      },
+      {
         "command": "freejt7.openClawGatewayStatus",
         "title": "Free JT7: OpenClaw Gateway Status"
       },
@@ -121,9 +125,9 @@
     "chatParticipants": [
       {
         "id": "freejt7.chat",
-        "name": "freejt7",
+        "name": "free-jt7",
         "fullName": "Free JT7",
-        "description": "Planifica y ejecuta tareas de Free JT7 en el workspace actual.",
+        "description": "Planifica y ejecuta tareas de Free JT7 desde GitHub Copilot Chat en cualquier carpeta abierta.",
         "isSticky": true,
         "commands": [
           {
@@ -177,6 +181,16 @@
           "type": "boolean",
           "default": false,
           "description": "Sobrescribe archivos de integracion existentes."
+        },
+        "freejt7.autoRepairGlobalSettings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Repara automaticamente los settings globales para que apunten a la extension instalada y no a un checkout fuente desfasado."
+        },
+        "freejt7.autoInstallWorkspaceBridge": {
+          "type": "boolean",
+          "default": true,
+          "description": "Repara automaticamente el bridge minimo de Free JT7 solo en workspaces ya gestionados cuando falten archivos base."
         },
         "freejt7.copilotRouter.cliPath": {
           "type": "string",
@@ -250,17 +264,17 @@
           "type": "string",
           "enum": ["copilot", "openrouter", "hf", "zai"],
           "enumDescriptions": [
-            "GitHub Copilot (default)",
-            "OpenRouter",
+            "GitHub Copilot",
+            "OpenRouter (default)",
             "HuggingFace",
             "ZAI (ZhipuAI)"
           ],
-          "default": "copilot",
+          "default": "openrouter",
           "description": "Proveedor de API activo para el agente Free JT7"
         },
         "freejt7.apiProviderModel": {
           "type": "string",
-          "default": "",
+          "default": "meta-llama/llama-3.3-70b-instruct:free",
           "description": "Modelo específico del proveedor seleccionado (ej: openai/gpt-4o-mini, glm-4-flash)"
         }
       }
@@ -268,6 +282,8 @@
   },
   "scripts": {
     "build:bundle": "node scripts/build-extension-bundle.js",
+    "test:agent-manifest-smoke": "node tests/agent_manifest_smoke.js",
+    "test:global-settings-drift-smoke": "node tests/global_settings_drift_smoke.js",
     "test:router-core-concurrency-smoke": "node tests/router_core_concurrency_smoke.js",
     "test:router-review-smoke": "node tests/router_review_stage_smoke.js",
     "test:plugin-integration-smoke": "node tests/plugin_integration_manifest_smoke.js",

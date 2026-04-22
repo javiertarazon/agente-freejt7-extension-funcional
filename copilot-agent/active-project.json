@@ -1,8 +1,21 @@
 {
   "_description": "Proyecto activo donde se aplican los cambios. Edita 'path' o usa: python skills_manager.py set-project <ruta>",
-  "path": "E:\\javie\\agente-freejt7-extension-funcional",
+  "path": "/home/javier28/Público/copilot vs code/agente free jt7 extension/agente-freejt7-extension-funcional",
+  "canonical_path": "/home/javier28/Público/copilot vs code/agente free jt7 extension/agente-freejt7-extension-funcional",
+  "project_id": "fedce465e417418b",
+  "platform": "linux",
+  "host_fingerprint": "b605c1760457f638",
   "name": "agente-freejt7-extension-funcional",
-  "set_at": "2026-03-11T04:25:18Z",
-  "notes": "",
-  "history": []
+  "set_at": "2026-04-19T14:45:31Z",
+  "notes": "workspace linux canonico para auditoria avanzada",
+  "history": [
+    {
+      "path": "E:\\javie\\agente-freejt7-extension-funcional",
+      "canonical_path": "",
+      "project_id": "",
+      "platform": "",
+      "host_fingerprint": "",
+      "set_at": "2026-03-11T04:25:18Z"
+    }
+  ]
 }

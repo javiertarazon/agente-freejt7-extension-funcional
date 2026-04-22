@@ -44,6 +44,10 @@ const FALLBACK_FREE_MODELS = getFreeModelsCatalog();
 
 const FALLBACK_DEFAULT_MODELS = getFreeModelDefaults();
 
+const DEFAULT_EXTERNAL_PROVIDER = "openrouter";
+const DEFAULT_EXTERNAL_MODEL = FALLBACK_DEFAULT_MODELS[DEFAULT_EXTERNAL_PROVIDER] || "";
+const GLOBAL_SETTINGS_SYNC_STATE_KEY = "freejt7.globalVsCodeSync";
+
 const INSTALL_IDE_PICK_ITEMS = Object.freeze([
   { label: "VS Code", value: "vscode", detail: "Extensión VS Code y settings de usuario de Code." },
   { label: "Cursor", value: "cursor", detail: "Bridge de workspace y settings de usuario de Cursor." },
@@ -393,6 +397,35 @@ function getPrimaryWorkspacePath() {
   return folders[0].uri.fsPath;
 }
 
+function workspaceHasFreeJt7Signals(workspacePath) {
+  if (!workspacePath) {
+    return false;
+  }
+  const markers = [
+    path.join(workspacePath, ".github", "copilot-instructions.md"),
+    path.join(workspacePath, ".github", "free-jt7-policy.yaml"),
+    path.join(workspacePath, ".github", "free-jt7-model-routing.json"),
+    path.join(workspacePath, "copilot-agent", "tasks.yaml"),
+  ];
+  return markers.some((marker) => fs.existsSync(marker));
+}
+
+function isManagedWorkspace(workspacePath) {
+  return workspaceHasFreeJt7Signals(workspacePath);
+}
+
+function getGlobalRuntimeRoot(context) {
+  return context.globalStorageUri?.fsPath || path.join(context.extensionPath, ".freejt7-runtime");
+}
+
+function getOperationalRoot(context) {
+  const workspacePath = getPrimaryWorkspacePath();
+  if (isManagedWorkspace(workspacePath)) {
+    return workspacePath;
+  }
+  return getGlobalRuntimeRoot(context);
+}
+
 function getExtensionById(...ids) {
   for (const id of ids) {
     try {
@@ -485,6 +518,9 @@ async function runManagedInstall(context, output, installOptions) {
   if (installOptions.updateUserSettings) {
     args.push("--update-user-settings");
   }
+  if (installOptions.userSettingsOnly) {
+    args.push("--user-settings-only");
+  }
   if (installOptions.force) {
     args.push("--force");
   }
@@ -494,12 +530,17 @@ async function runManagedInstall(context, output, installOptions) {
   output.show(true);
 
   const result = await runCommand(py.bin, args, { cwd: context.extensionPath }, output);
+  const notify = installOptions.notify !== false;
   if (result.code === 0) {
-    vscode.window.showInformationMessage(installOptions.successMessage);
+    if (notify && installOptions.successMessage) {
+      vscode.window.showInformationMessage(installOptions.successMessage);
+    }
     return { ok: true, message: installOptions.successMessage };
   }
 
-  vscode.window.showErrorMessage(installOptions.errorMessage);
+  if (notify && installOptions.errorMessage) {
+    vscode.window.showErrorMessage(installOptions.errorMessage);
+  }
   return { ok: false, message: installOptions.errorMessage };
 }
 
@@ -537,17 +578,15 @@ async function installWorkspace(context, output) {
 async function installGlobalVsCode(context, output) {
   const config = vscode.workspace.getConfiguration("freejt7");
   const force = config.get("install.force", false);
-  const workspacePath = getPrimaryWorkspacePath();
 
   return runManagedInstall(context, output, {
-    targetPath: workspacePath || context.extensionPath,
+    targetPath: context.extensionPath,
     ide: "vscode",
     updateUserSettings: true,
+    userSettingsOnly: true,
     force,
     startMessage: "[freejt7] Aplicando configuracion global de VS Code...",
-    successMessage: workspacePath
-      ? "Free JT7: configuracion global de VS Code aplicada y workspace sincronizado."
-      : "Free JT7: configuracion global de VS Code aplicada correctamente.",
+    successMessage: "Free JT7: configuracion global de VS Code aplicada correctamente.",
     errorMessage: "Free JT7: fallo la configuracion global de VS Code. Revisa el Output 'Free JT7'.",
   });
 }
@@ -565,23 +604,102 @@ async function installGlobalMultiIde(context, output) {
   }
 
   const force = config.get("install.force", false);
-  const workspacePath = getPrimaryWorkspacePath();
   const result = await runManagedInstall(context, output, {
-    targetPath: workspacePath || context.extensionPath,
+    targetPath: context.extensionPath,
     ide,
     updateUserSettings: true,
+    userSettingsOnly: true,
     force,
     startMessage: `[freejt7] Aplicando configuracion global para ${getInstallIdeLabel(ide)}...`,
-    successMessage: workspacePath
-      ? `Free JT7: configuracion global aplicada para ${getInstallIdeLabel(ide)} y workspace sincronizado.`
-      : `Free JT7: configuracion global aplicada para ${getInstallIdeLabel(ide)}.`,
+    successMessage: `Free JT7: configuracion global aplicada para ${getInstallIdeLabel(ide)}.`,
     errorMessage: `Free JT7: fallo la configuracion global para ${getInstallIdeLabel(ide)}. Revisa el Output 'Free JT7'.`,
   });
 
-  if (result.ok && !workspacePath) {
-    result.message = `${result.message} Abre un workspace si tambien quieres desplegar bridges locales de proyecto.`;
+  if (result.ok) {
+    result.message = `${result.message} Usa la instalacion de workspace solo cuando quieras bootstrap explicito del proyecto.`;
   }
   return result;
+}
+
+async function ensureGlobalVsCodeSettings(context, output) {
+  const config = vscode.workspace.getConfiguration("freejt7");
+  if (!config.get("autoRepairGlobalSettings", true)) {
+    return;
+  }
+  const version = getCurrentExtensionVersion(context);
+  const syncState = context.globalState?.get?.(GLOBAL_SETTINGS_SYNC_STATE_KEY) || {};
+  const targets = getGlobalVsCodeSettingsTargets(context);
+  const snapshot = getGlobalVsCodeSettingsSnapshot();
+  const repairState = getGlobalVsCodeSettingsRepairState(targets, snapshot);
+  const alreadySynced = syncState.version === version && syncState.extensionPath === context.extensionPath;
+  if (alreadySynced && !repairState.needsRepair) {
+    return;
+  }
+
+  if (repairState.needsRepair) {
+    output.appendLine(`[freejt7] Drift detectado en settings globales de VS Code: ${repairState.reasons.join(", ")}`);
+  }
+
+  const result = await runManagedInstall(context, output, {
+    targetPath: context.extensionPath,
+    ide: "vscode",
+    updateUserSettings: true,
+    userSettingsOnly: true,
+    force: false,
+    notify: false,
+    startMessage: `[freejt7] Reparando settings globales de VS Code para ${context.extensionPath}...`,
+    successMessage: "",
+    errorMessage: "",
+  });
+
+  if (result.ok) {
+    output.appendLine("[freejt7] Settings globales de VS Code reparados para la extension instalada.");
+    await context.globalState?.update?.(GLOBAL_SETTINGS_SYNC_STATE_KEY, {
+      version,
+      extensionPath: context.extensionPath,
+      syncedAt: new Date().toISOString(),
+    });
+  } else {
+    output.appendLine("[freejt7] WARN: no se pudieron reparar los settings globales de VS Code automaticamente.");
+  }
+}
+
+async function ensureWorkspaceBridge(context, output) {
+  const config = vscode.workspace.getConfiguration("freejt7");
+  if (!config.get("autoInstallWorkspaceBridge", true)) {
+    return;
+  }
+  const workspacePath = getPrimaryWorkspacePath();
+  if (!workspacePath) {
+    return;
+  }
+  if (path.resolve(workspacePath) === path.resolve(context.extensionPath)) {
+    return;
+  }
+  if (!workspaceHasFreeJt7Signals(workspacePath)) {
+    output.appendLine(`[freejt7] Workspace no gestionado; no se instala bridge automatico en ${workspacePath}.`);
+    return;
+  }
+  if (!workspaceNeedsBridge(workspacePath)) {
+    return;
+  }
+
+  const result = await runManagedInstall(context, output, {
+    targetPath: workspacePath,
+    ide: "vscode",
+    updateUserSettings: false,
+    force: false,
+    notify: false,
+    startMessage: `[freejt7] Instalando bridge automatico para el workspace ${workspacePath}...`,
+    successMessage: "",
+    errorMessage: "",
+  });
+
+  if (result.ok) {
+    output.appendLine(`[freejt7] Bridge automatico instalado en ${workspacePath}.`);
+  } else {
+    output.appendLine(`[freejt7] WARN: no se pudo instalar el bridge automatico en ${workspacePath}.`);
+  }
 }
 
 async function runtimeDoctor(context, output) {
@@ -650,6 +768,131 @@ function getDefaultModel(provider) {
   return freeModelsCatalog.getDefaultModel(provider);
 }
 
+function getEffectiveProviderConfig() {
+  const config = vscode.workspace.getConfiguration("freejt7");
+  const configuredProvider = String(config.get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim();
+  const provider = configuredProvider || DEFAULT_EXTERNAL_PROVIDER;
+  if (provider === "copilot") {
+    return { provider, model: "" };
+  }
+  const configuredModel = String(config.get("apiProviderModel") || "").trim();
+  return {
+    provider,
+    model: configuredModel || getDefaultModel(provider) || DEFAULT_EXTERNAL_MODEL,
+  };
+}
+
+function workspaceNeedsBridge(workspacePath) {
+  if (!isManagedWorkspace(workspacePath)) {
+    return false;
+  }
+  const markers = [
+    path.join(workspacePath, ".github", "copilot-instructions.md"),
+    path.join(workspacePath, ".github", "free-jt7-policy.yaml"),
+    path.join(workspacePath, ".github", "free-jt7-model-routing.json"),
+  ];
+  return markers.some((marker) => !fs.existsSync(marker));
+}
+
+function getCurrentExtensionVersion(context) {
+  return String(context?.extension?.packageJSON?.version || "0.0.0");
+}
+
+function normalizeComparablePath(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
+  }
+  const normalized = path.isAbsolute(text) ? path.resolve(text) : text;
+  return normalized.replace(/\\/g, "/");
+}
+
+function getGlobalConfigurationValue(section, key) {
+  try {
+    return vscode.workspace.getConfiguration(section).inspect?.(key)?.globalValue;
+  } catch {
+    return undefined;
+  }
+}
+
+function hasMatchingInstructionEntry(instructions, expectedFile) {
+  if (!Array.isArray(instructions)) {
+    return false;
+  }
+  return instructions.some((entry) => (
+    entry && typeof entry === "object" && normalizeComparablePath(entry.file) === normalizeComparablePath(expectedFile)
+  ));
+}
+
+function hasAnyFreeJt7AgentLocation(agentFilesLocations) {
+  if (!agentFilesLocations || typeof agentFilesLocations !== "object" || Array.isArray(agentFilesLocations)) {
+    return false;
+  }
+  return Object.entries(agentFilesLocations).some(([candidatePath, enabled]) => {
+    const normalized = normalizeComparablePath(candidatePath);
+    return Boolean(enabled)
+      && normalized.includes("agente-freejt7-extension-funcional")
+      && normalized.endsWith("/.github/agents");
+  });
+}
+
+function getGlobalVsCodeSettingsTargets(context) {
+  return {
+    instructionFile: path.join(context.extensionPath, ".github", "copilot-instructions.md"),
+    skillsIndex: path.join(context.extensionPath, ".github", "skills", ".skills_index.json"),
+    policyFile: path.join(context.extensionPath, ".github", "free-jt7-policy.yaml"),
+    modelsRouting: path.join(context.extensionPath, ".github", "free-jt7-model-routing.json"),
+    modelsIde: "vscode",
+    customAgentsEnabled: true,
+    switchAgentEnabled: true,
+  };
+}
+
+function getGlobalVsCodeSettingsSnapshot() {
+  return {
+    instructions: getGlobalConfigurationValue("github.copilot.chat.codeGeneration", "instructions"),
+    agentFilesLocations: getGlobalConfigurationValue("chat", "agentFilesLocations"),
+    skillsIndex: getGlobalConfigurationValue("freejt7", "skills.index"),
+    policyFile: getGlobalConfigurationValue("freejt7", "policy.file"),
+    modelsRouting: getGlobalConfigurationValue("freejt7", "models.routing"),
+    modelsIde: getGlobalConfigurationValue("freejt7", "models.ide"),
+    customAgentsEnabled: getGlobalConfigurationValue("github.copilot.chat.cli", "customAgents.enabled"),
+    switchAgentEnabled: getGlobalConfigurationValue("github.copilot.chat", "switchAgent.enabled"),
+  };
+}
+
+function getGlobalVsCodeSettingsRepairState(targets, snapshot) {
+  const reasons = [];
+  if (!hasMatchingInstructionEntry(snapshot.instructions, targets.instructionFile)) {
+    reasons.push("github.copilot.chat.codeGeneration.instructions");
+  }
+  if (hasAnyFreeJt7AgentLocation(snapshot.agentFilesLocations)) {
+    reasons.push("chat.agentFilesLocations");
+  }
+  if (normalizeComparablePath(snapshot.skillsIndex) !== normalizeComparablePath(targets.skillsIndex)) {
+    reasons.push("freejt7.skills.index");
+  }
+  if (normalizeComparablePath(snapshot.policyFile) !== normalizeComparablePath(targets.policyFile)) {
+    reasons.push("freejt7.policy.file");
+  }
+  if (normalizeComparablePath(snapshot.modelsRouting) !== normalizeComparablePath(targets.modelsRouting)) {
+    reasons.push("freejt7.models.routing");
+  }
+  if (String(snapshot.modelsIde || "").trim() !== targets.modelsIde) {
+    reasons.push("freejt7.models.ide");
+  }
+  if (Boolean(snapshot.customAgentsEnabled) !== Boolean(targets.customAgentsEnabled)) {
+    reasons.push("github.copilot.chat.cli.customAgents.enabled");
+  }
+  if (Boolean(snapshot.switchAgentEnabled) !== Boolean(targets.switchAgentEnabled)) {
+    reasons.push("github.copilot.chat.switchAgent.enabled");
+  }
+  return {
+    needsRepair: reasons.length > 0,
+    reasons,
+  };
+}
+
 function buildModelQuickPickItems(provider, currentModel) {
   const defaultModel = getDefaultModel(provider);
   const activeModel = currentModel || defaultModel;
@@ -681,11 +924,190 @@ function updateProviderStatusBar(providerStatusBar) {
   if (!providerStatusBar) {
     return;
   }
-  const config = vscode.workspace.getConfiguration("freejt7");
-  const provider = config.get("apiProvider") || "copilot";
-  const model = config.get("apiProviderModel") || "";
+  const { provider, model } = getEffectiveProviderConfig();
   providerStatusBar.text = formatProviderStatusBarText(provider, model);
   providerStatusBar.tooltip = formatProviderStatusBarTooltip(provider, model);
+}
+
+function slugifyDesignText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "freejt7-design";
+}
+
+function extractJsonObjectFromText(text) {
+  const source = String(text || "").trim();
+  if (!source) {
+    return "";
+  }
+  if (source.startsWith("{") && source.endsWith("}")) {
+    return source;
+  }
+  const start = source.indexOf("{");
+  if (start === -1) {
+    return "";
+  }
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < source.length; index += 1) {
+    const char = source[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === "{") {
+      depth += 1;
+    } else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return source.slice(start, index + 1);
+      }
+    }
+  }
+  return "";
+}
+
+async function launchDesignAgent(context, output) {
+  const workspacePath = getPrimaryWorkspacePath();
+  if (!workspacePath) {
+    vscode.window.showErrorMessage("Free JT7: abre un workspace antes de usar el agente de diseño.");
+    return null;
+  }
+
+  const prompt = await vscode.window.showInputBox({
+    prompt: "Objetivo creativo del video",
+    placeHolder: "Ej: video de lanzamiento para Free JT7 con look técnico y CTA final",
+    ignoreFocusOut: true,
+  });
+  if (!prompt) {
+    return null;
+  }
+
+  const sourceMode = await vscode.window.showQuickPick(
+    [
+      { label: "Sin archivo inicial", value: "none", detail: "Genera storyboard y video sin importar un asset/documento en esta corrida." },
+      { label: "Importar archivo en Canva", value: "pick", detail: "Selecciona una imagen, documento o media para usarla dentro del flujo." },
+    ],
+    {
+      placeHolder: "¿Quieres adjuntar un archivo al flujo Canva + Remotion?",
+      ignoreFocusOut: true,
+    }
+  );
+  if (!sourceMode) {
+    return null;
+  }
+
+  let sourceFile = "";
+  if (sourceMode.value === "pick") {
+    const picked = await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      openLabel: "Usar en el flujo de diseño",
+      filters: {
+        Media: ["png", "jpg", "jpeg", "webp", "mp3", "wav", "m4a", "aac", "pdf"],
+        Todos: ["*"],
+      },
+    });
+    if (!picked || !picked[0]) {
+      return null;
+    }
+    sourceFile = picked[0].fsPath;
+  }
+
+  const outputName = await vscode.window.showInputBox({
+    prompt: "Nombre base para los artefactos de salida",
+    value: slugifyDesignText(prompt),
+    ignoreFocusOut: true,
+  });
+  if (!outputName) {
+    return null;
+  }
+
+  const { provider, model } = getEffectiveProviderConfig();
+  const py = pythonCommand(context.extensionPath);
+  const args = [
+    ...py.args,
+    "-m",
+    "tools.design_agent.cli",
+    "generate-video",
+    "--workspace-root",
+    workspacePath,
+    "--prompt",
+    prompt,
+    "--output-name",
+    outputName,
+    "--provider",
+    provider,
+    "--interactive-canva-auth",
+    "--json",
+  ];
+  if (model) {
+    args.push("--model", model);
+  }
+  if (sourceFile) {
+    args.push("--source-file", sourceFile);
+  }
+
+  output.appendLine(`[freejt7-design] prompt=${prompt}`);
+  output.appendLine(`[freejt7-design] provider=${provider} model=${model || "default"} source=${sourceFile || "none"}`);
+  output.show(true);
+
+  const result = await runCommandCapture(py.bin, args, {
+    cwd: context.extensionPath,
+    env: { ...process.env, PYTHONUTF8: "1" },
+  }, output);
+
+  if (result.code !== 0) {
+    const detail = String(result.stderr || result.stdout || "Error desconocido").trim();
+    vscode.window.showErrorMessage(`Free JT7: el agente de diseño falló. ${detail}`);
+    return null;
+  }
+
+  const rawJson = extractJsonObjectFromText(result.stdout) || result.stdout;
+  let data;
+  try {
+    data = JSON.parse(rawJson);
+  } catch (error) {
+    vscode.window.showErrorMessage(`Free JT7: salida JSON inválida del agente de diseño. ${error.message}`);
+    return null;
+  }
+
+  if (Array.isArray(data.warnings) && data.warnings.length > 0) {
+    for (const warning of data.warnings) {
+      output.appendLine(`[freejt7-design] warning: ${warning}`);
+    }
+  }
+
+  const actions = [];
+  if (data.finalVideo || data.rawVideo) {
+    actions.push("Abrir video");
+  }
+  if (data.runDir) {
+    actions.push("Abrir carpeta");
+  }
+  const message = `Free JT7: video generado${data.finalVideo ? ` en ${data.finalVideo}` : ""}`;
+  const choice = await vscode.window.showInformationMessage(message, ...actions);
+  if (choice === "Abrir video" && (data.finalVideo || data.rawVideo)) {
+    await vscode.env.openExternal(vscode.Uri.file(data.finalVideo || data.rawVideo));
+  }
+  if (choice === "Abrir carpeta" && data.runDir) {
+    await vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(data.runDir));
+  }
+  return data;
 }
 
 async function routeTaskWithGoal(context, output, goal) {
@@ -777,12 +1199,12 @@ function openRuntimeDocs(context) {
 
 // helpers for OpenClaw CLI detection and invocation
 function findOpenClawBinary(workspacePath) {
-  // prefer local workspace package
-  const localBin = path.join(workspacePath, "OPEN CLAW", "node_modules", ".bin", "openclaw");
-  if (fs.existsSync(localBin)) {
-    return localBin;
+  if (workspacePath && isManagedWorkspace(workspacePath)) {
+    const localBin = path.join(workspacePath, "OPEN CLAW", "node_modules", ".bin", "openclaw");
+    if (fs.existsSync(localBin)) {
+      return localBin;
+    }
   }
-  // global fallback - assume in PATH
   return "openclaw";
 }
 
@@ -917,10 +1339,16 @@ function activate(context) {
     output.appendLine(`[freejt7] ensureMcpDependencies error: ${e}`)
   );
 
+  Promise.resolve()
+    .then(() => ensureGlobalVsCodeSettings(context, output))
+    .then(() => ensureWorkspaceBridge(context, output))
+    .catch((error) => {
+      output.appendLine(`[freejt7] bootstrap global/workspace error: ${String(error?.message || error)}`);
+    });
+
   // P4 Wire-C: start memory orchestrator + scheduler (non-fatal)
   try {
-    const _wp = (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]
-      ? vscode.workspace.workspaceFolders[0].uri.fsPath : null) || context.extensionPath;
+    const _wp = getOperationalRoot(context);
     getRemoteBridge({ rootDir: _wp }).start();
     const pluginRuntime = getPluginRuntime();
     const integrationDiscovery = pluginRuntime.discoverAndLoadIntegrations({
@@ -943,6 +1371,7 @@ function activate(context) {
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
     vscode.commands.registerCommand("freejt7.openRuntimeDocs", () => openRuntimeDocs(context)),
     vscode.commands.registerCommand("freejt7.routeTaskWithCopilot", () => routeTaskWithCopilot(context, output)),
+    vscode.commands.registerCommand("freejt7.launchDesignAgent", () => launchDesignAgent(context, output)),
 
     // new commands exposing OpenClaw CLI
     vscode.commands.registerCommand("freejt7.openClawGatewayStatus", () => runOpenClaw(["gateway", "status"], output)),
@@ -978,16 +1407,19 @@ function activate(context) {
     vscode.commands.registerCommand("freejt7.openClawChannelsLogin", () => runOpenClaw(["channels","login"], output)),
     vscode.commands.registerCommand("freejt7.selectApiProvider", async () => {
       const providers = [
-        { label: "$(copilot) GitHub Copilot (default)", value: "copilot" },
-        { label: "$(cloud) OpenRouter", value: "openrouter" },
+        { label: "$(cloud) OpenRouter (default)", value: "openrouter" },
         { label: "$(hubot) HuggingFace", value: "hf" },
         { label: "$(zap) ZAI (ZhipuAI)", value: "zai" },
+        { label: "$(copilot) GitHub Copilot", value: "copilot" },
       ];
       const picked = await vscode.window.showQuickPick(providers, { placeHolder: "Selecciona el proveedor de API" });
       if (!picked) return;
       let model = "";
       if (picked.value !== "copilot") {
-        const currentModel = vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "";
+        const currentConfig = getEffectiveProviderConfig();
+        const currentModel = currentConfig.provider === picked.value
+          ? currentConfig.model
+          : (getDefaultModel(picked.value) || "");
         const items = buildModelQuickPickItems(picked.value, currentModel);
         if (items.length > 0) {
           items.push({ label: "✏️ Escribir manualmente...", description: "" });
@@ -1007,7 +1439,7 @@ function activate(context) {
           model = await vscode.window.showInputBox({
             prompt: `Modelo para ${picked.value} (deja vacío para usar el predeterminado)`,
             value: currentModel,
-          }) || "";
+          }) || getDefaultModel(picked.value) || "";
         }
       }
       const config = vscode.workspace.getConfiguration("freejt7");
@@ -1037,7 +1469,7 @@ function activate(context) {
     }),
     vscode.commands.registerCommand("freejt7.selectFreeModel", async () => {
       const config = vscode.workspace.getConfiguration("freejt7");
-      const provider = config.get("apiProvider") || "copilot";
+      const { provider, model: activeModel } = getEffectiveProviderConfig();
       if (provider === "copilot") {
         vscode.window.showInformationMessage("Copilot usa su modelo integrado. Cambia de proveedor primero.");
         return;
@@ -1047,8 +1479,7 @@ function activate(context) {
         vscode.window.showWarningMessage(`No hay modelos gratuitos catalogados para ${provider}.`);
         return;
       }
-      const currentModel = config.get("apiProviderModel") || "";
-      const items = buildModelQuickPickItems(provider, currentModel);
+      const items = buildModelQuickPickItems(provider, activeModel);
       const selection = await vscode.window.showQuickPick(items, { placeHolder: `Selecciona modelo verificado para ${provider}` });
       if (!selection) return;
       await config.update("apiProviderModel", selection.modelValue, vscode.ConfigurationTarget.Global);
@@ -1063,13 +1494,11 @@ function activate(context) {
       vscode.window.showInformationMessage("Free JT7: catálogo de modelos actualizado.");
     }),
     vscode.commands.registerCommand("freejt7.testApiProvider", async () => {
-      const config = vscode.workspace.getConfiguration("freejt7");
-      const provider = config.get("apiProvider") || "copilot";
+      const { provider, model } = getEffectiveProviderConfig();
       if (provider === "copilot") {
         vscode.window.showInformationMessage("Free JT7: Copilot usa autenticación GitHub — no requiere test de conexión externo.");
         return;
       }
-      const model = config.get("apiProviderModel") || "";
       output.appendLine(`[freejt7] Probando conexión: provider=${provider} model=${model || "default"}`);
       output.show(true);
       vscode.window.showInformationMessage(`Free JT7: probando conexión con ${provider}...`);
@@ -1124,5 +1553,6 @@ function deactivate() {
 module.exports = {
   activate,
   deactivate,
-  runOpenClaw // available for scripts
+  runOpenClaw,
+  getGlobalVsCodeSettingsRepairState,
 };

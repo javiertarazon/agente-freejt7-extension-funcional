@@ -155,6 +155,20 @@ IDE_USER_SETTINGS_SUPPORTED: tuple[str, ...] = (
     "gemini-cli",
 )
 
+FREEJT7_DEFAULT_PROVIDER = "openrouter"
+FREEJT7_DEFAULT_PROVIDER_MODELS: dict[str, str] = {
+    "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
+    "hf": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+    "zai": "glm-4.5-flash",
+}
+
+FREEJT7_DEFAULT_PROVIDER = "openrouter"
+FREEJT7_DEFAULT_PROVIDER_MODELS: dict[str, str] = {
+    "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
+    "hf": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+    "zai": "glm-4.5-flash",
+}
+
 GITHUB_RAW  = "https://raw.githubusercontent.com"
 GITHUB_API  = "https://api.github.com"
 DEFAULT_REPO   = "javiertarazon/antigravity-awesome-skills"
@@ -628,23 +642,48 @@ def _same_path(a: Path, b: Path) -> bool:
         return _to_posix(a) == _to_posix(b)
 
 
+def _is_freejt7_instruction_path(value: Any) -> bool:
+    text = str(value or "").replace("\\", "/")
+    return "agente-freejt7-extension-funcional" in text and text.endswith("/.github/copilot-instructions.md")
+
+
+def _is_freejt7_agent_path(value: Any) -> bool:
+    text = str(value or "").replace("\\", "/")
+    return "agente-freejt7-extension-funcional" in text and text.endswith("/.github/agents")
+
+
 def _append_instruction_entry(settings: dict[str, Any], instruction_file: str) -> None:
     key = "github.copilot.chat.codeGeneration.instructions"
     value = settings.get(key, [])
     if not isinstance(value, list):
         value = []
+    value = [item for item in value if not (isinstance(item, dict) and _is_freejt7_instruction_path(item.get("file")))]
     exists = any(isinstance(item, dict) and item.get("file") == instruction_file for item in value)
     if not exists:
         value.append({"file": instruction_file})
     settings[key] = value
 
 
-def _append_agent_location(settings: dict[str, Any], agent_location: str) -> None:
+def _prune_freejt7_agent_locations(settings: dict[str, Any]) -> None:
     key = "chat.agentFilesLocations"
     value = settings.get(key, {})
     if isinstance(value, list):
         value = {str(item): True for item in value if isinstance(item, str) and item.strip()}
     elif not isinstance(value, dict):
+        settings.pop(key, None)
+        return
+    value = {path_key: enabled for path_key, enabled in value.items() if not _is_freejt7_agent_path(path_key)}
+    if value:
+        settings[key] = value
+    else:
+        settings.pop(key, None)
+
+
+def _append_agent_location(settings: dict[str, Any], agent_location: str) -> None:
+    _prune_freejt7_agent_locations(settings)
+    key = "chat.agentFilesLocations"
+    value = settings.get(key, {})
+    if not isinstance(value, dict):
         value = {}
     value[agent_location] = True
     settings[key] = value
@@ -655,11 +694,18 @@ def _apply_freejt7_settings(
     instruction_file: str,
     agent_location: str,
     ide: str,
+    *,
+    include_agent_location: bool = True,
 ) -> None:
     _append_instruction_entry(settings, instruction_file)
-    _append_agent_location(settings, agent_location)
+    if include_agent_location:
+        _append_agent_location(settings, agent_location)
+    else:
+        _prune_freejt7_agent_locations(settings)
     settings["github.copilot.chat.codeGeneration.useInstructionFiles"] = True
     settings["github.copilot.chat.customInstructionsInSystemMessage"] = True
+    settings["github.copilot.chat.cli.customAgents.enabled"] = True
+    settings["github.copilot.chat.switchAgent.enabled"] = True
     settings["chat.agent.enabled"] = True
     settings["freejt7.enabled"] = True
     settings[f"freejt7.integrations.{ide}.enabled"] = True
@@ -667,6 +713,24 @@ def _apply_freejt7_settings(
     settings["freejt7.policy.file"] = ".github/free-jt7-policy.yaml"
     settings["freejt7.models.routing"] = ".github/free-jt7-model-routing.json"
     settings["freejt7.models.ide"] = ide
+    current_provider = str(settings.get("freejt7.apiProvider") or "").strip()
+    if current_provider in {"", "copilot"}:
+        current_provider = FREEJT7_DEFAULT_PROVIDER
+        settings["freejt7.apiProvider"] = current_provider
+    current_model = str(settings.get("freejt7.apiProviderModel") or "").strip()
+    if current_provider != "copilot" and not current_model:
+        settings["freejt7.apiProviderModel"] = FREEJT7_DEFAULT_PROVIDER_MODELS.get(current_provider, FREEJT7_DEFAULT_PROVIDER_MODELS[FREEJT7_DEFAULT_PROVIDER])
+    settings.setdefault("freejt7.autoRepairGlobalSettings", True)
+    settings.setdefault("freejt7.autoInstallWorkspaceBridge", True)
+    current_provider = str(settings.get("freejt7.apiProvider") or "").strip()
+    if current_provider in {"", "copilot"}:
+        current_provider = FREEJT7_DEFAULT_PROVIDER
+        settings["freejt7.apiProvider"] = current_provider
+    current_model = str(settings.get("freejt7.apiProviderModel") or "").strip()
+    if current_provider != "copilot" and not current_model:
+        settings["freejt7.apiProviderModel"] = FREEJT7_DEFAULT_PROVIDER_MODELS.get(current_provider, FREEJT7_DEFAULT_PROVIDER_MODELS[FREEJT7_DEFAULT_PROVIDER])
+    settings.setdefault("freejt7.autoRepairGlobalSettings", True)
+    settings.setdefault("freejt7.autoInstallWorkspaceBridge", True)
 
 
 def _save_json_object(path: Path, data: dict[str, Any]) -> None:
@@ -958,7 +1022,7 @@ def _update_user_settings_for_ide(
         skills_index = _to_posix((ROOT / ".github" / "skills" / ".skills_index.json").resolve())
         policy_file = _to_posix((ROOT / ".github" / "free-jt7-policy.yaml").resolve())
         model_routing = _to_posix((ROOT / ".github" / "free-jt7-model-routing.json").resolve())
-        _apply_freejt7_settings(settings, instruction_file, agent_location, ide)
+        _apply_freejt7_settings(settings, instruction_file, agent_location, ide, include_agent_location=False)
         # In global user settings these must be absolute, otherwise they break per-workspace.
         settings["freejt7.skills.index"] = skills_index
         settings["freejt7.policy.file"] = policy_file
@@ -981,7 +1045,7 @@ def _update_user_settings_for_ide(
             if _same_path(profile_settings, settings_path):
                 continue
             profile_data = _load_json_object(profile_settings)
-            _apply_freejt7_settings(profile_data, instruction_file, agent_location, ide)
+            _apply_freejt7_settings(profile_data, instruction_file, agent_location, ide, include_agent_location=False)
             profile_data["freejt7.skills.index"] = skills_index
             profile_data["freejt7.policy.file"] = policy_file
             profile_data["freejt7.models.routing"] = model_routing
@@ -3412,8 +3476,8 @@ def cmd_set_project(args: argparse.Namespace) -> int:
             agent_locations = {str(item): True for item in agent_locations if isinstance(item, str) and item.strip()}
         elif not isinstance(agent_locations, dict):
             agent_locations = {}
-        root_agent_path = _to_posix((ROOT / ".github" / "agents").resolve())
-        agent_locations[root_agent_path] = True
+        agent_locations = {path_key: enabled for path_key, enabled in agent_locations.items() if str(path_key).strip() != "${workspaceFolder}/.github/agents"}
+        agent_locations[".github/agents"] = True
         settings["chat.agentFilesLocations"] = agent_locations
         save_json(workspace_file, workspace)
     except Exception as exc:
@@ -4350,89 +4414,94 @@ def cmd_install(args: argparse.Namespace) -> int:
         return 1
 
     target = Path(args.path).resolve()
+    user_settings_only = bool(getattr(args, "user_settings_only", False))
     gh_target = target / ".github"
     skills_target = gh_target / "skills"
     instr_target = gh_target / "instructions"
     ci_target = gh_target / "copilot-instructions.md"
 
-    if not target.exists():
+    if not target.exists() and not user_settings_only:
         target.mkdir(parents=True, exist_ok=True)
 
-    gh_target.mkdir(parents=True, exist_ok=True)
+    if not user_settings_only:
+        gh_target.mkdir(parents=True, exist_ok=True)
 
-    # copilot-instructions.md
-    ci_source = ROOT / ".github" / "copilot-instructions.md"
-    if _same_path(ci_source, ci_target):
-        print("[install] SKIP copilot-instructions.md ya apunta al origen")
-    elif not ci_target.exists() or args.force:
-        shutil.copy2(ci_source, ci_target)
-        print(f"[install] OK copilot-instructions.md -> {ci_target}")
-    else:
-        print(f"[install] SKIP copilot-instructions.md ya existe (usa --force para sobreescribir)")
+    if not user_settings_only:
+        # copilot-instructions.md
+        ci_source = ROOT / ".github" / "copilot-instructions.md"
+        if _same_path(ci_source, ci_target):
+            print("[install] SKIP copilot-instructions.md ya apunta al origen")
+        elif not ci_target.exists() or args.force:
+            shutil.copy2(ci_source, ci_target)
+            print(f"[install] OK copilot-instructions.md -> {ci_target}")
+        else:
+            print(f"[install] SKIP copilot-instructions.md ya existe (usa --force para sobreescribir)")
 
-    # skills/ (symlink)
-    if _same_path(skills_target, GH_SKILLS_DIR):
-        print("[install] SKIP .github/skills/ ya apunta al origen")
-    else:
-        if skills_target.exists() or skills_target.is_symlink():
-            if args.force:
-                if skills_target.is_symlink():
-                    skills_target.unlink()
+        # skills/ (symlink)
+        if _same_path(skills_target, GH_SKILLS_DIR):
+            print("[install] SKIP .github/skills/ ya apunta al origen")
+        else:
+            if skills_target.exists() or skills_target.is_symlink():
+                if args.force:
+                    if skills_target.is_symlink():
+                        skills_target.unlink()
+                    else:
+                        shutil.rmtree(skills_target)
                 else:
-                    shutil.rmtree(skills_target)
-            else:
-                print(f"[install] SKIP .github/skills/ ya existe (usa --force)")
-        if not skills_target.exists() and not skills_target.is_symlink():
-            try:
-                skills_target.symlink_to(GH_SKILLS_DIR, target_is_directory=True)
-                print(f"[install] LINK .github/skills/ -> symlink a {GH_SKILLS_DIR}")
-            except OSError:
-                shutil.copytree(GH_SKILLS_DIR, skills_target)
-                print(f"[install] COPY .github/skills/ -> copiado (sin privilegios de symlink)")
+                    print(f"[install] SKIP .github/skills/ ya existe (usa --force)")
+            if not skills_target.exists() and not skills_target.is_symlink():
+                try:
+                    skills_target.symlink_to(GH_SKILLS_DIR, target_is_directory=True)
+                    print(f"[install] LINK .github/skills/ -> symlink a {GH_SKILLS_DIR}")
+                except OSError:
+                    shutil.copytree(GH_SKILLS_DIR, skills_target)
+                    print(f"[install] COPY .github/skills/ -> copiado (sin privilegios de symlink)")
 
-    # instructions/ (symlink)
-    instr_src = ROOT / ".github" / "instructions"
-    if _same_path(instr_target, instr_src):
-        print("[install] SKIP .github/instructions/ ya apunta al origen")
-    else:
-        if instr_target.exists() or instr_target.is_symlink():
-            if args.force:
-                if instr_target.is_symlink():
-                    instr_target.unlink()
+        # instructions/ (symlink)
+        instr_src = ROOT / ".github" / "instructions"
+        if _same_path(instr_target, instr_src):
+            print("[install] SKIP .github/instructions/ ya apunta al origen")
+        else:
+            if instr_target.exists() or instr_target.is_symlink():
+                if args.force:
+                    if instr_target.is_symlink():
+                        instr_target.unlink()
+                    else:
+                        shutil.rmtree(instr_target)
                 else:
-                    shutil.rmtree(instr_target)
-            else:
-                print(f"[install] SKIP .github/instructions/ ya existe (usa --force)")
-        if not instr_target.exists() and not instr_target.is_symlink():
-            try:
-                instr_target.symlink_to(instr_src, target_is_directory=True)
-                print(f"[install] LINK .github/instructions/ -> symlink a {instr_src}")
-            except OSError:
-                shutil.copytree(instr_src, instr_target)
-                print(f"[install] COPY .github/instructions/ -> copiado")
+                    print(f"[install] SKIP .github/instructions/ ya existe (usa --force)")
+            if not instr_target.exists() and not instr_target.is_symlink():
+                try:
+                    instr_target.symlink_to(instr_src, target_is_directory=True)
+                    print(f"[install] LINK .github/instructions/ -> symlink a {instr_src}")
+                except OSError:
+                    shutil.copytree(instr_src, instr_target)
+                    print(f"[install] COPY .github/instructions/ -> copiado")
 
-    # Ensure both routing and policy files exist in target .github for all IDE bridges.
-    model_routing_target = _ensure_target_model_routing(target, force=getattr(args, "force", False))
-    print(f"[install] OK model routing -> {model_routing_target}")
+        # Ensure both routing and policy files exist in target .github for all IDE bridges.
+        model_routing_target = _ensure_target_model_routing(target, force=getattr(args, "force", False))
+        print(f"[install] OK model routing -> {model_routing_target}")
 
-    policy_target = gh_target / "free-jt7-policy.yaml"
-    if _same_path(POLICY_FILE, policy_target):
-        print("[install] SKIP free-jt7-policy.yaml ya apunta al origen")
-    elif not policy_target.exists() or args.force:
-        shutil.copy2(POLICY_FILE, policy_target)
-        print(f"[install] OK policy -> {policy_target}")
+        policy_target = gh_target / "free-jt7-policy.yaml"
+        if _same_path(POLICY_FILE, policy_target):
+            print("[install] SKIP free-jt7-policy.yaml ya apunta al origen")
+        elif not policy_target.exists() or args.force:
+            shutil.copy2(POLICY_FILE, policy_target)
+            print(f"[install] OK policy -> {policy_target}")
+        else:
+            print("[install] SKIP free-jt7-policy.yaml ya existe (usa --force para sobreescribir)")
+
+        openclaw_note = _link_openclaw_repo_into_target(target, force=getattr(args, "force", False))
+        print(f"[install] {openclaw_note}")
+
+        for ide in ide_targets:
+            notes = _install_workspace_ide_adapter(target, ide, force=getattr(args, "force", False))
+            if notes:
+                print(f"[install] IDE {ide}:")
+                for note in notes:
+                    print(f"  - {note}")
     else:
-        print("[install] SKIP free-jt7-policy.yaml ya existe (usa --force para sobreescribir)")
-
-    openclaw_note = _link_openclaw_repo_into_target(target, force=getattr(args, "force", False))
-    print(f"[install] {openclaw_note}")
-
-    for ide in ide_targets:
-        notes = _install_workspace_ide_adapter(target, ide, force=getattr(args, "force", False))
-        if notes:
-            print(f"[install] IDE {ide}:")
-            for note in notes:
-                print(f"  - {note}")
+        print("[install] Modo user-settings-only: se omite bootstrap de workspace y solo se reparan settings globales.")
 
     if getattr(args, "update_user_settings", False):
         for ide in ide_targets:
@@ -4442,9 +4511,13 @@ def cmd_install(args: argparse.Namespace) -> int:
             except RuntimeError as exc:
                 print(f"[install] WARN IDE {ide} user settings: {exc}")
 
-    _log_audit("install", str(target))
-    _update_resume("install", f"skills instalados en {target.name} | ide={','.join(ide_targets)}")
-    print(f"[install] OK Skills vinculados en: {target} | ide={','.join(ide_targets)}")
+    _log_audit("install", f"{target} | ide={','.join(ide_targets)} | user_settings_only={user_settings_only}")
+    if user_settings_only:
+        _update_resume("install", f"settings globales reparados | ide={','.join(ide_targets)}")
+        print(f"[install] OK Settings globales reparados | ide={','.join(ide_targets)}")
+    else:
+        _update_resume("install", f"skills instalados en {target.name} | ide={','.join(ide_targets)}")
+        print(f"[install] OK Skills vinculados en: {target} | ide={','.join(ide_targets)}")
     return 0
 
 
@@ -5439,6 +5512,11 @@ def main() -> int:
         "--update-user-settings",
         action="store_true",
         help="Actualizar settings de usuario del IDE objetivo",
+    )
+    p_inst.add_argument(
+        "--user-settings-only",
+        action="store_true",
+        help="Omitir bootstrap del workspace y actualizar solo settings globales del IDE objetivo",
     )
     p_inst.add_argument("--appdata-root", default="", help=argparse.SUPPRESS)
     p_inst.add_argument("--force", "-f", action="store_true", help="Sobreescribir archivos existentes")

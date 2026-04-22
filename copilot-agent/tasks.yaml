@@ -2,6 +2,45 @@
 # Actualizado automaticamente por skills_manager.py
 
 tareas:
+  - id: "20260420-agent-selector-remediation"
+    fecha: "2026-04-20"
+    titulo: "Recuperar visibilidad de agentes en el selector de Copilot Chat"
+    descripcion: >
+      Corregir la causa raiz por la que `free-jt7`, `openclaw` y
+      `skill-creator` no aparecen en el selector de agentes de GitHub Copilot
+      Chat, normalizando los `.agent.md`, propagando los flags de selector en
+      settings reparados/instalados y validando el contrato minimo de agentes.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["free-jt7-global-runtime-audit", "systematic-debugging", "verification-before-completion", "agent-orchestration"]
+    resultado: >
+      Completado: `openclaw.agent.md` y `skill-creator.agent.md` quedaron
+      normalizados al contrato minimo del selector (`name`, `tools`,
+      `argument-hint`, `user-invokable` y tools soportadas),
+      `skills_manager.py` y `extension.runtime.js` ahora propagan/verifican
+      `github.copilot.chat.cli.customAgents.enabled` y
+      `github.copilot.chat.switchAgent.enabled`, se añadió
+      `tests/agent_manifest_smoke.js`, y la validación cerró con
+      `node tests/agent_manifest_smoke.js`,
+      `node tests/global_settings_drift_smoke.js`, `npm run build:bundle`,
+      `npm run package:local` y reinstalación exitosa del VSIX 4.2.9.
+  - id: "20260420-global-agentfiles-remediation"
+    fecha: "2026-04-20"
+    titulo: "Eliminar agentFiles global invalido y validar activacion fuera del repo"
+    descripcion: >
+      Corregir la escritura de `chat.agentFilesLocations` en settings globales
+      para no usar rutas absolutas invalidas, limpiar configuraciones locales
+      heredadas y revalidar la activacion de la extension instalada en una
+      carpeta externa al repositorio.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["free-jt7-global-runtime-audit", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: `skills_manager.py` deja de inyectar `chat.agentFilesLocations`
+      global en user settings, el drift-heal del runtime solo repara entradas
+      Free JT7 stale, se limpiaron los settings invalidos del repo/usuario y la
+      extension quedo verificada en `window3` fuera del repo sin warnings
+      `Skipping invalid path`.
   - id: "20260305-v4-bootstrap"
     fecha: "2026-03-05"
     titulo: "Bootstrap v4.0 en repositorio dedicado"
@@ -165,6 +204,85 @@ tareas:
     resultado: >
       En progreso: integracion tecnica del router en la extension y en el flujo
       del agente free-jt7.
+  - id: "20260418-agent-compliance-hardening"
+    fecha: "2026-04-18"
+    titulo: "Endurecer cumplimiento operativo del agente Free JT7"
+    descripcion: >
+      Corregir el desfase entre instrucciones y ejecucion real para imponer
+      intake obligatorio, checklist, trazabilidad completa, skill resolution y
+      delegacion preferente en tareas no triviales.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["writing-skills", "agent-orchestration", "free-jt7-global-runtime-audit"]
+    resultado: >
+      Completado: se corrigieron instrucciones con rutas reales (`copilot-agent/`),
+      se hizo obligatorio el intake de 3 aclaraciones antes del plan, se resolvieron
+      skills antes de rutear y el runtime del router quedo integrado con
+      `task-start`/`task-close` para cerrar `tasks.yaml`, `audit-log.jsonl`,
+      `RESUME.md` y evidencia en `copilot-agent/runs/`.
+  - id: "20260419-router-hooks-functional-blocked-gate"
+    fecha: "2026-04-19"
+    titulo: "Cerrar hooks nativos de tool use y validar gate bloqueado del router"
+    descripcion: >
+      Integrar `preToolUse` y `postToolUse` reales del Copilot SDK con el
+      plugin runtime/policies de Free JT7, dejar evidencia auditable del uso de
+      herramientas y ejecutar una corrida funcional real del router que termine
+      con gate bloqueado y resume state verificable.
+    estado: "en_progreso"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "copilot-sdk", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      En progreso: hooks nativos `preToolUse`/`postToolUse` ya integrados con
+      plugin runtime + remote bridge y validados con smoke/build; la corrida
+      funcional real queda bloqueada solo por autenticacion ausente del Copilot
+      CLI/SDK en este host.
+  - id: "20260419-bridge-canonical-project-identity"
+    fecha: "2026-04-19"
+    titulo: "Endurecer identidad canonica multi-host del remote bridge"
+    descripcion: >
+      Normalizar project root y host identity en el bridge persistente para
+      detectar estado stale, mejorar reanudacion segura y dejar evidencia
+      de compatibilidad multi-host/multi-path en el resume state.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "software-architecture", "verification-before-completion"]
+    resultado: >
+      Completado: el remote bridge normaliza `projectRoot`, persiste
+      `projectId`/`hostFingerprint`, expone `identityStatus` en el resume state
+      y quedó validado con smoke suite + build.
+  - id: "20260419-audit-checklist-cli-identity"
+    fecha: "2026-04-19"
+    titulo: "Consolidar checklist de auditoría y cerrar identidad canónica en CLI"
+    descripcion: >
+      Reflejar con claridad qué hallazgos/fases de la auditoría avanzada ya
+      están ejecutados y endurecer `active-project.json`/`skills_manager.py`
+      para ignorar rutas stale multi-host o de otra plataforma.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "documentation", "python-testing-patterns", "verification-before-completion"]
+    resultado: >
+      Completado: `docs/11-AUDITORIA-AVANZADA-FREEJT7-CLAURST-CODEX.md`
+      ahora expone checklist real de hallazgos/fases, `skills_manager.py`
+      invalida rutas stale o de otra plataforma en `active-project.json`, el
+      proyecto activo quedó regenerado con identidad Linux canónica y la
+      validación cerró con `51 passed` en pytest + `doctor --strict` limpio.
+  - id: "20260419-autolearn-evaluator-integration-manifest"
+    fecha: "2026-04-19"
+    titulo: "Ejecutar Fase 4 evaluator-driven y Fase 5 capability packs externos"
+    descripcion: >
+      Implementar evaluator previo al collector en AutoLearn, añadir tagging y
+      regression packs desde runs validados, y diseñar/activar un integration
+      manifest versionado para capability packs externos con discovery seguro y
+      una integración de ejemplo sin tocar el core.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "software-architecture", "python-testing-patterns", "verification-before-completion"]
+    resultado: >
+      Completado: AutoLearn ahora evalúa antes de colectar, guarda evaluaciones
+      en `.agent-learning/logs/evaluations.jsonl`, genera regression packs y
+      `routing_hints.json`, y el runtime carga capability packs externos via
+      `freejt7.integration.json` con discovery seguro y un pack de ejemplo
+      validado por smoke, build y `doctor --strict`.
   - id: "audit-autonomia-20260318"
     fecha: "2026-03-18"
     titulo: "verificacion de autonomia auditada"
@@ -272,3 +390,413 @@ tareas:
       principales son integrar consolidacion automatica de memoria en runtime,
       scheduler cross-platform, runtime real de plugins con hooks/capacidades y
       una refactorizacion por capas del runtime JS.
+  - id: "20260418-priority-node-diagnosis"
+    fecha: "2026-04-18"
+    titulo: "Diagnosticar error No lowest priority node found"
+    descripcion: >
+      Investigar el origen real del error runtime "No lowest priority node found"
+      asociado a stacks minificados y verificar si proviene del bundle propio,
+      del scheduler del runtime o de una dependencia empaquetada.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["using-superpowers", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: se confirmo que la ruta conflictiva entra por el router Copilot
+      de la extension hacia `@github/copilot-sdk` y su CLI embebido con Bottleneck.
+      Se aplico una mitigacion local en `src-js/core/extension.runtime.js` para
+      bloquear ejecuciones solapadas del router, se recompilo `dist/extension.cjs`
+      y la validacion final confirmo el guard presente en el bundle.
+  - id: "20260418-free-model-catalog-sync"
+    fecha: "2026-04-18"
+    titulo: "Sincronizar catálogo visible de modelos gratis"
+    descripcion: >
+      Investigar por que el catálogo que se muestra para OpenRouter, HuggingFace
+      y ZAI no refleja los modelos gratis que realmente funcionan, unificar la
+      fuente de verdad del catálogo y corregir el refresco visible en la
+      extensión con cambios mínimos.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["systematic-debugging", "verification-before-completion", "agent-orchestration"]
+    resultado: >
+      Completado: se confirmó que el QuickPick, `src-js/free-models-catalog.js`
+      y el fallback empaquetado usaban catálogos estáticos duplicados y
+      desalineados respecto al adaptador. Se unificó la fuente de verdad en
+      `src-js/core/api-provider-adapter.js`, se actualizó OpenRouter con 15
+      modelos gratis vigentes y se validó con `npm run build:bundle` más una
+      comprobación Node de conteos/defaults consistente para OpenRouter, HF y
+      ZAI.
+  - id: "20260418-vsix-rebuild-reinstall"
+    fecha: "2026-04-18"
+    titulo: "Regenerar e reinstalar VSIX"
+    descripcion: >
+      Regenerar el paquete VSIX de la extensión tras la corrección del catálogo
+      de modelos gratis, reinstalarlo en VS Code y verificar que el artefacto
+      empaquetado quede instalado correctamente para probar el QuickPick real.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["verification-before-completion"]
+    resultado: >
+      Completado: `npm run package:local` generó
+      `agente-freejt7-extension-funcional-4.2.8.vsix`, se reinstaló con
+      `code --install-extension --force` y la validación final confirmó
+      `javiertarazon.agente-freejt7-extension-funcional@4.2.8`.
+  - id: "20260418-final-agent-audit"
+    fecha: "2026-04-18"
+    titulo: "Auditoria integral final de Free JT7"
+    descripcion: >
+      Auditar el repositorio para detectar errores, fallas, duplicidad o
+      solapamiento de funciones, codigo muerto, gaps de globalidad multi-IDE,
+      instalacion global, empaquetado y experiencia de clonacion + instalacion,
+      con evidencia ejecutable y hallazgos priorizados.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["free-jt7-global-runtime-audit", "systematic-debugging", "verification-before-completion", "code-review-checklist"]
+    resultado: >
+      Completado: el runtime principal paso `policy-validate`, `doctor --strict`,
+      `ide-detect`, `task-run` y `task-checklist`; `npm run build:bundle` y
+      `npm run package:local` generaron `agente-freejt7-extension-funcional-4.2.8.vsix`;
+      una instalacion limpia con `python3 skills_manager.py install <tempdir> --ide all --force`
+      creo bridges para vscode, cursor, kiro, antigravity, codex, claude-code y gemini-cli.
+      La auditoria detecto como gaps principales el acoplamiento de la extension
+      VS Code a GitHub Copilot Chat, la configuracion global expuesta solo para
+      VS Code, documentacion desactualizada en README y duplicidad mantenida en
+      los instaladores PowerShell.
+  - id: "20260419T020647Z-aaff8f6d"
+    fecha: "2026-04-19"
+    titulo: "runtime-audit"
+    descripcion: >
+      runtime-audit
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["free-jt7-global-runtime-audit", "production-code-audit", "seo-audit"]
+    resultado: >
+      Run finalizado con 2 steps
+  - id: "20260419-short-remediation-pass"
+    fecha: "2026-04-19"
+    titulo: "Plan de remediacion corto tras auditoria final"
+    descripcion: >
+      Ejecutar la pasada correctiva de mayor impacto surgida de la auditoria:
+      actualizar README a la realidad 4.2.8, exponer desde la extension un
+      flujo global multi-IDE real apoyado en `skills_manager.py` y consolidar
+      los instaladores PowerShell para reducir duplicidad operativa.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "readme", "vscode-ext-commands", "verification-before-completion"]
+    resultado: >
+      Completado: el README quedo alineado con la release 4.2.8 y el flujo
+      operativo real, la extension ahora expone `Free JT7: Aplicar configuracion
+      global multi-IDE` y reutiliza el backend de instalacion multi-IDE tambien
+      desde `@freejt7 /global`, y `scripts/add-free-jt7-agent.ps1` paso a ser
+      un wrapper de compatibilidad que delega en `scripts/setup-project.ps1`.
+      Verificado con `npm run build:bundle` y presencia del nuevo comando en
+      `dist/extension.cjs`.
+  - id: "20260419-wrapper-simplification-benchmark-matrix"
+    fecha: "2026-04-19"
+    titulo: "Segunda pasada correctiva de wrappers y matriz comparativa"
+    descripcion: >
+      Ejecutar una segunda pasada correctiva enfocada solo en duplicidad y
+      simplificacion de wrappers operativos, centrada en la capa OpenClaw,
+      y diseñar una matriz de metricas y escenarios reutilizable para una
+      comparativa real entre Free JT7, OpenClaw, Codex y Claude Code.
+    estado: "completada"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "systematic-debugging", "refactor", "documentation-templates", "verification-before-completion"]
+    resultado: >
+      Completada: `scripts/openclaw-start.cmd` paso a ser el wrapper comun para
+      resolver OpenClaw local/PATH/override, `scripts/free-jt7-gateway-autostart.ps1`
+      dejo de reimplementar esa deteccion y ahora reutiliza el wrapper comun, y
+      se añadio `docs/10-MATRIZ-COMPARATIVA-AGENTES.md` con metricas, pesos,
+      escenarios y protocolo de evidencia para comparar Free JT7, OpenClaw,
+      Codex y Claude Code. Verificado con `npm run build:bundle` y revision de
+      referencias/documentos.
+  - id: "20260419-doc08-runtime-alignment"
+    fecha: "2026-04-19"
+    titulo: "Integrar mejoras restantes del analisis Claurst vs Free JT7"
+    descripcion: >
+      Convertir en cambios reales y compatibles solo las mejoras del documento
+      `docs/08-ANALISIS-CLAURST-VS-FREEJT7.md` que todavia no estaban cerradas
+      en el runtime actual, priorizando bridge remoto, capas canonicas
+      `runtime/` y `providers/`, y alineacion final de la documentacion.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "refactor", "software-architecture", "verification-before-completion"]
+    resultado: >
+      Completado: se recalculo el delta real del documento frente al runtime,
+      se reforzo `src-js/bridge/remote-bridge.js` con persistencia, sesiones,
+      eventos y aprobaciones remotas, se introdujeron fachadas canonicas en
+      `src-js/runtime/` y `src-js/providers/`, se corrigieron huecos reales de
+      integracion (arranque del scheduler, bug de `nightlyTrain`, orden de
+      inicializacion del router en delegacion a proveedor) y se actualizo el
+      documento `docs/08-ANALISIS-CLAURST-VS-FREEJT7.md`. Verificado con
+      `npm run build:bundle`, chequeo de errores y carga minima por `require()`.
+  - id: "20260419-advanced-comparative-audit-roadmap"
+    fecha: "2026-04-19"
+    titulo: "Auditoria comparativa avanzada Free JT7 vs Claurst/Codex"
+    descripcion: >
+      Auditar el estado actual de Free JT7 tras la pasada correctiva, comparar
+      contra Claurst y contra patrones operativos de Codex para detectar
+      capacidades avanzadas aun no absorbidas y proponer un roadmap de
+      integracion seguro, eficiente y compatible hacia atras.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "code-review-checklist", "software-architecture"]
+    resultado: >
+      Completado: se documento `docs/11-AUDITORIA-AVANZADA-FREEJT7-CLAURST-CODEX.md`
+      con una comparativa real del estado actual de Free JT7 frente a Claurst y
+      frente a patrones de trabajo tipo Codex. La auditoria concluyo que las
+      brechas prioritarias ya no son de ausencia total de memoria/scheduler/
+      plugins/bridge, sino de cierre operativo: review loop multi-modelo,
+      hardening del bridge, servicio central de token economy, auto-mejora
+      evaluada y plataforma segura de capability packs externos. Validado con
+      chequeo de errores sobre documentacion y trazabilidad.
+  - id: "20260419-router-review-loop-phase1"
+    fecha: "2026-04-19"
+    titulo: "Implementar Fase 1 review loop en el router Copilot"
+    descripcion: >
+      Ejecutar el siguiente paso natural del roadmap avanzado: introducir en el
+      router Copilot un review stage nativo, configurable y con findings
+      estructurados, de modo que el cierre quede bloqueado cuando existan
+      hallazgos criticos o tareas fallidas, manteniendo compatibilidad hacia
+      atras y verificacion ligera reproducible.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "plan-writing", "software-architecture", "test-driven-development"]
+    resultado: >
+      Completado: `src-js/core/copilot_router.runtime.js` incorpora ahora un
+      `reviewStage` nativo y configurable, activado por reglas de riesgo
+      (tareas fallidas, multi-file, riesgo alto o residual risks), con
+      findings estructurados, `closingGate` real y salida final enriquecida.
+      Se extendieron `package.json` y `.github/free-jt7-model-routing.json`
+      para configurar reviewer y umbrales, y se añadio
+      `tests/router_review_stage_smoke.js` junto con el script
+      `npm run test:router-review-smoke`. Verificado con smoke test verde,
+      export de helpers y `npm run build:bundle` exitoso.
+  - id: "20260419-router-phase2-bridge-budget"
+    fecha: "2026-04-19"
+    titulo: "Completar loop auto-fix, budget central y hardening del bridge"
+    descripcion: >
+      Continuar el roadmap avanzado del router integrando auto-remediacion de
+      findings con re-review, una capa central de economia de contexto/tokens
+      compartida entre router y proveedores, y persistencia/reanudacion remota
+      mas fuerte para findings, gates y sesiones.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "plan-writing", "software-architecture", "test-driven-development"]
+    resultado: >
+      Completado: el router Copilot ahora puede ejecutar una pasada de
+      auto-remediacion con re-review antes del cierre cuando el gate queda
+      bloqueado, `src-js/core/context-budget.js` centraliza limites y budgets
+      reutilizados por router, memoria y proveedores, y el bridge remoto
+      persiste `reviewHistory`, `latestGate` y `resumePointer` para revisar y
+      reanudar findings/gates entre sesiones. Validado con
+      `npm run test:router-review-smoke` y `npm run build:bundle`.
+  - id: "20260419-router-core-concurrency-lock"
+    fecha: "2026-04-19"
+    titulo: "Aplicar lock definitivo de concurrencia en el router core"
+    descripcion: >
+      Mover la proteccion contra ejecuciones solapadas del router Copilot al
+      nucleo de `src-js/core/copilot_router.runtime.js` para cubrir tambien la
+      entrada directa por CLI/core, añadir una prueba JS minima de regresion y
+      revalidar el bundle resultante.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["using-superpowers", "systematic-debugging", "test-driven-development", "verification-before-completion"]
+    resultado: >
+      Completado: `src-js/core/copilot_router.runtime.js` ahora aplica el lock
+      de concurrencia en el propio core mediante `runWithRouterRunLock` y la
+      ruta principal `runCopilotRouter`, cubriendo también entradas directas
+      por CLI/core. Se añadió `tests/router_core_concurrency_smoke.js` y el
+      script `npm run test:router-core-concurrency-smoke`. Validado con
+      `npm run test:router-core-concurrency-smoke`,
+      `npm run test:router-review-smoke`, `npm run build:bundle` y una carga
+      Node que confirma la exportación del helper y del router principal.
+  - id: "20260419T160256Z-359067ff"
+    fecha: "2026-04-19"
+    titulo: "runtime-audit"
+    descripcion: >
+      runtime-audit
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["free-jt7-global-runtime-audit", "production-code-audit", "seo-audit"]
+    resultado: >
+      Run finalizado con 2 steps
+  - id: "20260419-final-release-packaging-publication"
+    fecha: "2026-04-19"
+    titulo: "Auditoria final, empaquetado e instalacion/publicacion de la version"
+    descripcion: >
+      Ejecutar la fase final de release sobre el estado corregido del runtime:
+      ordenar versionado y changelog, regenerar el VSIX, reinstalarlo en VS Code,
+      verificar el artefacto y dejar listo el estado de publicacion local/remota
+      con trazabilidad y evidencia fresca.
+    estado: "en_progreso"
+    riesgo: "medium"
+    skills_usados: ["free-jt7-global-runtime-audit", "agent-orchestration", "verification-before-completion"]
+    resultado: >
+      En progreso: la release se renumero a 4.2.9 para evitar la colision con
+      el tag local v4.2.8, manteniendo el mismo contenido funcional que 4.2.8.
+      El VSIX 4.2.9 ya fue regenerado e instalado correctamente en VS Code;
+      queda pendiente solo decidir la publicacion git sobre un working tree
+      todavia muy mezclado.
+  - id: "20260419-release-clean-commit-tag"
+    fecha: "2026-04-19"
+    titulo: "Separar commit limpio de release 4.2.9 y preparar tag local"
+    descripcion: >
+      Auditar el working tree mezclado, separar el subconjunto real de la
+      release 4.2.9, crear un commit local limpio solo con esos cambios y dejar
+      creado/validado el tag v4.2.9 sin publicar ni hacer push.
+    estado: "completada"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "make-repo-contribution", "verification-before-completion"]
+    resultado: >
+      Completada: se separo el subset real de la release 4.2.9, se creo el
+      commit local limpio `01f70125c263b5bdda3adce0b8771777a1966fec` con mensaje
+      `chore(release): prepare v4.2.9`, y se creo/valido el tag anotado
+      `v4.2.9` apuntando al mismo commit. Quedaron fuera del commit los archivos
+      operativos/locales de `copilot-agent/`, memoria, temporales y artefactos de test.
+  - id: "20260419T175016Z-43a34f03"
+    fecha: "2026-04-19"
+    titulo: "resolver activacion global multi-IDE y forzar OpenRouter gratis como proveedor e"
+    descripcion: >
+      resolver activacion global multi-IDE y forzar OpenRouter gratis como proveedor efectivo
+    estado: "bloqueado"
+    riesgo: "low"
+    skills_usados: ["free-jt7-global-runtime-audit", "nano-banana-pro-openrouter", "react-state-management"]
+    resultado: >
+      Bloqueado por quality gate: existen steps fallidos o sin evidencia.
+  - id: "20260420-extension-global-decouple"
+    fecha: "2026-04-20"
+    titulo: "Desacoplar runtime global del bootstrap de workspace"
+    descripcion: >
+      Corregir la causa raiz por la que Free JT7 sigue comportandose como un
+      repo bootstrapado en lugar de una extension VS Code autosuficiente,
+      separando el modo global instalado del modo workspace gestionado,
+      evitando bootstrap innecesario en la carpeta abierta y manteniendo la
+      compatibilidad de comandos y APIs publicas.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["free-jt7-global-runtime-audit", "agent-orchestration", "software-architecture", "verification-before-completion"]
+    resultado: >
+      Completado: el instalador global ahora soporta `--user-settings-only`, de
+      modo que la autocuracion global ya no bootstrappea workspaces ni escribe
+      dentro de la carpeta instalada de la extension. En paralelo,
+      `src-js/core/extension.runtime.js` separa workspace gestionado de folder
+      arbitrario: solo usa root de workspace para bridge/scheduler/OpenClaw
+      cuando detecta marcadores reales de Free JT7; en caso contrario opera
+      desde storage global de la extension. Validado con `npm run build:bundle`,
+      `node tests/plugin_integration_manifest_smoke.js`, `python skills_manager.py doctor --strict`,
+      `python skills_manager.py install <tmp> --user-settings-only` sin crear
+      `.github`/`OPEN CLAW`, y empaquetado+instalacion del VSIX 4.2.9.
+  - id: "20260420-global-settings-drift-heal"
+    fecha: "2026-04-20"
+    titulo: "Endurecer autocuración global ante drift real de settings"
+    descripcion: >
+      Corregir el caso en el que la extensión instalada cree que la
+      configuración global ya está sincronizada por versión/path, pero los
+      settings reales de VS Code siguen apuntando al checkout fuente o a rutas
+      stale, dejando la experiencia global rota aunque el VSIX correcto ya esté
+      instalado.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["free-jt7-global-runtime-audit", "systematic-debugging", "software-architecture", "verification-before-completion"]
+    resultado: >
+      Completado: `src-js/core/extension.runtime.js` ya no confía solo en
+      `syncState`; ahora compara los settings globales reales de VS Code contra
+      la ruta esperada de la extensión instalada y relanza la reparación si
+      detecta drift en instrucciones, agents o rutas `freejt7.*`. Se añadió el
+      smoke test `tests/global_settings_drift_smoke.js` y la validación cerró
+      con `npm run test:global-settings-drift-smoke`, `npm run build:bundle`,
+      `npm run test:plugin-integration-smoke`, empaquetado+reinstalación del
+      VSIX 4.2.9 y confirmación de que `settings.json` apunta a
+      `~/.vscode/extensions/javiertarazon.agente-freejt7-extension-funcional-4.2.9/`.
+  - id: "20260420-zip-integration-feasibility"
+    fecha: "2026-04-20"
+    titulo: "Analizar ZIP externo y evaluar factibilidad de integración en Free JT7"
+    descripcion: >
+      Inspeccionar `files.zip`, identificar su arquitectura y dependencias,
+      mapear posibles puntos de acople con el runtime actual de Free JT7 y
+      emitir una evaluación técnica de factibilidad, riesgos, esfuerzo y vía
+      de integración recomendada sin aplicar todavía cambios funcionales.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["using-superpowers", "agent-orchestration", "software-architecture", "verification-before-completion"]
+    resultado: >
+      Completado: el ZIP aporta solo 5 archivos y no coincide con la estructura
+      del proyecto que declara su propio README/tasks. El paquete compila a
+      nivel sintáctico, pero `master_pipeline.py` depende de módulos ausentes
+      (`claude_design_agent`, `remotion_agent`) y faltan también
+      `video_pipeline_agent`, `remotion_project` y otros artefactos citados.
+      La integración directa en Free JT7 no es recomendable; la vía viable es
+      una integración adaptada como capability pack/plugin o wrapper sobre el
+      remote bridge, reutilizando principalmente la parte Canva y rearmando o
+      descartando el flujo Remotion.
+  - id: "20260419-clone-remotion-optional-repo"
+    fecha: "2026-04-19"
+    titulo: "Clonar repositorio oficial de Remotion en carpeta opcional externa"
+    descripcion: >
+      Localizar el repositorio oficial de Remotion en GitHub y clonarlo en la
+      ruta externa solicitada por el usuario para usarlo como referencia o base
+      de reconstrucción del subproyecto Remotion faltante.
+    estado: "en_progreso"
+    riesgo: "low"
+    skills_usados: ["gh-cli", "verification-before-completion"]
+    resultado: >
+      En progreso: repositorio oficial identificado como
+      `remotion-dev/remotion`; pendiente ejecutar clonación validada en la ruta
+      externa `/home/javier28/Público/REPOSOTORIOS OPCIONALES`.
+  - id: "20260421-canva-mcp-live-registration"
+    fecha: "2026-04-21"
+    titulo: "Completar registro real de Canva MCP y validación del design agent"
+    descripcion: >
+      Ejecutar el registro manual real del cliente Canva MCP para el design
+      agent de Free JT7, persistir credenciales locales en `.env.free-jt7` si
+      la API responde correctamente y verificar el estado resultante con el CLI
+      del agente. Si el flujo exige intervención humana o allowlist previa,
+      dejar el bloqueo documentado con evidencia reproducible.
+    estado: "completada"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "verification-before-completion", "wiki-qa"]
+    resultado: >
+      Completada: el error "client id no valida" no estaba en las credenciales
+      sino en el host OAuth. `tools/design_agent/canva_service.py` forzaba el
+      flujo sobre `www.canva.com/api/oauth/*`; ahora usa
+      `https://mcp.canva.com/authorize` y `https://mcp.canva.com/token`, se
+      agrego regresion en `tests/test_design_agent.py`, `auth-canva --json`
+      completo el intercambio de token y `doctor --json` confirmo
+      `canvaTokenPresent=true`.
+  - id: "20260421-release-4-2-10-design-agent"
+    fecha: "2026-04-21"
+    titulo: "Versionar, empaquetar y publicar release 4.2.10 con agente de diseño"
+    descripcion: >
+      Tomar el estado actual completo de `feature/agente-diseno`, alinear los
+      metadatos a una nueva versión correlativa, validar el design agent,
+      generar un nuevo VSIX instalable y publicar el commit resultante en el
+      remoto de la misma rama con trazabilidad cerrada.
+    estado: "en_progreso"
+    riesgo: "medium"
+    skills_usados: ["make-repo-contribution", "agent-orchestration", "verification-before-completion"]
+    resultado: >
+      En progreso: alcance fijado a todo el working tree actual de
+      `feature/agente-diseno`, destino de publicación fijado a
+      `origin/feature/agente-diseno`, y metadatos de release alineándose hacia
+      la versión correlativa 4.2.10. La validación fresca cerró con
+      `doctor --json` OK, `pytest tests/test_design_agent.py -q` => 5 passed,
+      `npm run build:bundle` OK, y el VSIX
+      `agente-freejt7-extension-funcional-4.2.10.vsix` ya fue generado y
+      verificado con contenido `extension/tools/design_agent/*`; queda pendiente
+      solo el commit y push final sobre `origin/feature/agente-diseno`.
+  - id: "20260421-feature-agente-diseno-branch"
+    fecha: "2026-04-21"
+    titulo: "Crear rama feature/agente-diseno local y remota"
+    descripcion: >
+      Crear la rama `feature/agente-diseno` desde el estado actual del
+      repositorio local, publicarla en `origin` con upstream configurado y
+      dejar evidencia del resultado sin alterar ni limpiar el working tree
+      existente.
+    estado: "completada"
+    riesgo: "low"
+    skills_usados: ["make-repo-contribution", "git-advanced-workflows"]
+    resultado: >
+      Completada: se creo `feature/agente-diseno` desde el HEAD actual con
+      `git switch -c`, se publico con `git push -u origin feature/agente-diseno`
+      y quedo rastreando `origin/feature/agente-diseno`. El working tree sucio
+      existente se preservo intacto sobre la nueva rama.
