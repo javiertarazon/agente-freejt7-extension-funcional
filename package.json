@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local, router Copilot y gateway OpenClaw.",
-  "version": "4.2.5",
+  "version": "4.2.10",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -50,6 +50,14 @@
         "title": "Free JT7: Instalar en workspace actual"
       },
       {
+        "command": "freejt7.installGlobalVsCode",
+        "title": "Free JT7: Aplicar configuracion global en VS Code"
+      },
+      {
+        "command": "freejt7.installGlobalMultiIde",
+        "title": "Free JT7: Aplicar configuracion global multi-IDE"
+      },
+      {
         "command": "freejt7.runtimeDoctor",
         "title": "Free JT7: Validar runtime"
       },
@@ -60,6 +68,10 @@
       {
         "command": "freejt7.routeTaskWithCopilot",
         "title": "Free JT7: Routed Copilot Task"
+      },
+      {
+        "command": "freejt7.launchDesignAgent",
+        "title": "Free JT7: Generar video con agente de diseño"
       },
       {
         "command": "freejt7.openClawGatewayStatus",
@@ -88,14 +100,34 @@
       {
         "command": "freejt7.openClawChannelsLogin",
         "title": "Free JT7: OpenClaw Channels Login"
+      },
+      {
+        "command": "freejt7.selectApiProvider",
+        "title": "Free JT7: Seleccionar Proveedor de API"
+      },
+      {
+        "command": "freejt7.setApiKey",
+        "title": "Free JT7: Configurar API Key de Proveedor"
+      },
+      {
+        "command": "freejt7.selectFreeModel",
+        "title": "Free JT7: Seleccionar Modelo Gratuito"
+      },
+      {
+        "command": "freejt7.refreshFreeModels",
+        "title": "Free JT7: Actualizar Catálogo de Modelos Gratuitos"
+      },
+      {
+        "command": "freejt7.testApiProvider",
+        "title": "Free JT7: Probar Conexión con Proveedor Externo"
       }
     ],
     "chatParticipants": [
       {
         "id": "freejt7.chat",
-        "name": "freejt7",
+        "name": "free-jt7",
         "fullName": "Free JT7",
-        "description": "Planifica y ejecuta tareas de Free JT7 en el workspace actual.",
+        "description": "Planifica y ejecuta tareas de Free JT7 desde GitHub Copilot Chat en cualquier carpeta abierta.",
         "isSticky": true,
         "commands": [
           {
@@ -109,6 +141,10 @@
           {
             "name": "install",
             "description": "Instala o adapta Free JT7 en el workspace actual"
+          },
+          {
+            "name": "global",
+            "description": "Aplica la configuracion global de Free JT7 para VS Code u otros IDE soportados"
           },
           {
             "name": "docs",
@@ -146,6 +182,16 @@
           "default": false,
           "description": "Sobrescribe archivos de integracion existentes."
         },
+        "freejt7.autoRepairGlobalSettings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Repara automaticamente los settings globales para que apunten a la extension instalada y no a un checkout fuente desfasado."
+        },
+        "freejt7.autoInstallWorkspaceBridge": {
+          "type": "boolean",
+          "default": true,
+          "description": "Repara automaticamente el bridge minimo de Free JT7 solo en workspaces ya gestionados cuando falten archivos base."
+        },
         "freejt7.copilotRouter.cliPath": {
           "type": "string",
           "default": "",
@@ -171,6 +217,39 @@
           "default": "gpt-5.4",
           "description": "Modelo de fallback cuando una subtarea es de alto riesgo o falla con un modelo barato."
         },
+        "freejt7.copilotRouter.reviewEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Activa la fase de review loop del router cuando la politica de riesgo lo requiera."
+        },
+        "freejt7.copilotRouter.reviewModel": {
+          "type": "string",
+          "default": "gpt-5.4",
+          "description": "Modelo usado por la segunda pasada de review/verificacion del router."
+        },
+        "freejt7.copilotRouter.reviewMaxFindings": {
+          "type": "number",
+          "default": 12,
+          "minimum": 1,
+          "description": "Numero maximo de findings estructurados que debe devolver la etapa de review."
+        },
+        "freejt7.copilotRouter.reviewMinChangedFiles": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "description": "Numero minimo de archivos cambiados para disparar review automatico por multi-file." 
+        },
+        "freejt7.copilotRouter.autoFixEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Permite una pasada automatica de remediacion y re-review cuando el gate queda bloqueado por findings abiertos."
+        },
+        "freejt7.copilotRouter.autoFixMaxPasses": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "description": "Numero maximo de pasadas de auto-remediacion antes de dejar el gate bloqueado para revision manual."
+        },
         "freejt7.copilotRouter.experimentalCodeModel": {
           "type": "string",
           "default": "",
@@ -180,12 +259,35 @@
           "type": "boolean",
           "default": true,
           "description": "Aprueba automaticamente tools seguras del SDK y bloquea shells destructivas conocidas."
+        },
+        "freejt7.apiProvider": {
+          "type": "string",
+          "enum": ["copilot", "openrouter", "hf", "zai"],
+          "enumDescriptions": [
+            "GitHub Copilot",
+            "OpenRouter (default)",
+            "HuggingFace",
+            "ZAI (ZhipuAI)"
+          ],
+          "default": "openrouter",
+          "description": "Proveedor de API activo para el agente Free JT7"
+        },
+        "freejt7.apiProviderModel": {
+          "type": "string",
+          "default": "meta-llama/llama-3.3-70b-instruct:free",
+          "description": "Modelo específico del proveedor seleccionado (ej: openai/gpt-4o-mini, glm-4-flash)"
         }
       }
     }
   },
   "scripts": {
     "build:bundle": "node scripts/build-extension-bundle.js",
+    "test:agent-manifest-smoke": "node tests/agent_manifest_smoke.js",
+    "test:global-settings-drift-smoke": "node tests/global_settings_drift_smoke.js",
+    "test:router-core-concurrency-smoke": "node tests/router_core_concurrency_smoke.js",
+    "test:router-review-smoke": "node tests/router_review_stage_smoke.js",
+    "test:plugin-integration-smoke": "node tests/plugin_integration_manifest_smoke.js",
+    "test:router-functional-blocked-gate": "node tools/router-functional-blocked-gate.js",
     "postinstall": "node scripts/fix-copilot-sdk-install.js && node scripts/build-extension-bundle.js",
     "package": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --allow-missing-repository",
     "package:local": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --no-yarn --allow-missing-repository"

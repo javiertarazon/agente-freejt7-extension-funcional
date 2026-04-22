@@ -42,6 +42,7 @@ $configPath = Join-Path $root ".openclaw\openclaw.json"
 $stateDir = Join-Path $root ".openclaw\state"
 $credPath = Join-Path $root ".secrets\free-jt7.env"
 $logDir = Join-Path $root ".openclaw\logs"
+$wrapperPath = Join-Path $root "scripts\openclaw-start.cmd"
 
 New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
@@ -55,13 +56,9 @@ if (Is-GatewayListening -Port 18789) {
     exit 0
 }
 
-$openclawCmd = (Get-Command openclaw.cmd -ErrorAction SilentlyContinue)
-if (-not $openclawCmd) {
-    $openclawCmd = (Get-Command openclaw -ErrorAction SilentlyContinue)
-}
-if (-not $openclawCmd) {
-    throw "No se encontro 'openclaw' en PATH."
+if (-not (Test-Path -LiteralPath $wrapperPath)) {
+    throw "No se encontro el wrapper comun de OpenClaw: $wrapperPath"
 }
 
 Set-Location $root
-& $openclawCmd.Source gateway run --port 18789 --verbose
+& $wrapperPath gateway --port 18789 --verbose

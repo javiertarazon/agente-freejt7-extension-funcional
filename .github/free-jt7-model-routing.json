@@ -140,6 +140,14 @@
       "fallbackModel": "gpt-5.4",
       "experimentalCodeModel": ""
     },
+    "review": {
+      "enabled": true,
+      "model": "gpt-5.4",
+      "maxFindings": 12,
+      "minChangedFiles": 2,
+      "autoFixEnabled": true,
+      "autoFixMaxPasses": 1
+    },
     "synthesis": {
       "model": "gpt-5.4"
     },

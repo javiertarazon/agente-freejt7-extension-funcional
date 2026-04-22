@@ -1,11 +1,9 @@
 ---
 name: Skill Creator
 description: Generador de skills experto
-model: claude-sonnet-4-5
-tools:
-  - codebase
-  - terminal
-  - search
+tools: ["read", "edit", "search", "execute", "agent"]
+argument-hint: Describe el skill, el dominio y el resultado esperado.
+user-invokable: true
 ---
 
 # Skill Creator — Agente personalizado

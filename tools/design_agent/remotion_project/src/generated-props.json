@@ -1,0 +1,50 @@
+{
+  "compositionId": "FreeJT7DesignVideo",
+  "title": "Video Smoke De Free Jt7 Con Remotion Y Mcp-Video",
+  "subtitle": "Canva, Remotion y mcp-video trabajando en un solo flujo",
+  "callToAction": "Activa el flujo completo desde Free JT7",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "durationInFrames": 360,
+  "audioPath": null,
+  "outputName": "smoke-design",
+  "scenes": [
+    {
+      "headline": "Idea y contexto",
+      "body": "Video smoke de Free JT7 con Remotion y mcp-video convertido en storyboard operativo dentro del runtime de Free JT7.",
+      "bullets": [
+        "prompt estructurado",
+        "salida lista para video"
+      ],
+      "background": "#101820",
+      "accent": "#F2AA4C",
+      "durationInFrames": 120,
+      "imagePath": null
+    },
+    {
+      "headline": "Diseño y ensamblado",
+      "body": "Canva aporta piezas visuales; Remotion compone escenas; mcp-video remata la edición.",
+      "bullets": [
+        "assets reutilizables",
+        "render reproducible"
+      ],
+      "background": "#1B4965",
+      "accent": "#CAE9FF",
+      "durationInFrames": 120,
+      "imagePath": null
+    },
+    {
+      "headline": "Entrega automatizada",
+      "body": "El resultado queda versionado dentro del workspace con trazabilidad y salida final lista para revisar.",
+      "bullets": [
+        "salida mp4",
+        "pipeline verificable"
+      ],
+      "background": "#2D3142",
+      "accent": "#EF8354",
+      "durationInFrames": 120,
+      "imagePath": null
+    }
+  ]
+}

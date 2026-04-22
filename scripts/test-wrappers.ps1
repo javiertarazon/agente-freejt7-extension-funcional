@@ -1,4 +1,4 @@
-# simple tests for wrapper scripts and CLI helper
+# smoke tests para wrappers CLI y helper JS
 $ErrorActionPreference = 'Stop'
 
 Write-Host '[test] running openclaw-start.cmd --version'
@@ -11,7 +11,6 @@ try {
 # test runOpenClaw via node
 Write-Host '[test] running runOpenClaw helper from extension.js'
 $node = 'node'
-# ensure working directory is workspace root where extension.js resides
 $cwd = Get-Location
 Push-Location $PSScriptRoot\..\
 $code = @"

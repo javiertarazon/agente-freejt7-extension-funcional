@@ -2,22 +2,29 @@
 
 ## Checklist operativo
 
-1. Validar policy:
+1. Intake obligatorio antes del plan:
+   - Confirmar entregable esperado
+   - Confirmar restricciones/no-goals
+   - Confirmar verificacion esperada
+2. Validar policy:
    - `python skills_manager.py policy-validate`
-2. Confirmar modo rollout:
+3. Confirmar modo rollout:
    - `python skills_manager.py rollout-mode`
-3. Diagnostico estricto:
+4. Diagnostico estricto:
    - `python skills_manager.py doctor --strict`
-4. Resolver skills para la tarea:
+5. Resolver skills para la tarea:
    - `python skills_manager.py skill-resolve --query "<objetivo>" --top 3`
-5. Ejecutar run:
+6. Registrar/ejecutar run:
    - `python skills_manager.py task-run --goal "<objetivo>" --commands "..."`
-6. Revisar checklist:
+7. Revisar checklist:
    - `python skills_manager.py task-list --limit 20`
    - `python skills_manager.py task-checklist --run-id <run_id>`
-7. Revisar evidencia:
+8. Revisar evidencia:
    - `copilot-agent/runs/<run_id>.json`
    - `copilot-agent/runs/<run_id>.events.jsonl`
+9. Registrar decision de delegacion:
+   - Delegar si la tarea compleja se beneficia de aislamiento o paralelismo
+   - Si no se delega, dejar motivo breve en la trazabilidad
 
 ## Router Copilot SDK
 
@@ -28,7 +35,7 @@
 - Fallback de alto riesgo: `gpt-5.4`
 - Si el CLI responde que no hay autenticacion, ejecutar `copilot` y usar `/login`, o definir `COPILOT_GITHUB_TOKEN`, `GH_TOKEN` o `GITHUB_TOKEN`.
 
-8. Aprendizaje automático:
+10. Aprendizaje automático:
    - **Siempre** que el agente ejecute una tarea (autónoma o guiada), se
      crea un ejemplo de entrenamiento: el prompt es el `user_goal` y la
      respuesta el `summary`. Un campo `score` marca éxito (1.0) o fallo

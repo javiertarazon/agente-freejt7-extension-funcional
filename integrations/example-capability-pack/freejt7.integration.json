@@ -1,0 +1,55 @@
+{
+  "manifestVersion": 1,
+  "id": "example-capability-pack",
+  "version": "1.0.0",
+  "tier": "trusted",
+  "description": "Capability pack externo de ejemplo para validar discovery seguro sin tocar el core.",
+  "compatibility": {
+    "pluginRuntimeApi": "1.x"
+  },
+  "capabilities": {
+    "plugin": {
+      "entry": "plugin.js",
+      "capabilities": [
+        "tool-intercept",
+        "route-intercept"
+      ]
+    },
+    "commands": [
+      {
+        "id": "example-health-check",
+        "path": "commands/example-health-check.json"
+      }
+    ],
+    "tools": [
+      {
+        "id": "example-audit-tool",
+        "path": "tools/example-audit-tool.json"
+      }
+    ],
+    "policies": [
+      {
+        "id": "example-policy",
+        "path": "policies/default-policy.json"
+      }
+    ],
+    "docs": [
+      {
+        "id": "overview",
+        "path": "docs/overview.md"
+      }
+    ],
+    "prompts": [
+      {
+        "id": "route-review",
+        "path": "prompts/route-review.md"
+      }
+    ],
+    "evaluators": [
+      {
+        "id": "pack-quality",
+        "path": "evaluators/pack-quality.json"
+      }
+    ]
+  }
+}

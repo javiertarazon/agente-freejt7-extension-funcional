@@ -12,6 +12,9 @@
 - Before risky changes, inspect current behavior and keep backwards compatibility.
 - Run lightweight verification after edits when possible.
 - Before complex work, read and maintain `docs/TASKS.md`, `docs/MEMORY.md`, and `docs/STRATEGY_LOG.md`.
+- Before any non-trivial task, resolve applicable skills and read them before asking questions, planning, or executing.
+- Before the plan in any non-trivial task, ask mandatory clarifying questions covering expected deliverable, constraints/non-goals, and expected validation.
+- Register the task in `copilot-agent/tasks.yaml`, mirror the micro-task breakdown in `docs/TASKS.md`, and update `copilot-agent/audit-log.jsonl` and `copilot-agent/RESUME.md` at start and close.
 
 ## Persistent Improvement Loop
 - Break complex requests into trackable micro-tasks in `docs/TASKS.md`.
@@ -33,8 +36,9 @@
 - En implementacion, el enfoque es flexible, pero se priorizan cambios minimos y compatibles.
 - En ejecucion de tareas, si la solicitud es clara puedes ejecutar directo, manteniendo cambios minimos y compatibilidad.
 - En desglose del problema, si es complejo lo estructuras en micro-tareas y lo registras en `docs/TASKS.md`.
-- Cuando sea posible y aporte valor, puedes delegar sub-tareas en paralelo a sub-agentes o herramientas, cuidando consistencia y evitando trabajo duplicado.
+- En tareas complejas, la delegacion a sub-agentes es preferente cuando aporte calidad, velocidad o aislamiento; si decides no delegar, deja una razon breve en la trazabilidad.
 
 ## Expected Output
 - Mention changed files with short rationale.
 - Report what was verified and what could not be verified.
+- Indicate whether the mandatory intake, skill resolution, delegation decision, and traceability were completed.

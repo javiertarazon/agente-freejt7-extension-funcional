@@ -1,6 +1,6 @@
 ﻿# Agente Free JT7 Extension Funcional
 
-Version: `4.2.4`
+Version: `4.2.10`
 
 Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - ejecutable por CLI (`skills_manager.py`)
@@ -29,10 +29,11 @@ Documentacion:
 ## Requisitos
 
 ### Organización de scripts
-Todos los helpers de instalación y pruebas ahora residen en `scripts/`.
-- `scripts\setup-project.ps1` es la herramienta principal para añadir el agente a un proyecto.
-- `scripts\add-free-jt7-agent.ps1` permanece por compatibilidad y está **deprecated**.
-- `scripts\test-wrappers.ps1` comprueba los wrappers CLI.
+Todos los helpers de instalación y pruebas residen en `scripts/`.
+- `scripts/setup-project.ps1` es la herramienta principal para instalar el agente en proyectos y actualizar settings de usuario.
+- `scripts/add-free-jt7-agent.ps1` permanece por compatibilidad, pero ahora delega en `scripts/setup-project.ps1` para evitar duplicidad operativa.
+- `scripts/openclaw-start.cmd` es el wrapper común para resolver OpenClaw local o en PATH; sin argumentos arranca el gateway por defecto.
+- `scripts/test-wrappers.ps1` comprueba los wrappers CLI.
 
 La carpeta `legacy-vscode-free-jt7-agent` y los registros en
 `copilot-agent\admin-runs` han sido eliminados para reducir el desorden.
@@ -87,7 +88,7 @@ Estado operativo esperado:
 ```bash
 python3 skills_manager.py policy-validate
 python3 skills_manager.py ide-detect --json
-python3 skills_manager.py install "/ruta/mi-proyecto" --ide vscode --update-user-settings
+python3 skills_manager.py install "/ruta/mi-proyecto" --ide all --update-user-settings
 ```
 
 ## Router real con Copilot SDK
@@ -109,6 +110,8 @@ Uso desde la extension:
 
 - comando `Free JT7: Routed Copilot Task`
 - participante nativo `@freejt7` en Copilot Chat
+
+El participante `@freejt7` es una capacidad propia de VS Code con GitHub Copilot Chat. La integración multi-IDE fuera de VS Code se hace mediante `skills_manager.py` y los bridges que instala en el proyecto y en los settings globales de cada IDE.
 
 Requisito operativo:
 
@@ -158,7 +161,7 @@ Después de crear el paquete puedes confirmar la instalación ejecutando
 Para instalar manualmente usa el menú de extensiones de VS Code o:
 
 ```bash
-code --install-extension agente-freejt7-extension-funcional-4.2.4.vsix
+code --install-extension agente-freejt7-extension-funcional-4.2.10.vsix
 ```
 
 ### Probar wrappers
@@ -175,6 +178,12 @@ El script imprimirá los comandos que intenta ejecutar y fallará con
 `ENOENT` si no se encuentra el binario `openclaw`, lo cual es el comportamiento
 esperado en un entorno de desarrollo.
 
+La ruta de autostart del gateway reutiliza el mismo wrapper común para evitar que PowerShell y CMD mantengan lógica duplicada al descubrir OpenClaw.
+
+## Comparativa entre agentes
+
+La matriz propuesta de métricas y escenarios para comparar Free JT7 frente a OpenClaw, Codex y Claude Code está en `docs/10-MATRIZ-COMPARATIVA-AGENTES.md`.
+
 ## Instalar extension en VS Code
 
 1. VS Code -> Extensions
@@ -182,12 +191,41 @@ esperado en un entorno de desarrollo.
 3. Seleccionar el archivo `.vsix` generado
 4. Ejecutar el comando:
    - `Free JT7: Instalar en workspace actual`
+  - `Free JT7: Aplicar configuracion global multi-IDE`
+  - `Free JT7: Aplicar configuracion global en VS Code` (alias legacy, solo VS Code)
 
 En Linux o Windows tambien puedes abrir Copilot Chat y usar:
 
 - `@freejt7 /doctor`
 - `@freejt7 /install`
+- `@freejt7 /global`
 - `@freejt7 /route analiza este proyecto y aplica la solucion`
+
+### Uso con proveedores externos
+
+Free JT7 puede trabajar con `OpenRouter`, `HuggingFace` y `ZAI` ademas de Copilot.
+
+Dentro de VS Code puedes usar:
+
+- `Free JT7: Seleccionar Proveedor de API`
+- `Free JT7: Configurar API Key de Proveedor`
+- `Free JT7: Seleccionar Modelo Gratuito`
+- `Free JT7: Actualizar Catálogo de Modelos Gratuitos`
+
+Las credenciales no deben guardarse en el repositorio. La extension usa `SecretStorage` de VS Code y tambien puede leer variables de entorno o archivos locales ignorados por git como `env api` o `.env`.
+
+### Configuracion global dentro de VS Code
+
+Si quieres que Free JT7 quede operativo desde la extensión para uno o varios IDEs soportados, usa:
+
+- comando `Free JT7: Aplicar configuracion global multi-IDE`
+- o en Copilot Chat: `@freejt7 /global`
+
+Ese flujo te deja elegir `Auto`, `Todos los IDE soportados` o un IDE concreto (`VS Code`, `Cursor`, `Kiro`, `Antigravity`, `Codex`, `Claude Code`, `Gemini CLI`).
+
+- Si hay un workspace abierto, además de los settings globales se sincronizan los bridges locales del proyecto.
+- Si no hay un workspace abierto, se actualizan solo los settings globales del IDE seleccionado.
+- El comando legacy `Free JT7: Aplicar configuracion global en VS Code` se mantiene por compatibilidad y fuerza únicamente el target `vscode`.
 
 ## Servicios fundamentales despues de instalar la extension
 
@@ -201,7 +239,7 @@ npm run smoke
 
 ### Gateway OpenClaw
 
-Free JT7 espera que `openclaw` exista en PATH. Si instalas OpenClaw en un runtime separado, deja un wrapper o binario accesible como `openclaw`.
+Free JT7 puede resolver OpenClaw de tres formas: `FREE_JT7_OPENCLAW_CMD`, un repo local `OPEN CLAW` ya construido, o el binario `openclaw` en PATH. El wrapper `scripts/openclaw-start.cmd` unifica esa resolución y, si se ejecuta sin argumentos, arranca el gateway por defecto.
 
 Comandos utiles desde la raiz del repo:
 
@@ -221,6 +259,8 @@ La guia operativa completa para Linux y los IDEs soportados por el runtime esta 
 ## Comandos de la extension
 
 - `Free JT7: Instalar en workspace actual`
+- `Free JT7: Aplicar configuracion global multi-IDE`
+- `Free JT7: Aplicar configuracion global en VS Code`
 - `Free JT7: Validar runtime`
 - `Free JT7: Abrir documentacion`
 

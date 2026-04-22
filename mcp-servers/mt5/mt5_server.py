@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 import subprocess
 import psutil
 import time
+import platform
 
 from mcp.server import Server, InitializationOptions
 from mcp.server.stdio import stdio_server
@@ -52,13 +53,20 @@ server = Server("mt5-service", version="0.1.0")
 
 # ===================== CONFIGURACIÓN =====================
 
+def _default_mt5_path() -> str:
+    """Ruta por defecto de terminal64.exe según el sistema operativo"""
+    if platform.system() == "Linux":
+        return str(Path.home() / ".wine-mt5/drive_c/Program Files/MetaTrader 5/terminal64.exe")
+    return "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
+
+
 def load_config() -> dict:
     """Carga la configuración de MT5"""
     if CONFIG_FILE.exists():
         with open(CONFIG_FILE, 'r') as f:
             return json.load(f)
     return {
-        "mt5_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+        "mt5_path": _default_mt5_path(),
         "accounts": [],
         "default_account": None,
         "auto_connect": True,
@@ -122,7 +130,7 @@ def check_mt5_installed() -> bool:
     if not MT5_AVAILABLE:
         return False
     config = load_config()
-    mt5_path = config.get("mt5_path", "C:\\Program Files\\MetaTrader 5\\terminal64.exe")
+    mt5_path = config.get("mt5_path", _default_mt5_path())
     return Path(mt5_path).exists()
 
 def start_mt5(path: Optional[str] = None) -> bool:
@@ -135,7 +143,17 @@ def start_mt5(path: Optional[str] = None) -> bool:
         mt5_path = path or config.get("mt5_path")
         
         logger.info(f"Intentando iniciar MT5: {mt5_path}")
-        subprocess.Popen(mt5_path)
+        if platform.system() == "Linux":
+            wine_prefix = str(Path.home() / ".wine-mt5")
+            env = {
+                **os.environ,
+                "WINEPREFIX": wine_prefix,
+                "WINEARCH": "win64",
+                "DISPLAY": os.environ.get("DISPLAY", ":0"),
+            }
+            subprocess.Popen(["wine", mt5_path], env=env)
+        else:
+            subprocess.Popen(mt5_path)
         time.sleep(5)  # Esperar a que se inicie
         return True
     except Exception as e:

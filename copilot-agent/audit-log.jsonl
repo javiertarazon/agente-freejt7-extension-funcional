@@ -69,3 +69,226 @@
 {"ts": "2026-04-16T00:22:10Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
 {"ts": "2026-04-16T00:22:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-16T00:22:23Z", "action": "task-close", "detail": "20260416T002223Z-5d848cba:succeeded"}
+{"ts": "2026-04-17T01:24:09Z", "action": "task-open", "detail": "20260416-ui-provider-models-fix:verificar y corregir las seis areas de proveedor/modelos gratis"}
+{"ts": "2026-04-17T01:26:34Z", "action": "task-close", "detail": "20260416-ui-provider-models-fix:succeeded quickpick-label-value-refresh-bundle-clean"}
+{"ts": "2026-04-17T01:33:03Z", "action": "task-close", "detail": "20260416-visual-provider-indicator-fix:succeeded vsix-catalog-fallback-left-statusbar-config-sync"}
+{"ts": "2026-04-17T01:35:17Z", "action": "vsix-install", "detail": "agente-freejt7-extension-funcional-4.2.5.vsix installed with code --force"}
+{"ts": "2026-04-17T01:45:59Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T01:45:59Z", "action": "install", "detail": "/home/javier28/Público/copilot vs code/agente free jt7 extension/agente-freejt7-extension-funcional"}
+{"ts": "2026-04-19T17:50:16Z", "action": "task-open", "detail": "20260419T175016Z-43a34f03:resolver activacion global multi-IDE y forzar OpenRouter gratis como proveedor efectivo"}
+{"ts": "2026-04-16T00:00:00Z", "action": "task-open", "detail": "20260416-clone-claurst-target:clonar repositorio claurst en /home/javier28/Público/copilot vs code-AQUI"}
+{"ts": "2026-04-16T00:00:01Z", "action": "task-close", "detail": "20260416-clone-claurst-target:succeeded clone=/home/javier28/Público/copilot vs code-AQUI/claurst"}
+{"ts": "2026-04-16T00:00:02Z", "action": "task-open", "detail": "20260416-provider-context-budget-fix:acotar contexto y manejar 400 de proveedores externos"}
+{"ts": "2026-04-19T04:05:00Z", "action": "task-open", "detail": "20260419-router-hooks-functional-blocked-gate:cablear hooks nativos pre/post tool use y validar gate bloqueado con resume state"}
+{"ts": "2026-04-19T04:05:01Z", "action": "delegation-decision", "detail": "20260419-router-hooks-functional-blocked-gate:no-delegado porque el cambio cruza router, SDK hooks, plugin runtime y verificacion end-to-end en un mismo hilo tecnico"}
+{"ts": "2026-04-19T04:16:00Z", "action": "implementation", "detail": "20260419-router-hooks-functional-blocked-gate:sdk hooks pre/post tool use conectados al router + bridge + smoke coverage + runner funcional"}
+{"ts": "2026-04-19T04:20:00Z", "action": "verification", "detail": "20260419-router-hooks-functional-blocked-gate:smoke ok, build ok, functional blocked por auth ausente del Copilot CLI/SDK"}
+{"ts": "2026-04-19T04:28:00Z", "action": "task-open", "detail": "20260419-bridge-canonical-project-identity:endurecer identidad de proyecto/host y stale state del remote bridge"}
+{"ts": "2026-04-19T04:28:01Z", "action": "delegation-decision", "detail": "20260419-bridge-canonical-project-identity:no-delegado porque el cambio es pequeño pero cruza persistencia del bridge, snapshot/resume y smoke tests del mismo runtime"}
+{"ts": "2026-04-19T04:34:00Z", "action": "implementation", "detail": "20260419-bridge-canonical-project-identity:remote bridge con projectRoot canónico, projectId, hostFingerprint e identityStatus en resume/snapshot/approvals"}
+{"ts": "2026-04-19T04:36:00Z", "action": "verification", "detail": "20260419-bridge-canonical-project-identity:smoke ok, build ok"}
+{"ts": "2026-04-19T16:05:00Z", "action": "implementation", "detail": "20260419-autolearn-evaluator-integration-manifest:evaluator comun + evaluations.jsonl + regression packs + routing hints + runtime discovery de capability packs externos"}
+{"ts": "2026-04-19T16:12:00Z", "action": "verification", "detail": "20260419-autolearn-evaluator-integration-manifest:pytest 54 passed + plugin integration smoke ok + build bundle ok + doctor --strict ok"}
+{"ts": "2026-04-19T16:13:00Z", "action": "task-close", "detail": "20260419-autolearn-evaluator-integration-manifest:succeeded evaluator-driven-autolearn+integration-manifest-runtime"}
+{"ts": "2026-04-19T00:00:00Z", "action": "task-open", "detail": "20260419-router-phase2-bridge-budget:auto-fix del review loop + budget central + hardening del bridge"}
+{"ts": "2026-04-19T00:00:01Z", "action": "delegation-decision", "detail": "20260419-router-phase2-bridge-budget:no-subagent router+budget+bridge comparten contratos y requieren cambio coherente en una sola pasada"}
+{"ts": "2026-04-19T00:00:02Z", "action": "router-phase2-implementation", "detail": "20260419-router-phase2-bridge-budget:auto-fix + context-budget central + bridge resume state"}
+{"ts": "2026-04-19T00:00:03Z", "action": "verification", "detail": "20260419-router-phase2-bridge-budget:ok npm run test:router-review-smoke && npm run build:bundle"}
+{"ts": "2026-04-19T00:00:04Z", "action": "task-close", "detail": "20260419-router-phase2-bridge-budget:succeeded autofix+rereview+context-budget+resume-pointer"}
+{"ts": "2026-04-16T00:00:03Z", "action": "task-close", "detail": "20260416-provider-context-budget-fix:succeeded provider-prompt-compaction-build-bundle"}
+{"ts": "2026-04-17T00:00:00Z", "action": "task-open", "detail": "20260417-claurst-freejt7-comparison:analizar Claurst local y compararlo con Free JT7"}
+{"ts": "2026-04-17T00:00:01Z", "action": "task-close", "detail": "20260417-claurst-freejt7-comparison:succeeded docs-08-analisis-claurst-vs-freejt7"}
+{"ts": "2026-04-17T17:28:12Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:14Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "sync-claude", "detail": "5 activas de 964"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:17Z", "action": "sync-claude", "detail": "6 activas de 964"}
+{"ts": "2026-04-17T17:28:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:18Z", "action": "sync-claude", "detail": "7 activas de 964"}
+{"ts": "2026-04-17T17:28:18Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "sync-claude", "detail": "8 activas de 964"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:19Z", "action": "sync-claude", "detail": "9 activas de 964"}
+{"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "sync-claude", "detail": "10 activas de 964"}
+{"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:20Z", "action": "sync-claude", "detail": "11 activas de 964"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "sync-claude", "detail": "12 activas de 964"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:21Z", "action": "sync-claude", "detail": "13 activas de 964"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "sync-claude", "detail": "14 activas de 964"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:22Z", "action": "sync-claude", "detail": "15 activas de 964"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-18T00:50:00Z", "action": "task-open", "detail": "20260418-free-model-catalog-sync:sincronizar catalogo visible de modelos gratis para openrouter hf y zai"}
+{"ts": "2026-04-18T01:00:00Z", "action": "task-close", "detail": "20260418-free-model-catalog-sync:succeeded unified-catalog-build-bundle-validated"}
+{"ts": "2026-04-18T00:20:00Z", "action": "task-open", "detail": "20260418-agent-compliance-hardening:endurecer intake, checklist, skill resolution y trazabilidad del agente"}
+{"ts": "2026-04-18T00:24:00Z", "action": "instructions-hardening", "detail": "corregidas rutas copilot-agent, intake obligatorio, decision de delegacion y fallback de skills"}
+{"ts": "2026-04-18T00:31:00Z", "action": "router-hardening", "detail": "extension.runtime exige 3 aclaraciones, skill-resolve y task-start/task-close; copilot_router.runtime reutiliza run_id y skills seleccionadas"}
+{"ts": "2026-04-18T00:35:00Z", "action": "build-bundle", "detail": "npm run build:bundle OK; bundle contiene 'Aclaracion obligatoria 1/3' y 'task-start'"}
+{"ts": "2026-04-18T00:36:00Z", "action": "task-close", "detail": "20260418-agent-compliance-hardening:succeeded intake+skills+task-start-task-close"}
+{"ts": "2026-04-17T17:28:23Z", "action": "sync-claude", "detail": "16 activas de 964"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:23Z", "action": "sync-claude", "detail": "17 activas de 964"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "sync-claude", "detail": "18 activas de 964"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:24Z", "action": "sync-claude", "detail": "19 activas de 964"}
+{"ts": "2026-04-17T17:28:25Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:25Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:25Z", "action": "sync-claude", "detail": "20 activas de 964"}
+{"ts": "2026-04-18T01:05:00Z", "action": "task-open", "detail": "20260418-vsix-rebuild-reinstall:regenerar e reinstalar el VSIX para validar el QuickPick empaquetado"}
+{"ts": "2026-04-18T01:12:00Z", "action": "vsix-package", "detail": "npm run package:local OK -> agente-freejt7-extension-funcional-4.2.8.vsix"}
+{"ts": "2026-04-18T01:13:00Z", "action": "vsix-install", "detail": "code --install-extension --force agente-freejt7-extension-funcional-4.2.8.vsix OK"}
+{"ts": "2026-04-18T01:14:00Z", "action": "task-close", "detail": "20260418-vsix-rebuild-reinstall:succeeded vsix=4.2.8 installed-and-verified"}
+{"ts": "2026-04-18T01:25:00Z", "action": "task-open", "detail": "20260418-final-agent-audit:auditoria integral final de runtime, codigo, multi-IDE e instalacion global"}
+{"ts": "2026-04-19T02:22:00Z", "action": "task-close", "detail": "20260418-final-agent-audit:succeeded runtime-ok build-ok package-ok temp-install-all-ok findings=extension-vscode-coupled,global-vscode-only,readme-stale,duplicate-installers"}
+{"ts": "2026-04-17T17:28:25Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "sync-claude", "detail": "21 activas de 964"}
+{"ts": "2026-04-17T17:28:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:26Z", "action": "sync-claude", "detail": "22 activas de 964"}
+{"ts": "2026-04-17T17:28:29Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-17T17:28:29Z", "action": "sync-claude", "detail": "22 activas de 964"}
+{"ts": "2026-04-18T00:00:00Z", "action": "task-open", "detail": "20260418-priority-node-diagnosis:diagnostico del error No lowest priority node found en runtime/bundle/dependencias"}
+{"ts": "2026-04-18T00:10:00Z", "action": "copilot-router-guard", "detail": "src-js/core/extension.runtime.js bloquea ejecuciones solapadas del router Copilot"}
+{"ts": "2026-04-18T00:12:00Z", "action": "build-bundle", "detail": "npm run build:bundle OK con guard presente en dist/extension.cjs"}
+{"ts": "2026-04-18T00:13:00Z", "action": "task-close", "detail": "20260418-priority-node-diagnosis:succeeded copilot-router-concurrency-guard"}
+{"ts": "2026-04-19T02:06:40Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-19T02:06:47Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-19T02:06:47Z", "action": "task-close", "detail": "20260419T020647Z-aaff8f6d:succeeded"}
+{"ts": "2026-04-19T02:09:13Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-19T02:09:13Z", "action": "install", "detail": "/home/javier28/Público/copilot vs code/agente free jt7 extension/agente-freejt7-extension-funcional/temp_install_test"}
+{"ts": "2026-04-19T02:30:00Z", "action": "task-open", "detail": "20260419-short-remediation-pass:readme-4.2.8 global-multi-ide-desde-extension consolidacion-de-instaladores"}
+{"ts": "2026-04-19T02:31:00Z", "action": "delegation-decision", "detail": "20260419-short-remediation-pass:no-subagents same-files runtime-readme-installers require coherent single-pass patch"}
+{"ts": "2026-04-19T02:35:00Z", "action": "build-bundle", "detail": "npm run build:bundle OK; comando installGlobalMultiIde presente en dist/extension.cjs"}
+{"ts": "2026-04-19T02:36:00Z", "action": "task-close", "detail": "20260419-short-remediation-pass:succeeded readme+global-multi-ide+installer-consolidation"}
+{"ts": "2026-04-19T02:45:00Z", "action": "task-open", "detail": "20260419-wrapper-simplification-benchmark-matrix:segunda pasada correctiva de wrappers openclaw y diseno de matriz comparativa real"}
+{"ts": "2026-04-19T02:46:00Z", "action": "delegation-decision", "detail": "20260419-wrapper-simplification-benchmark-matrix:no-subagents wrappers+benchmark share same operational context and require single coherent design pass"}
+{"ts": "2026-04-19T03:05:00Z", "action": "wrapper-simplification", "detail": "openclaw-start.cmd pasa a wrapper comun; free-jt7-gateway-autostart.ps1 reutiliza el wrapper y deja de resolver openclaw por separado"}
+{"ts": "2026-04-19T03:07:00Z", "action": "benchmark-matrix-doc", "detail": "creado docs/10-MATRIZ-COMPARATIVA-AGENTES.md con pesos, escenarios, scoring y protocolo de evidencia"}
+{"ts": "2026-04-19T03:09:00Z", "action": "verification", "detail": "npm run build:bundle OK; README y wrappers referencian la nueva ruta comun y la matriz comparativa"}
+{"ts": "2026-04-19T03:10:00Z", "action": "task-close", "detail": "20260419-wrapper-simplification-benchmark-matrix:succeeded wrapper-common-openclaw+benchmark-matrix"}
+{"ts": "2026-04-19T03:20:00Z", "action": "task-open", "detail": "20260419-doc08-runtime-alignment:integrar mejoras restantes del analisis Claurst vs Free JT7 sin romper compatibilidad"}
+{"ts": "2026-04-19T03:21:00Z", "action": "delegation-decision", "detail": "20260419-doc08-runtime-alignment:no-subagents bridge+router+runtime facades touch shared integration points and require one coherent compatibility-safe pass"}
+{"ts": "2026-04-19T03:34:00Z", "action": "runtime-alignment", "detail": "bridge remoto persistente con sesiones/eventos/aprobaciones; fachadas runtime/providers; scheduler arrancado; fix de delegation path y nightlyTrain"}
+{"ts": "2026-04-19T03:38:00Z", "action": "documentation-update", "detail": "docs/08-ANALISIS-CLAURST-VS-FREEJT7.md alineado al estado real del runtime tras la pasada correctiva"}
+{"ts": "2026-04-19T03:40:00Z", "action": "verification", "detail": "npm run build:bundle OK; require('./src-js/core/copilot_router.runtime.js') y require('./src-js/core/extension.runtime.js') OK"}
+{"ts": "2026-04-19T03:42:00Z", "action": "task-close", "detail": "20260419-doc08-runtime-alignment:succeeded remote-bridge+persistent-runtime-facades+scheduler-fixes+doc08-aligned"}
+{"ts": "2026-04-19T13:33:19Z", "action": "task-open", "detail": "20260419-advanced-comparative-audit-roadmap:auditoria comparativa avanzada de Free JT7 frente a Claurst y patrones operativos de Codex"}
+{"ts": "2026-04-19T13:33:19Z", "action": "delegation-decision", "detail": "20260419-advanced-comparative-audit-roadmap:selective-read-only delegation se uso apoyo puntual de exploracion para mapear Claurst, pero la sintesis y el plan quedan centralizados por tocar arquitectura, roadmap y compatibilidad del runtime actual"}
+{"ts": "2026-04-19T13:33:19Z", "action": "documentation-update", "detail": "docs/11-AUDITORIA-AVANZADA-FREEJT7-CLAURST-CODEX.md agregado con findings priorizados y roadmap de integracion segura"}
+{"ts": "2026-04-19T13:33:19Z", "action": "verification", "detail": "get_errors limpio para docs/11-AUDITORIA-AVANZADA-FREEJT7-CLAURST-CODEX.md, docs/TASKS.md, copilot-agent/tasks.yaml y copilot-agent/audit-log.jsonl"}
+{"ts": "2026-04-19T13:33:19Z", "action": "task-close", "detail": "20260419-advanced-comparative-audit-roadmap:succeeded advanced-audit+codex-workflow-gap-analysis+phased-roadmap"}
+{"ts": "2026-04-19T14:05:00Z", "action": "task-open", "detail": "20260419-router-review-loop-phase1:implementar review stage nativo y gate real de cierre en el router Copilot"}
+{"ts": "2026-04-19T14:05:00Z", "action": "delegation-decision", "detail": "20260419-router-review-loop-phase1:no-subagents router+config+smoke-test comparten el mismo punto de integracion y requieren una sola pasada coherente para mantener compatibilidad"}
+{"ts": "2026-04-19T14:24:00Z", "action": "router-review-loop", "detail": "src-js/core/copilot_router.runtime.js ahora ejecuta review stage configurable, findings estructurados y closing gate antes de synthesis/cierre"}
+{"ts": "2026-04-19T14:24:00Z", "action": "verification", "detail": "npm run test:router-review-smoke OK; exports shouldRunReviewStage/normalizeReviewResult/finalizeRouterOutcome visibles; npm run build:bundle OK"}
+{"ts": "2026-04-19T14:24:00Z", "action": "task-close", "detail": "20260419-router-review-loop-phase1:succeeded review-stage+closing-gate+smoke-test"}
+{"ts": "2026-04-19T15:00:00Z", "action": "task-open", "detail": "20260419-audit-checklist-cli-identity:consolidar checklist real de la auditoría avanzada y cerrar identidad canónica pendiente en CLI"}
+{"ts": "2026-04-19T15:00:01Z", "action": "delegation-decision", "detail": "20260419-audit-checklist-cli-identity:no-delegado porque documentación, active-project.json y resolución CLI comparten el mismo contrato operativo y requieren una sola pasada coherente"}
+{"ts": "2026-04-19T14:45:31Z", "action": "set-project", "detail": "/home/javier28/Público/copilot vs code/agente free jt7 extension/agente-freejt7-extension-funcional"}
+{"ts": "2026-04-19T14:45:32Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-19T15:02:00Z", "action": "implementation", "detail": "20260419-audit-checklist-cli-identity:checklist consolidado en docs/11 + skills_manager con identidad canónica CLI y rechazo de rutas stale cross-host/cross-platform + tests Python nuevos"}
+{"ts": "2026-04-19T15:02:01Z", "action": "verification", "detail": "20260419-audit-checklist-cli-identity:set-project OK; pytest tests/test_active_project_identity.py tests/test_task_run_cross_platform.py -q => 51 passed; doctor --strict => errors=0 warnings=0"}
+{"ts": "2026-04-19T15:02:02Z", "action": "task-close", "detail": "20260419-audit-checklist-cli-identity:succeeded checklist-real+cli-active-project-identity+pytest51+doctor-clean"}
+{"ts": "2026-04-19T15:10:00Z", "action": "task-open", "detail": "20260419-autolearn-evaluator-integration-manifest:ejecutar Fase 4 evaluator-driven y Fase 5 con capability packs externos"}
+{"ts": "2026-04-19T15:10:00Z", "action": "delegation-decision", "detail": "20260419-autolearn-evaluator-integration-manifest:no-delegado porque AutoLearn Python, scheduler JS y runtime de plugins comparten el mismo contrato de integración y requieren una pasada coherente para mantener compatibilidad"}
+{"ts": "2026-04-19T15:22:14Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-19T15:22:52Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-19T15:35:00Z", "action": "task-open", "detail": "20260419-router-core-concurrency-lock:aplicar lock definitivo de concurrencia en el router core y cubrir CLI/core con smoke test"}
+{"ts": "2026-04-19T15:35:00Z", "action": "delegation-decision", "detail": "20260419-router-core-concurrency-lock:no-delegado porque el fix y la prueba comparten el mismo modulo del router y requieren una sola pasada coherente para no romper compatibilidad"}
+{"ts": "2026-04-19T15:36:00Z", "action": "red-test", "detail": "node tests/router_core_concurrency_smoke.js => AssertionError: runWithRouterRunLock debe exportarse desde el router core"}
+{"ts": "2026-04-19T15:39:00Z", "action": "implementation", "detail": "20260419-router-core-concurrency-lock:lock de concurrencia bajado a src-js/core/copilot_router.runtime.js y smoke script npm añadido en package.json"}
+{"ts": "2026-04-19T15:41:00Z", "action": "verification", "detail": "npm run test:router-core-concurrency-smoke OK; npm run test:router-review-smoke OK; npm run build:bundle OK; require('./src-js/core/copilot_router.runtime.js') expone runWithRouterRunLock y runCopilotRouter"}
+{"ts": "2026-04-19T15:41:01Z", "action": "task-close", "detail": "20260419-router-core-concurrency-lock:succeeded core-lock+smoke-test+bundle"}
+{"ts": "2026-04-19T16:02:55Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-19T16:02:56Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-19T16:02:56Z", "action": "task-close", "detail": "20260419T160256Z-359067ff:succeeded"}
+{"ts": "2026-04-19T16:20:00Z", "action": "task-open", "detail": "20260419-final-release-packaging-publication:auditoria final + versionado/changelog + VSIX + reinstalacion + evaluacion de publicacion"}
+{"ts": "2026-04-19T16:20:01Z", "action": "delegation-decision", "detail": "20260419-final-release-packaging-publication:no-delegado porque versionado, changelog, empaquetado, instalacion y publicacion deben cerrarse sobre el mismo estado git y la misma evidencia de release"}
+{"ts": "2026-04-19T16:20:02Z", "action": "release-audit", "detail": "20260419-final-release-packaging-publication:runtime/toolchain OK; bloqueo principal detectado = working tree sucio + metadatos de release no alineados al arbol actual"}
+{"ts": "2026-04-19T16:28:00Z", "action": "release-metadata-fix", "detail": "20260419-final-release-packaging-publication:CHANGELOG 4.2.8 corregido a 2026-04-19 y package-lock alineado a 4.2.8"}
+{"ts": "2026-04-19T16:31:00Z", "action": "package-vsix", "detail": "20260419-final-release-packaging-publication:VSIX generado correctamente -> agente-freejt7-extension-funcional-4.2.8.vsix (89 MB)"}
+{"ts": "2026-04-19T16:32:00Z", "action": "install-vsix", "detail": "20260419-final-release-packaging-publication:instalado en VS Code -> javiertarazon.agente-freejt7-extension-funcional@4.2.8"}
+{"ts": "2026-04-19T16:34:00Z", "action": "publish-blocked", "detail": "20260419-final-release-packaging-publication:publicacion git detenida; arbol con 39 cambios mezclados y tag local v4.2.8 ya existente"}
+{"ts": "2026-04-19T17:00:00Z", "action": "release-version-bump", "detail": "20260419-final-release-packaging-publication:release renumerada a 4.2.9 porque v4.2.8 ya existe localmente; sin cambios funcionales adicionales"}
+{"ts": "2026-04-19T17:02:00Z", "action": "package-vsix", "detail": "20260419-final-release-packaging-publication:VSIX 4.2.9 generado correctamente -> agente-freejt7-extension-funcional-4.2.9.vsix (90 MB)"}
+{"ts": "2026-04-19T17:03:00Z", "action": "install-vsix", "detail": "20260419-final-release-packaging-publication:instalado en VS Code -> javiertarazon.agente-freejt7-extension-funcional@4.2.9"}
+{"ts": "2026-04-19T17:20:00Z", "action": "task-open", "detail": "20260419-release-clean-commit-tag:auditar arbol mezclado, separar release 4.2.9 y preparar commit limpio + tag local sin publicar"}
+{"ts": "2026-04-19T17:20:01Z", "action": "delegation-decision", "detail": "20260419-release-clean-commit-tag:no-delegado porque el staging selectivo, el commit y el tag deben cerrarse sobre un unico estado git coherente en esta misma sesion"}
+{"ts": "2026-04-19T17:38:00Z", "action": "git-commit", "detail": "20260419-release-clean-commit-tag:commit limpio creado -> 01f70125c263b5bdda3adce0b8771777a1966fec chore(release): prepare v4.2.9"}
+{"ts": "2026-04-19T17:39:00Z", "action": "git-tag", "detail": "20260419-release-clean-commit-tag:tag anotado v4.2.9 creado y validado contra HEAD/01f70125c263b5bdda3adce0b8771777a1966fec"}
+{"ts": "2026-04-19T17:40:00Z", "action": "task-close", "detail": "20260419-release-clean-commit-tag:release local lista para publicar; quedaron fuera del commit archivos operativos locales, memoria y temporales"}
+{"ts": "2026-04-19T17:50:16Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-19T17:50:21Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-19T17:58:45Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-20T00:35:00Z", "action": "task-open", "detail": "20260420-extension-global-decouple:desacoplar runtime global del bootstrap de workspace para que el VSIX funcione como extension normal en cualquier carpeta"}
+{"ts": "2026-04-20T00:35:01Z", "action": "delegation-decision", "detail": "20260420-extension-global-decouple:no-delegado porque el fix cruza extension.runtime.js, skills_manager.py, packaging y verificacion del VSIX sobre el mismo contrato de compatibilidad"}
+{"ts": "2026-04-20T00:42:00Z", "action": "implementation", "detail": "20260420-extension-global-decouple:runtime distingue workspace gestionado vs folder arbitrario; estado operativo cae a globalStorage; install global usa user-settings-only sin bootstrap de workspace"}
+{"ts": "2026-04-20T00:47:00Z", "action": "verification", "detail": "20260420-extension-global-decouple:build bundle ok; plugin smoke ok; doctor --strict ok; install --user-settings-only no crea .github ni OPEN CLAW en tmp; VSIX 4.2.9 empaquetado e instalado en VS Code"}
+{"ts": "2026-04-20T00:47:01Z", "action": "task-close", "detail": "20260420-extension-global-decouple:succeeded global-runtime-decoupled-from-workspace-bootstrap"}
+{"ts": "2026-04-20T00:32:04Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-20T00:32:08Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-04-20T00:32:08Z", "action": "install", "detail": "/tmp/tmp.r4FM3jMpy0 | ide=vscode | user_settings_only=True"}
+{"ts": "2026-04-20T02:05:00Z", "action": "task-open", "detail": "20260420-global-settings-drift-heal:endurecer autocuración global para detectar drift real de settings y no confiar solo en syncState"}
+{"ts": "2026-04-20T02:05:01Z", "action": "delegation-decision", "detail": "20260420-global-settings-drift-heal:no-delegado porque el fix es pequeño pero cruza runtime de activación, settings globales y verificación sobre la copia instalada del VSIX"}
+{"ts": "2026-04-20T02:12:00Z", "action": "implementation", "detail": "20260420-global-settings-drift-heal:ensureGlobalVsCodeSettings valida drift real de settings globales y se añade smoke test de regresión para instrucciones/agents/freejt7.*"}
+{"ts": "2026-04-20T02:18:00Z", "action": "verification", "detail": "20260420-global-settings-drift-heal:test:global-settings-drift-smoke OK; build bundle OK; plugin integration smoke OK; VSIX 4.2.9 empaquetado e instalado; reparador global idempotente y settings.json alineado a ~/.vscode/extensions"}
+{"ts": "2026-04-20T02:18:01Z", "action": "task-close", "detail": "20260420-global-settings-drift-heal:succeeded global-settings-drift-detection+self-heal"}
+{"ts": "2026-04-20T02:20:00Z", "action": "task-open", "detail": "20260420-global-agentfiles-remediation:eliminar chat.agentFilesLocations global invalido y verificar activacion real fuera del repo"}
+{"ts": "2026-04-20T02:20:01Z", "action": "delegation-decision", "detail": "20260420-global-agentfiles-remediation:no-delegado porque installer global, runtime de drift-heal, settings locales y verificacion del VSIX comparten el mismo contrato operativo y requieren una sola pasada coherente"}
+{"ts": "2026-04-20T02:27:00Z", "action": "implementation", "detail": "20260420-global-agentfiles-remediation:skills_manager omite chat.agentFilesLocations en user settings globales, limpia entradas Free JT7 stale y normaliza agent paths relativos del workspace; runtime solo repara agentFilesLocations invalidos remanentes"}
+{"ts": "2026-04-20T02:34:00Z", "action": "verification", "detail": "20260420-global-agentfiles-remediation:global_settings_drift_smoke OK; VSIX 4.2.9 reinstalado; ~/.config/Code/User/settings.json sin chat.agentFilesLocations absoluto; window3 activa javiertarazon.agente-freejt7-extension-funcional via onStartupFinished fuera del repo y sin warnings Skipping invalid path"}
+{"ts": "2026-04-20T02:34:01Z", "action": "task-close", "detail": "20260420-global-agentfiles-remediation:succeeded global-agentfiles-cleanup+external-window-activation-proof"}
+{"ts": "2026-04-20T03:05:00Z", "action": "task-open", "detail": "20260420-agent-selector-remediation:recuperar visibilidad de free-jt7 openclaw y skill-creator en el selector de Copilot Chat"}
+{"ts": "2026-04-20T03:05:01Z", "action": "delegation-decision", "detail": "20260420-agent-selector-remediation:no-delegado porque el fix cruza contrato de agent files, settings instalados/reparados y smoke verification del mismo runtime"}
+{"ts": "2026-04-20T03:16:00Z", "action": "implementation", "detail": "20260420-agent-selector-remediation:normalizados openclaw.agent.md y skill-creator.agent.md al contrato minimo de Copilot Chat; skills_manager/runtime propagan y verifican customAgents.enabled + switchAgent.enabled; settings globales del usuario alineados"}
+{"ts": "2026-04-20T03:22:00Z", "action": "verification", "detail": "20260420-agent-selector-remediation:agent_manifest_smoke OK; global_settings_drift_smoke OK; npm run build:bundle OK; npm run package:local OK; VSIX 4.2.9 reinstalado con code --install-extension --force"}
+{"ts": "2026-04-20T03:22:01Z", "action": "task-close", "detail": "20260420-agent-selector-remediation:succeeded agent-files-normalized+selector-flags-propagated+vsix-reinstalled"}
+{"ts": "2026-04-20T12:00:00Z", "action": "task-open", "detail": "20260420-zip-integration-feasibility:analizar files.zip y evaluar factibilidad de integración en Free JT7"}
+{"ts": "2026-04-20T12:00:01Z", "action": "delegation-decision", "detail": "20260420-zip-integration-feasibility:delegado apoyo read-only a Explore para localizar puntos de acople del runtime sin tocar código"}
+{"ts": "2026-04-20T12:04:00Z", "action": "verification", "detail": "20260420-zip-integration-feasibility:unzip inventariado; py_compile OK para los 2 scripts Python; README/tasks del ZIP apuntan a módulos/rutas ausentes; puntos de acople contrastados con plugin-runtime, remote-bridge e integration manifest de Free JT7"}
+{"ts": "2026-04-20T12:05:00Z", "action": "task-close", "detail": "20260420-zip-integration-feasibility:succeeded direct-integration-not-recommended capability-pack-or-remote-bridge-adaptation-only"}
+{"ts": "2026-04-19T00:00:00Z", "action": "task-open", "detail": "20260419-clone-remotion-optional-repo:clonar remotion-dev/remotion en /home/javier28/Público/REPOSOTORIOS OPCIONALES"}
+{"ts": "2026-04-19T00:00:01Z", "action": "delegation-decision", "detail": "20260419-clone-remotion-optional-repo:no-delegado; tarea corta y determinista de clonación externa con verificación local"}
+{"ts": "2026-04-21T00:00:00Z", "action": "task-open", "detail": "20260421-canva-mcp-live-registration:registro real de Canva MCP + persistencia local + validacion del design agent"}
+{"ts": "2026-04-21T00:00:01Z", "action": "delegation-decision", "detail": "20260421-canva-mcp-live-registration:no-delegado porque el flujo mezcla alta externa, configuracion local sensible y validacion inmediata del mismo agente"}
+{"ts": "2026-04-22T02:10:56Z", "action": "implementation", "detail": "20260421-canva-mcp-live-registration:POST https://mcp.canva.com/register => 201; Canva emitio credenciales reales para Free JT7 Design Agent y se persistieron en .env.free-jt7"}
+{"ts": "2026-04-22T02:12:00Z", "action": "verification", "detail": "20260421-canva-mcp-live-registration:doctor --json => ok=true canvaConfigured=true canvaTokenPresent=false; auth-canva --json arranca, imprime URL OAuth valida y queda esperando consentimiento del usuario en navegador"}
+{"ts": "2026-04-22T02:18:00Z", "action": "verification", "detail": "20260421-canva-mcp-live-registration:intento de automatizacion navegador bloqueado por login humano de Canva; pantalla detectada='La ultima vez, iniciaste sesion con Google'; token sigue ausente y auth-canva continua esperando callback"}
+{"ts": "2026-04-22T02:35:20Z", "action": "implementation", "detail": "20260421-canva-mcp-live-registration:root-cause aislada en tools/design_agent/canva_service.py; CanvaAuth apuntaba a www.canva.com/api/oauth/* y se forzo mcp.canva.com/authorize + /token"}
+{"ts": "2026-04-22T02:36:10Z", "action": "verification", "detail": "20260421-canva-mcp-live-registration:auth-canva --json completo con HTTP/1.1 200 OK en https://mcp.canva.com/token; canva_tokens.json generado; pytest tests/test_design_agent.py -q => 5 passed; doctor --json => canvaTokenPresent=true"}
+{"ts": "2026-04-22T02:36:40Z", "action": "task-close", "detail": "20260421-canva-mcp-live-registration:succeeded mcp-oauth-endpoints-fixed+token-issued+doctor-green"}
+{"ts": "2026-04-22T02:36:40Z", "action": "task-open", "detail": "20260421-feature-agente-diseno-branch:crear y publicar feature/agente-diseno desde el estado actual del repo"}
+{"ts": "2026-04-22T02:36:41Z", "action": "delegation-decision", "detail": "20260421-feature-agente-diseno-branch:no-delegado porque es una operacion git corta y determinista sobre el mismo working tree activo"}
+{"ts": "2026-04-22T02:49:15Z", "action": "implementation", "detail": "20260421-feature-agente-diseno-branch:git switch -c feature/agente-diseno && git push -u origin feature/agente-diseno completados sin alterar el working tree pendiente"}
+{"ts": "2026-04-22T02:49:31Z", "action": "verification", "detail": "20260421-feature-agente-diseno-branch:branch actual=feature/agente-diseno upstream=origin/feature/agente-diseno; git status --short --branch confirma cambios pendientes preservados sobre la nueva rama"}
+{"ts": "2026-04-22T02:49:31Z", "action": "task-close", "detail": "20260421-feature-agente-diseno-branch:succeeded local-branch-created+origin-upstream-configured+dirty-working-tree-preserved"}
+{"ts": "2026-04-22T03:00:00Z", "action": "task-open", "detail": "20260421-release-4-2-10-design-agent:versionar, empaquetar y publicar en origin/feature/agente-diseno la nueva release correlativa con agente de diseño"}
+{"ts": "2026-04-22T03:00:10Z", "action": "delegation-decision", "detail": "20260421-release-4-2-10-design-agent:no-delegado porque versionado, empaquetado VSIX, commit y push comparten el mismo working tree y requieren una secuencia determinista única"}
+{"ts": "2026-04-22T03:05:00Z", "action": "release-version-bump", "detail": "20260421-release-4-2-10-design-agent:metadatos públicos alineados a 4.2.10 en package.json, package-lock.json, VERSION, README.md y CHANGELOG.md antes de validar y empaquetar"}
+{"ts": "2026-04-22T03:08:00Z", "action": "verification", "detail": "20260421-release-4-2-10-design-agent:doctor --json ok=true canvaConfigured=true canvaTokenPresent=true; pytest tests/test_design_agent.py -q => 5 passed; npm run build:bundle OK"}
+{"ts": "2026-04-22T03:10:00Z", "action": "package-vsix", "detail": "20260421-release-4-2-10-design-agent:npm run package:local OK -> agente-freejt7-extension-funcional-4.2.10.vsix (258 MB); contenido verificado con extension/tools/design_agent/* dentro del VSIX"}
+{"ts": "2026-04-22T03:14:00Z", "action": "git-commit", "detail": "20260421-release-4-2-10-design-agent:commit creado -> 636705b1b4d1e5d03131e33fc7cb75daa80631a2 feat: add design agent and release v4.2.10"}
+{"ts": "2026-04-22T03:15:00Z", "action": "git-push", "detail": "20260421-release-4-2-10-design-agent:push OK a origin/feature/agente-diseno; remoto avanzó 01f7012..636705b"}
+{"ts": "2026-04-22T03:16:00Z", "action": "task-close", "detail": "20260421-release-4-2-10-design-agent:succeeded version-bump+doctor-green+pytest-green+bundle-green+vsix-4.2.10+git-push"}

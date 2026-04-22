@@ -1,5 +1,85 @@
 ﻿# Changelog
 
+## [Unreleased]
+
+## [4.2.10] - 2026-04-21
+
+### Added
+- Agente de diseño Canva + Remotion integrado en la extensión con el comando `Free JT7: Generar video con agente de diseño` y el runtime Python asociado en `tools/design_agent/`.
+- Suite focalizada `tests/test_design_agent.py` para cubrir carga de configuración Canva y el override de endpoints OAuth MCP.
+
+### Changed
+- Versionado alineado en `package.json`, `package-lock.json`, `VERSION` y `README.md` para publicar una nueva release instalable sobre la rama `feature/agente-diseno`.
+
+### Fixed
+- La carga de credenciales Canva ahora hidrata variables desde `.env.free-jt7` sin pisar exportaciones previas.
+- El flujo OAuth del design agent fuerza `https://mcp.canva.com/authorize` y `https://mcp.canva.com/token`, corrigiendo el error de `client id no valida` del host legacy.
+
+## [4.2.9] - 2026-04-19
+
+### Changed
+- Reemisión correlativa del paquete para liberar la publicación de la línea actual sin reutilizar el tag local `v4.2.8`.
+- Metadatos de versión alineados en `package.json`, `package-lock.json`, `VERSION` y `README.md`.
+
+### Notes
+- No hay delta funcional respecto a `4.2.8`; esta versión existe para destrabar el versionado de release.
+
+## [4.2.8] - 2026-04-19
+
+### Added
+- `tests/router_core_concurrency_smoke.js` — smoke test mínimo para validar el guard de concurrencia del router core.
+- `tests/router_review_stage_smoke.js` — verificación ligera del review stage nativo del router.
+- `docs/11-AUDITORIA-AVANZADA-FREEJT7-CLAURST-CODEX.md` — auditoría comparativa avanzada y roadmap operativo.
+
+### Changed
+- `src-js/core/copilot_router.runtime.js` — review stage endurecido, trazabilidad operativa integrada y guard de concurrencia movido al núcleo compartido para cubrir extensión y ejecución directa.
+- `src-js/runtime/`, `src-js/providers/` y `src-js/bridge/remote-bridge.js` — fachadas de runtime/proveedores y bridge remoto persistente alineados con la integración avanzada post-análisis Claurst.
+- `scripts/add-free-jt7-agent.ps1`, `scripts/openclaw-start.cmd`, `README.md` y documentación operativa — simplificación de wrappers, instalación global multi-IDE y comandos reales del runtime.
+- `package-lock.json` — versionado alineado con `package.json` y `VERSION` en `4.2.8`.
+
+### Fixed
+- Error recurrente `No lowest priority node found` al lanzar tareas casi simultáneas: el lock de ejecución dejó de depender solo de la capa de extensión y ahora protege el router core común.
+- Desfase entre metadatos de release: la entrada `4.2.8` deja de apuntar a una fecha futura y queda coherente con el estado real que se empaqueta/publica.
+
+## [4.2.7] - 2026-04-19
+
+### Added
+- Refactorización del directorio `src-js/` en subdirectorios especializados:
+  `core/`, `memory/`, `scheduler/`, `bridge/`, `plugins/` — patrón arquitectónico
+  inspirado en la separación de crates de Claurst (core, api, tools, query, commands,
+  bridge, plugins). Cierra brecha de "agent core no separado" identificada en el análisis
+  comparativo (`docs/08-ANALISIS-CLAURST-VS-FREEJT7.md`).
+- `src-js/bridge/remote-bridge.js`: singleton EventEmitter con cola de comandos,
+  loop de polling asíncrono y canal bidireccional configurable — equivalente directo
+  al crate `bridge` de Claurst (device fingerprint, JWT, polling, canal web/mobile).
+  Cierra brecha de "capa remota nativa" identificada en el análisis.
+- Integración del RemoteBridge en el ciclo de vida de la extensión (activate/deactivate)
+  en `src-js/core/extension.runtime.js`.
+- Base para sistemas runtime integrados al loop principal:
+  - `src-js/memory/memory-orchestrator.js` — consolidación automática por umbrales
+    (inspirado en `auto_dream.rs` y `session_memory.rs` de Claurst).
+  - `src-js/scheduler/agent-scheduler.js` — scheduler transversal de tareas/prompts
+    (inspirado en `cron_scheduler.rs` de Claurst).
+  - `src-js/plugins/plugin-runtime.js` — runtime de plugins con hooks y manifests
+    (inspirado en el crate `plugins` de Claurst).
+
+### Changed
+- Arquitectura src-js migrada de archivos planos a estructura modular por dominio.
+- `extension.runtime.js` movido a `src-js/core/` y reducido en responsabilidad;
+  delega ciclo de vida de bridges y schedulers a sus módulos propios.
+
+## [4.2.6] - 2026-04-17
+
+- Agregado selector visual de proveedor y modelo activo en VS Code, con barra de estado y comandos para cambiar proveedor, API key, modelo gratuito y recargar catálogo.
+- Integrado routing hacia proveedores externos `OpenRouter`, `HuggingFace` y `ZAI` desde el runtime del router cuando el proveedor activo no es `copilot`.
+- Añadido `src-js/api-provider-adapter.js` con presupuestos defensivos de contexto, compactación automática del prompt, `max_tokens` de salida y traducción de errores remotos de longitud de contexto.
+- Añadido `src-js/free-models-catalog.js` y fallback en runtime para que la selección de modelos gratuitos siga funcionando también en el bundle empaquetado.
+- Mejorada la resiliencia del runtime empaquetado para no depender de archivos excluidos del VSIX al mostrar proveedor y modelo activo.
+- Eliminados fallbacks con credenciales embebidas; el runtime ahora usa solo `SecretStorage`, variables de entorno o archivos locales ignorados por git.
+- Agregado comando `Free JT7: Aplicar configuracion global en VS Code` para escribir la configuracion de usuario sin depender de un workspace abierto.
+- `@freejt7 /install` ahora degrada a configuracion global cuando no hay workspace, y se agrega `@freejt7 /global` como atajo explicito.
+
+
 ## [4.2.5] - 2026-04-15
 
 - Corregido: `extensionDependencies` con `github.copilot-chat` faltaba en `package.json` pese a que el CHANGELOG 4.2.4 lo declaraba. Sin esta dependencia VS Code no garantizaba que la API `vscode.chat.createChatParticipant` estuviese disponible al activar la extension, impidiendo que `@freejt7` apareciese en Copilot Chat.
