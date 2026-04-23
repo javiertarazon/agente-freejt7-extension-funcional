@@ -118,6 +118,15 @@
 {"ts": "2026-04-17T17:28:19Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:20Z", "action": "sync-claude", "detail": "10 activas de 964"}
+{"ts": "2026-04-22T00:00:00Z", "action": "task-open", "detail": "20260422-external-provider-copilot-bypass:verificar y corregir bypass real de Copilot al usar proveedor externo"}
+{"ts": "2026-04-22T00:00:01Z", "action": "delegation-decision", "detail": "20260422-external-provider-copilot-bypass:cambio principal no delegado porque el diagnóstico y fix comparten el mismo contrato entre UI, router runtime, telemetría y verificación end-to-end"}
+{"ts": "2026-04-22T11:40:00Z", "action": "implementation", "detail": "20260422-external-provider-copilot-bypass:router externo resuelve provider/model antes de la ruta Copilot, corrige model_resolution/execution_route y añade aviso + comando directo fuera de Copilot Chat"}
+{"ts": "2026-04-22T11:58:00Z", "action": "verification", "detail": "20260422-external-provider-copilot-bypass:get_errors limpio + npm run build:bundle OK + harness controlado con cliPath invalido => execution_route.copilot_sdk_created=false + prueba real OpenRouter alcanzada con HTTP 429"}
+{"ts": "2026-04-22T11:59:00Z", "action": "task-close", "detail": "20260422-external-provider-copilot-bypass:succeeded runtime-metadata-fixed+chat-host-warning+direct-command"}
+{"ts": "2026-04-22T12:05:00Z", "action": "task-open", "detail": "20260422-hf-provider-verification:confirmar configuracion activa hf/qwen y verificar uso real del router"}
+{"ts": "2026-04-22T12:06:00Z", "action": "delegation-decision", "detail": "20260422-hf-provider-verification:no delegado porque la verificacion requiere una sola lectura de settings y una sola corrida controlada del router"}
+{"ts": "2026-04-22T12:12:00Z", "action": "verification", "detail": "20260422-hf-provider-verification:settings globales confirman freejt7.apiProvider=hf + freejt7.apiProviderModel=Qwen/Qwen2.5-7B-Instruct-Turbo; harness del router registra cli=skipped y delegating to provider=hf model=Qwen/Qwen2.5-7B-Instruct-Turbo"}
+{"ts": "2026-04-22T12:13:00Z", "action": "task-close", "detail": "20260422-hf-provider-verification:succeeded hf-qwen-config-accepted+router-delegation-confirmed"}
 {"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:20Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:20Z", "action": "sync-claude", "detail": "11 activas de 964"}
@@ -209,6 +218,13 @@
 {"ts": "2026-04-19T14:45:31Z", "action": "set-project", "detail": "/home/javier28/Público/copilot vs code/agente free jt7 extension/agente-freejt7-extension-funcional"}
 {"ts": "2026-04-19T14:45:32Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
 {"ts": "2026-04-19T15:02:00Z", "action": "implementation", "detail": "20260419-audit-checklist-cli-identity:checklist consolidado en docs/11 + skills_manager con identidad canónica CLI y rechazo de rutas stale cross-host/cross-platform + tests Python nuevos"}
+{"ts": "2026-04-22T12:20:00Z", "action": "task-open", "detail": "20260422-mt5-linux-install:instalar MetaTrader 5 en Linux sin sudo con decision Bottles vs Wine y verificacion por apertura"}
+{"ts": "2026-04-22T12:21:00Z", "action": "delegation-decision", "detail": "20260422-mt5-linux-install:no-delegado porque la instalacion y validacion dependen del entorno local interactivo (flatpak/wine/prefix/rutas) y conviene una ejecucion lineal unica"}
+{"ts": "2026-04-22T12:36:00Z", "action": "implementation", "detail": "20260422-mt5-linux-install:bottles-cli bloqueado en offline sin runners gestionados; fallback aplicado a Wine user-space con WINEPREFIX en ~/.local/share/freejt7-mt5/wineprefix"}
+{"ts": "2026-04-22T12:38:00Z", "action": "verification", "detail": "20260422-mt5-linux-install:terminal64.exe localizado, lanzador ~/.local/bin/mt5 creado y procesos terminal64.exe activos verificados"}
+{"ts": "2026-04-22T12:39:00Z", "action": "task-close", "detail": "20260422-mt5-linux-install:succeeded wine-fallback-user-mode+mt5-launcher+process-running"}
+{"ts": "2026-04-22T13:10:00Z", "action": "task-open", "detail": "20260422-agente-mt5-design:analisis y diseño de nueva herramienta agente_mt5 para señales cuantitativas con control de riesgo"}
+{"ts": "2026-04-22T13:11:00Z", "action": "delegation-decision", "detail": "20260422-agente-mt5-design:ejecucion paralela habilitada por frentes independientes (arquitectura, estrategia, riesgo, testing, integración MCP)"}
 {"ts": "2026-04-19T15:02:01Z", "action": "verification", "detail": "20260419-audit-checklist-cli-identity:set-project OK; pytest tests/test_active_project_identity.py tests/test_task_run_cross_platform.py -q => 51 passed; doctor --strict => errors=0 warnings=0"}
 {"ts": "2026-04-19T15:02:02Z", "action": "task-close", "detail": "20260419-audit-checklist-cli-identity:succeeded checklist-real+cli-active-project-identity+pytest51+doctor-clean"}
 {"ts": "2026-04-19T15:10:00Z", "action": "task-open", "detail": "20260419-autolearn-evaluator-integration-manifest:ejecutar Fase 4 evaluator-driven y Fase 5 con capability packs externos"}
@@ -242,6 +258,9 @@
 {"ts": "2026-04-19T17:50:16Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-19T17:50:21Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
 {"ts": "2026-04-19T17:58:45Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-22T13:25:00Z", "action": "parallel-delegation", "detail": "20260422-agente-mt5-design:subagentes en paralelo para dependencia/reuso y estrategia multivoto; un lane fallido por runtime interno, compensado con exploracion alternativa"}
+{"ts": "2026-04-22T13:38:00Z", "action": "implementation", "detail": "20260422-agente-mt5-design:creado mcp-servers/agente_mt5/agente_mt5_server.py + README + requirements en modo signals-only usando tools/mt5_bridge.py"}
+{"ts": "2026-04-22T13:40:00Z", "action": "traceability-update", "detail": "20260422-agente-mt5-design:actualizados copilot-agent/tasks.yaml, docs/TASKS.md y copilot-agent/RESUME.md"}
 {"ts": "2026-04-20T00:35:00Z", "action": "task-open", "detail": "20260420-extension-global-decouple:desacoplar runtime global del bootstrap de workspace para que el VSIX funcione como extension normal en cualquier carpeta"}
 {"ts": "2026-04-20T00:35:01Z", "action": "delegation-decision", "detail": "20260420-extension-global-decouple:no-delegado porque el fix cruza extension.runtime.js, skills_manager.py, packaging y verificacion del VSIX sobre el mismo contrato de compatibilidad"}
 {"ts": "2026-04-20T00:42:00Z", "action": "implementation", "detail": "20260420-extension-global-decouple:runtime distingue workspace gestionado vs folder arbitrario; estado operativo cae a globalStorage; install global usa user-settings-only sin bootstrap de workspace"}
@@ -292,3 +311,13 @@
 {"ts": "2026-04-22T03:14:00Z", "action": "git-commit", "detail": "20260421-release-4-2-10-design-agent:commit creado -> 636705b1b4d1e5d03131e33fc7cb75daa80631a2 feat: add design agent and release v4.2.10"}
 {"ts": "2026-04-22T03:15:00Z", "action": "git-push", "detail": "20260421-release-4-2-10-design-agent:push OK a origin/feature/agente-diseno; remoto avanzó 01f7012..636705b"}
 {"ts": "2026-04-22T03:16:00Z", "action": "task-close", "detail": "20260421-release-4-2-10-design-agent:succeeded version-bump+doctor-green+pytest-green+bundle-green+vsix-4.2.10+git-push"}
+{"timestamp": "2026-04-22T23:55:36Z", "action": "implementation", "detail": "20260422-panel-webview-freejt7:integracion runtime + comando panel + feature flags panel/chat participant + wiring copilot callback"}
+{"timestamp": "2026-04-22T23:56:27Z", "action": "task-close", "detail": "20260422-panel-webview-freejt7:succeeded control-panel+runtime-integration+feature-flags+build-ok"}
+{"ts": "2026-04-23T10:20:38Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-04-23T10:35:00Z", "action": "task-open", "detail": "20260423-vscode-update-panel-pro:analisis-novedades-vscode + upgrade-panel-mvp-profesional"}
+{"ts": "2026-04-23T10:47:00Z", "action": "implementation", "detail": "20260423-vscode-update-panel-pro:panel-ui-redesign + doc-impacto-vscode + smoke-test-panel"}
+{"ts": "2026-04-23T10:49:00Z", "action": "task-close", "detail": "20260423-vscode-update-panel-pro:succeeded tests-green+bundle-green"}
+{"ts": "2026-04-23T11:40:00Z", "action": "task-open", "detail": "20260423-release-4-2-11-panel-pro:branch-release+version-bump+package+backup+secret-encryption"}
+{"ts": "2026-04-23T11:50:00Z", "action": "implementation", "detail": "20260423-release-4-2-11-panel-pro:release-branch-created+versioned-4.2.11+encrypted-secrets-repo-local+backup-folders-ready"}
+{"ts": "2026-04-23T11:58:00Z", "action": "verification", "detail": "20260423-release-4-2-11-panel-pro:test:control-panel-ui-smoke OK + test:agent-manifest-smoke OK + build:bundle OK + package:local OK"}
+{"ts": "2026-04-23T12:00:00Z", "action": "task-close", "detail": "20260423-release-4-2-11-panel-pro:succeeded branch+version+vsix+repo-backup+local-backup+encrypted-secrets"}

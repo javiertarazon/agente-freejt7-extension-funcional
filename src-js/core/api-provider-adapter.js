@@ -86,7 +86,7 @@ const PROVIDER_OUTPUT_TOKENS = {
 // Clave de API — primero SecretStorage, luego variables de entorno, luego archivo local ignorado
 // ---------------------------------------------------------------------------
 
-async function getApiKey(provider, secretStorage) {
+async function getApiKey(provider, secretStorage, options = {}) {
   // 1. VS Code SecretStorage (guardada por el comando freejt7.setApiKey)
   if (secretStorage) {
     try {
@@ -100,7 +100,7 @@ async function getApiKey(provider, secretStorage) {
   if (fromEnv) return fromEnv;
 
   // 3. Archivo local ignorado "env api" o ".env" en la raíz de la extensión
-  const fromFile = readEnvApiFile(provider);
+  const fromFile = readEnvApiFile(provider, options);
   if (fromFile) return fromFile;
 
   return null;
@@ -115,13 +115,30 @@ function readProcessEnv(provider) {
   return process.env[keyMap[provider]] || null;
 }
 
-function readEnvApiFile(provider) {
-  const base = path.resolve(__dirname, "..", "..");
-  const candidates = [
-    path.join(base, "env api"),
-    path.join(base, "env_api"),
-    path.join(base, ".env"),
-  ];
+function getEnvApiCandidateRoots(options = {}) {
+  const roots = [];
+  const extensionRoot = path.resolve(__dirname, "..", "..");
+  roots.push(extensionRoot);
+
+  // Soporta configurar claves desde el workspace abierto del usuario.
+  if (options.workspacePath) {
+    roots.push(path.resolve(String(options.workspacePath)));
+  }
+
+  if (process.cwd()) {
+    roots.push(path.resolve(process.cwd()));
+  }
+
+  return Array.from(new Set(roots.filter(Boolean)));
+}
+
+function readEnvApiFile(provider, options = {}) {
+  const candidates = [];
+  for (const base of getEnvApiCandidateRoots(options)) {
+    candidates.push(path.join(base, "env api"));
+    candidates.push(path.join(base, "env_api"));
+    candidates.push(path.join(base, ".env"));
+  }
   const keyMap = {
     openrouter: "OPENROUTER_API_KEY",
     hf: "HUGGINGFACE_API_KEY",
@@ -335,9 +352,9 @@ async function callProviderWithRetry(provider, goalInfo, model, apiKey) {
   }
 }
 
-async function callProvider(goal, config, secretStorage) {
+async function callProvider(goal, config, secretStorage, options = {}) {
   const { provider, model } = config;
-  const apiKey = normalizeApiKey(await getApiKey(provider, secretStorage));
+  const apiKey = normalizeApiKey(await getApiKey(provider, secretStorage, options));
   if (!apiKey) {
     throw new Error(
       `Free JT7: No hay API Key para "${provider}". Usa el comando "Free JT7: Configurar API Key de Proveedor".`

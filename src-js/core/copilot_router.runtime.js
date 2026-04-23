@@ -1111,7 +1111,14 @@ async function sendSession({ client, model, prompt, systemMessage, workingDirect
   }
 }
 
-function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, selectedSkills = []) {
+function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, selectedSkills = [], executionMeta = {}) {
+  const resolvedProvider = String(executionMeta.provider || "github-copilot-sdk").trim() || "github-copilot-sdk";
+  const resolvedModel = String(executionMeta.model || routing.plannerModel).trim() || routing.plannerModel;
+  const resolvedAuthMode = String(executionMeta.authMode || authInfo.authMode || "").trim();
+  const resolvedReason = String(executionMeta.reason || "copilot sdk router").trim() || "copilot sdk router";
+  const resolvedIdeProfiles = Array.isArray(executionMeta.ideDetectedProfiles)
+    ? executionMeta.ideDetectedProfiles
+    : ["free-jt7"];
   return {
     run_id: runId,
     started_at: nowIso(),
@@ -1130,17 +1137,20 @@ function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, selecte
     model_resolution: {
       ide: "vscode",
       profile: "free-jt7",
-      provider: "github-copilot-sdk",
-      model: routing.plannerModel,
-      auth_mode: authInfo.authMode,
-      reason: "copilot sdk router",
-      prefer_ide_profile: true,
-      allow_api_fallback: false,
-      api_env_var: authInfo.apiEnvVar,
-      ide_profile_available: true,
-      requested_profile_available: true,
-      ide_detected_profiles: ["free-jt7"],
+      provider: resolvedProvider,
+      model: resolvedModel,
+      auth_mode: resolvedAuthMode,
+      reason: resolvedReason,
+      prefer_ide_profile: executionMeta.preferIdeProfile ?? true,
+      allow_api_fallback: executionMeta.allowApiFallback ?? false,
+      api_env_var: executionMeta.apiEnvVar ?? authInfo.apiEnvVar,
+      ide_profile_available: executionMeta.ideProfileAvailable ?? true,
+      requested_profile_available: executionMeta.requestedProfileAvailable ?? true,
+      ide_detected_profiles: resolvedIdeProfiles,
       ide_evidence: [],
+      execution_mode: executionMeta.executionMode || "copilot-sdk",
+      selected_provider: executionMeta.selectedProvider || resolvedProvider,
+      selected_model: executionMeta.selectedModel || resolvedModel,
       routing_file: routing.routePath,
       router: {
         planner: routing.plannerModel,
@@ -1186,10 +1196,50 @@ async function runCopilotRouter(options) {
   const runId = String(options.runId || "").trim() || createRunId();
   const runPaths = createRunPaths(workspacePath, runId);
   const routing = mergeRouterConfig(workspacePath, options.vscode);
-  const cli = resolveCopilotCliCommand(options.cliPath || routing.cliPath, options.extensionPath || "");
-  const authInfo = getCopilotAuthInfo();
+  const selectedProvider = options.vscode
+    ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim() || DEFAULT_EXTERNAL_PROVIDER
+    : DEFAULT_EXTERNAL_PROVIDER;
+  let selectedProviderModel = "";
+  if (selectedProvider !== "copilot") {
+    const { getFreeModelDefaults } = require("../providers/api-provider-adapter");
+    const providerDefaults = getFreeModelDefaults();
+    const resolvedDefaultModel = providerDefaults[selectedProvider] || DEFAULT_EXTERNAL_PROVIDER_MODEL;
+    selectedProviderModel = options.vscode
+      ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "").trim() || resolvedDefaultModel
+      : resolvedDefaultModel;
+  }
+  const cli = selectedProvider === "copilot"
+    ? resolveCopilotCliCommand(options.cliPath || routing.cliPath, options.extensionPath || "")
+    : { cliPath: "", cliArgs: [], label: "skipped (external provider active)" };
+  const authInfo = selectedProvider === "copilot"
+    ? getCopilotAuthInfo()
+    : { githubToken: "", authMode: "external-provider", apiEnvVar: "" };
   const permissionHandler = createPermissionHandler(routing.autoApproveSafeTools);
-  const baseRun = buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, options.selectedSkills || []);
+  const baseRun = buildRunSkeleton(
+    runId,
+    goal,
+    workspacePath,
+    routing,
+    authInfo,
+    options.selectedSkills || [],
+    selectedProvider === "copilot"
+      ? {}
+      : {
+          provider: selectedProvider,
+          model: selectedProviderModel || "default",
+          authMode: "external-provider",
+          reason: "external provider delegation",
+          preferIdeProfile: false,
+          allowApiFallback: false,
+          apiEnvVar: "",
+          ideProfileAvailable: false,
+          requestedProfileAvailable: false,
+          ideDetectedProfiles: [],
+          executionMode: "external-provider",
+          selectedProvider,
+          selectedModel: selectedProviderModel || "default",
+        },
+  );
   const existingRun = loadJson(runPaths.json, null);
   const run = existingRun && typeof existingRun === "object"
     ? {
@@ -1245,46 +1295,83 @@ async function runCopilotRouter(options) {
   _bridge.appendSessionEvent(runId, 'route-start', { goal, workspacePath });
 
   // --- API Provider Delegation ---
-  const _activeProvider = options.vscode
-    ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim() || DEFAULT_EXTERNAL_PROVIDER
-    : DEFAULT_EXTERNAL_PROVIDER;
-  if (_activeProvider !== "copilot") {
-    const { callProvider, getFreeModelDefaults } = require("../providers/api-provider-adapter");
-    const providerDefaults = getFreeModelDefaults();
-    const resolvedDefaultModel = providerDefaults[_activeProvider] || DEFAULT_EXTERNAL_PROVIDER_MODEL;
-    const _activeModel = options.vscode
-      ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "").trim() || resolvedDefaultModel
-      : resolvedDefaultModel;
-    cliLog(options.output, `[freejt7-router] delegating to provider=${_activeProvider} model=${_activeModel || "default"}`);
-    const providerResult = await callProvider(goal, { provider: _activeProvider, model: _activeModel }, options.secretStorage);
-    const providerSummary = String(providerResult?.final?.summary || providerResult?.run?.summary || `Delegado a ${_activeProvider}`);
+  if (selectedProvider !== "copilot") {
+    const { callProvider } = require("../providers/api-provider-adapter");
+    cliLog(options.output, `[freejt7-router] delegating to provider=${selectedProvider} model=${selectedProviderModel || "default"}`);
+    const providerResult = await callProvider(
+      goal,
+      { provider: selectedProvider, model: selectedProviderModel },
+      options.secretStorage,
+      { workspacePath },
+    );
+    const providerSummary = String(providerResult?.final?.summary || providerResult?.run?.summary || `Delegado a ${selectedProvider}`);
     recordStepWithCompression(contextSystem, run, runPaths.events, {
       step_id: "provider-delegation",
       action: "provider-delegation",
-      command: `${_activeProvider}:${_activeModel || "default"}`,
-      result: providerSummary,
+      command: `${selectedProvider}:${selectedProviderModel || "default"}`,
+      result: `${providerSummary}\n\n[freejt7-router] provider_route=external-provider copilot_sdk_created=false`,
       exit_code: 0,
       retry_index: 0,
       risk_level: "medium",
       mode: "autonomous",
     });
+    run.model_resolution = {
+      ide: "vscode",
+      profile: "free-jt7",
+      provider: selectedProvider,
+      model: selectedProviderModel || "default",
+      auth_mode: "external-provider",
+      reason: "external provider delegation",
+      prefer_ide_profile: false,
+      allow_api_fallback: false,
+      api_env_var: "",
+      ide_profile_available: false,
+      requested_profile_available: false,
+      ide_detected_profiles: [],
+      execution_mode: "external-provider",
+      selected_provider: selectedProvider,
+      selected_model: selectedProviderModel || "default",
+      router: null,
+    };
+    run.execution_route = {
+      host: "external-provider",
+      adapter: "external-provider",
+      provider: selectedProvider,
+      model: selectedProviderModel || "default",
+      copilot_cli_resolved: false,
+      copilot_sdk_created: false,
+    };
     run.ended_at = nowIso();
     run.status = "completed";
     run.summary = providerSummary;
     run.quality_gate.passed = true;
     writeJson(runPaths.json, run);
     _bridge.appendSessionEvent(runId, 'provider-delegation', {
-      provider: _activeProvider,
-      model: _activeModel || 'default',
+      provider: selectedProvider,
+      model: selectedProviderModel || 'default',
       status: run.status,
       summary: providerSummary,
+      copilotCliResolved: false,
+      copilotSdkCreated: false,
     });
     _bridge.closeSession(runId, { status: run.status, summary: providerSummary });
     await _pr.emit('onRouteEnd', { goal, runId, status: run.status });
+    const delegatedRun = {
+      ...(providerResult?.run && typeof providerResult.run === "object" ? providerResult.run : {}),
+      run_id: run.run_id,
+      status: run.status,
+      summary: providerSummary,
+      started_at: run.started_at,
+      ended_at: run.ended_at,
+      model_resolution: run.model_resolution,
+      execution_route: run.execution_route,
+      quality_gate: run.quality_gate,
+      steps: Array.isArray(run.steps) ? run.steps : [],
+    };
     return {
       ...(providerResult || {}),
       runId,
-      run,
+      run: delegatedRun,
       final: providerResult?.final || {
         status: "completed",
         summary: providerSummary,
@@ -1292,7 +1379,7 @@ async function runCopilotRouter(options) {
         verification: [],
         residualRisks: [],
       },
-      plan: { summary: `Delegado a ${_activeProvider}`, tasks: [] },
+      plan: { summary: `Delegado a ${selectedProvider}`, tasks: [] },
       executionResults: [],
       runPaths,
     };

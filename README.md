@@ -1,6 +1,6 @@
 ﻿# Agente Free JT7 Extension Funcional
 
-Version: `4.2.10`
+Version: `4.2.11`
 
 Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - ejecutable por CLI (`skills_manager.py`)
@@ -161,7 +161,7 @@ Después de crear el paquete puedes confirmar la instalación ejecutando
 Para instalar manualmente usa el menú de extensiones de VS Code o:
 
 ```bash
-code --install-extension agente-freejt7-extension-funcional-4.2.10.vsix
+code --install-extension agente-freejt7-extension-funcional-4.2.11.vsix
 ```
 
 ### Probar wrappers

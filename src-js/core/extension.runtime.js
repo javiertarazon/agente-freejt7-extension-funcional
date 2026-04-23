@@ -30,6 +30,7 @@ const fs = require("fs");
 const { randomUUID } = require("crypto");
 const { spawn, spawnSync } = require("child_process");
 const { runCopilotRouter } = require("./copilot_router.runtime");
+const { createControlPanel } = require("./control-panel");
 const {
   callProvider: _callProvider,
   getFreeModelsCatalog,
@@ -86,6 +87,7 @@ const DEFAULT_ROUTER_SKILLS = [
 
 let activeCopilotRouterRun = null;
 let activeScheduler = null;
+let activeControlPanel = null;
 
 function loadFreeModelsCatalog() {
   // From src-js/core/: "../" = src-js/ (correct)
@@ -1117,6 +1119,25 @@ async function routeTaskWithGoal(context, output, goal) {
     return null;
   }
 
+  // BYPASS: si hay proveedor externo configurado, usar _callProvider en lugar de runCopilotRouter (vscode.lm)
+  const { provider: effectiveProvider, model: effectiveModel } = getEffectiveProviderConfig();
+  if (effectiveProvider !== "copilot") {
+    output.appendLine(`[freejt7-router] Usando proveedor externo: ${effectiveProvider} / ${effectiveModel} (sin consumir quota Copilot)`);
+    try {
+      const workspacePathForProvider = getPrimaryWorkspacePath() || context.extensionPath;
+      const result = await _callProvider(
+        finalGoal,
+        { provider: effectiveProvider, model: effectiveModel },
+        context.secrets,
+        { workspacePath: workspacePathForProvider },
+      );
+      return result;
+    } catch (err) {
+      output.appendLine(`[freejt7-router] Error con proveedor externo: ${String(err?.message || err)}`);
+      throw err;
+    }
+  }
+
   if (activeCopilotRouterRun) {
     const message = "Free JT7: ya hay una ejecucion activa del router Copilot. Espera a que termine antes de lanzar otra.";
     output.appendLine(`[freejt7-router] ${message}`);
@@ -1163,9 +1184,15 @@ async function routeTaskWithGoal(context, output, goal) {
 }
 
 async function routeTaskWithCopilot(context, output) {
+  const { provider, model } = getEffectiveProviderConfig();
+  const usesExternalProvider = provider !== "copilot";
   const goal = await vscode.window.showInputBox({
-    prompt: "Objetivo para el router Copilot de Free JT7",
-    placeHolder: "Ej: analiza el bug, planifica y aplica la solucion con validacion",
+    prompt: usesExternalProvider
+      ? `Objetivo para ejecutar Free JT7 con ${provider}${model ? ` / ${model}` : ""}`
+      : "Objetivo para el router Copilot de Free JT7",
+    placeHolder: usesExternalProvider
+      ? "Ej: analiza el bug y ejecútalo con el proveedor externo activo"
+      : "Ej: analiza el bug, planifica y aplica la solucion con validacion",
     ignoreFocusOut: true,
   });
   if (!goal) {
@@ -1181,12 +1208,12 @@ async function routeTaskWithCopilot(context, output) {
     if (!result) {
       return;
     }
-    vscode.window.showInformationMessage(`Free JT7: router completado (${result.runId}).`);
+    vscode.window.showInformationMessage(`Free JT7: ejecución completada (${result.runId}).`);
   } catch (error) {
     const message = String(error && error.message ? error.message : error);
     output.appendLine(`[freejt7-router] ERROR ${message}`);
     output.show(true);
-    vscode.window.showErrorMessage(`Free JT7: router Copilot fallo. ${message}`);
+    vscode.window.showErrorMessage(`Free JT7: la ejecución falló. ${message}`);
   }
 }
 
@@ -1221,6 +1248,7 @@ async function runOpenClaw(args, output) {
 
 async function handleChatRequest(context, output, request, chatContext, stream) {
   const command = request.command || "route";
+  const activeProviderConfig = getEffectiveProviderConfig();
 
   if (command === "docs") {
     openRuntimeDocs(context);
@@ -1254,6 +1282,13 @@ async function handleChatRequest(context, output, request, chatContext, stream) 
   if (!prompt) {
     stream.markdown("Escribe una solicitud para `@freejt7` o usa `/doctor`, `/install` o `/docs`.");
     return { metadata: { command, ok: false } };
+  }
+
+  if (activeProviderConfig.provider !== "copilot") {
+    const activeModelLabel = activeProviderConfig.model || "default";
+    stream.markdown(
+      `Aviso: esta solicitud entra por GitHub Copilot Chat como host. La ejecución de Free JT7 se delegará a ${activeProviderConfig.provider} / ${activeModelLabel}, pero la apertura de este chat puede seguir contabilizando uso del host Copilot. Si quieres evitar ese consumo del host, usa el comando "Free JT7: Ejecutar tarea directa con proveedor activo".`
+    );
   }
 
   stream.progress("Recogiendo intake obligatorio de Free JT7...");
@@ -1347,22 +1382,53 @@ function activate(context) {
     });
 
   // P4 Wire-C: start memory orchestrator + scheduler (non-fatal)
+  const operationalRoot = getOperationalRoot(context);
   try {
-    const _wp = getOperationalRoot(context);
-    getRemoteBridge({ rootDir: _wp }).start();
+    getRemoteBridge({ rootDir: operationalRoot }).start();
     const pluginRuntime = getPluginRuntime();
     const integrationDiscovery = pluginRuntime.discoverAndLoadIntegrations({
-      directories: [path.join(_wp, 'integrations')],
+      directories: [path.join(operationalRoot, 'integrations')],
       allowExperimental: false,
     });
-    const _orch = new MemoryOrchestrator({ workspacePath: _wp });
-    activeScheduler = createDefaultScheduler({ rootDir: _wp }, _orch);
+    const _orch = new MemoryOrchestrator({ workspacePath: operationalRoot });
+    activeScheduler = createDefaultScheduler({ rootDir: operationalRoot }, _orch);
     activeScheduler.start();
     output.appendLine('[freejt7] Scheduler runtime inicializado.');
     if (integrationDiscovery.loaded.length > 0) {
       output.appendLine(`[freejt7] Capability packs cargados: ${integrationDiscovery.loaded.length}`);
     }
   } catch (_) { /* non-fatal — scheduler must never crash extension startup */ }
+
+  const panelConfig = vscode.workspace.getConfiguration("freejt7");
+  const panelEnabled = panelConfig.get("panel.enabled", true);
+  if (panelEnabled) {
+    try {
+      activeControlPanel = createControlPanel(context, output, {
+        workspacePath: operationalRoot,
+        workerCount: Number(panelConfig.get("panel.workerPool.size", 3) || 3),
+        policyMode: String(panelConfig.get("panel.policy.mode", "mixed") || "mixed"),
+        remoteBridge: getRemoteBridge({ rootDir: operationalRoot }),
+        executeCopilotTask: async (goal) => {
+          const workspacePath = getPrimaryWorkspacePath();
+          if (!workspacePath) {
+            throw new Error("Free JT7: abre un workspace antes de usar Copilot Pro desde el panel.");
+          }
+          return runCopilotRouter({
+            goal,
+            workspacePath,
+            vscode,
+            output,
+            extensionPath: context.extensionPath,
+            secretStorage: context.secrets,
+            selectedSkills: DEFAULT_ROUTER_SKILLS,
+          });
+        },
+      });
+      output.appendLine("[freejt7-panel] Control panel runtime inicializado.");
+    } catch (error) {
+      output.appendLine(`[freejt7-panel] init error: ${String(error?.message || error)}`);
+    }
+  }
 
   const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
@@ -1371,6 +1437,14 @@ function activate(context) {
     vscode.commands.registerCommand("freejt7.runtimeDoctor", () => runtimeDoctor(context, output)),
     vscode.commands.registerCommand("freejt7.openRuntimeDocs", () => openRuntimeDocs(context)),
     vscode.commands.registerCommand("freejt7.routeTaskWithCopilot", () => routeTaskWithCopilot(context, output)),
+    vscode.commands.registerCommand("freejt7.routeTaskDirect", () => routeTaskWithCopilot(context, output)),
+    vscode.commands.registerCommand("freejt7.openControlPanel", () => {
+      if (!activeControlPanel) {
+        vscode.window.showErrorMessage("Free JT7: el panel esta deshabilitado en freejt7.panel.enabled.");
+        return;
+      }
+      activeControlPanel.openPanel();
+    }),
     vscode.commands.registerCommand("freejt7.launchDesignAgent", () => launchDesignAgent(context, output)),
 
     // new commands exposing OpenClaw CLI
@@ -1503,7 +1577,13 @@ function activate(context) {
       output.show(true);
       vscode.window.showInformationMessage(`Free JT7: probando conexión con ${provider}...`);
       try {
-        const result = await _callProvider("Responde solo con la palabra ok.", { provider, model }, context.secrets);
+        const workspacePathForProvider = getPrimaryWorkspacePath() || context.extensionPath;
+        const result = await _callProvider(
+          "Responde solo con la palabra ok.",
+          { provider, model },
+          context.secrets,
+          { workspacePath: workspacePathForProvider },
+        );
         const summary = String(result?.run?.summary || result?.final?.summary || "ok").slice(0, 150);
         output.appendLine(`[freejt7] Conexión OK con ${provider}: ${summary}`);
         vscode.window.showInformationMessage(`Free JT7: conexion con ${provider} verificada ✓. Respuesta: ${summary.slice(0, 80)}`);
@@ -1531,11 +1611,14 @@ function activate(context) {
     }));
   }
 
-  if (vscode.chat?.createChatParticipant) {
+  const chatParticipantEnabled = panelConfig.get("panel.chatParticipant.enabled", true);
+  if (chatParticipantEnabled && vscode.chat?.createChatParticipant) {
     const participant = vscode.chat.createChatParticipant("freejt7.chat", (request, chatContext, stream, token) => (
       handleChatRequest(context, output, request, chatContext, stream, token)
     ));
     subscriptions.push(participant);
+  } else if (!chatParticipantEnabled) {
+    output.appendLine("[freejt7-panel] chat participant deshabilitado por configuracion.");
   }
 
   context.subscriptions.push(...subscriptions);
@@ -1545,6 +1628,10 @@ function deactivate() {
   if (activeScheduler && typeof activeScheduler.stop === 'function') {
     activeScheduler.stop();
     activeScheduler = null;
+  }
+  if (activeControlPanel && typeof activeControlPanel.dispose === 'function') {
+    activeControlPanel.dispose();
+    activeControlPanel = null;
   }
   getRemoteBridge().stop();
 }

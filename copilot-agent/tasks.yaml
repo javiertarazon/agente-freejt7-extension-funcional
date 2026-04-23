@@ -2,6 +2,138 @@
 # Actualizado automaticamente por skills_manager.py
 
 tareas:
+  - id: "20260423-release-4-2-11-panel-pro"
+    fecha: "2026-04-23"
+    titulo: "Release 4.2.11: branch remota, paquete y backup cifrado"
+    descripcion: >
+      Crear rama de release local/remota, versionar correlativamente a 4.2.11,
+      empaquetar VSIX, generar backups y guardar secretos cifrados en repo y
+      carpeta local externa.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["git-pushing", "commit", "verification-before-completion"]
+    resultado: >
+      Completado: rama `release/v4.2.11-panel-pro` creada desde
+      `feature/agente-diseno`, versionado actualizado en `VERSION`,
+      `package.json`, `package-lock.json`, `README.md` y `CHANGELOG.md`.
+      Verificacion OK (`test:control-panel-ui-smoke`,
+      `test:agent-manifest-smoke`, `build:bundle`) y VSIX generado.
+      Backups creados en `backups/releases/4.2.11` y
+      `/home/javier28/Backups/freejt7-release-4.2.11`.
+      Secretos cifrados en
+      `security/encrypted-secrets/freejt7-secrets-4.2.11.tar.enc` y copia
+      local externa.
+  - id: "20260423-vscode-update-panel-pro"
+    fecha: "2026-04-23"
+    titulo: "Analizar novedades VS Code y elevar panel Free JT7 a UX profesional"
+    descripcion: >
+      Analizar las nuevas funcionalidades de VS Code (chat/agent/terminal) y
+      aterrizar su impacto para Free JT7. Implementar una mejora visual y
+      funcional del Control Panel en modo MVP profesional, manteniendo
+      compatibilidad de comandos y chat participant.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "frontend-design", "vscode-ext-commands", "verification-before-completion"]
+    resultado: >
+      Completado: se genero analisis de impacto de novedades VS Code en
+      `docs/13-VSCODE-UPDATE-IMPACTO-FREEJT7.md` y se rediseño el panel en
+      `src-js/core/control-panel.js` con UX profesional (consola en 3
+      columnas, metricas, sesiones ordenables, acciones contextuales de tarea y
+      feed de eventos). Se agrego smoke test `tests/control_panel_ui_smoke.js`
+      y script `test:control-panel-ui-smoke`. Verificacion final OK:
+      `npm run test:control-panel-ui-smoke`,
+      `npm run test:agent-manifest-smoke`, `npm run build:bundle`.
+  - id: "20260422-panel-webview-freejt7"
+    fecha: "2026-04-22"
+    titulo: "Implementar Control Panel Webview con ejecucion mixta"
+    descripcion: >
+      Ejecutar el plan por fases para desacoplar la operacion principal del
+      chat participant de Copilot: crear panel webview, session engine con
+      cola y aprobaciones, provider router (externos + copilot) y
+      configuraciones de feature flags.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: creados modulos `control-panel`, `session-engine`,
+      `provider-router`, `policy-engine`, `audit-bus`; integrados en
+      `extension.runtime.js` con comando `freejt7.openControlPanel`, flags
+      de panel y toggle de chat participant. Verificacion final ejecutada con
+      `npm run build:bundle` (OK, exit 0).
+  - id: "20260422-agente-mt5-design"
+    fecha: "2026-04-22"
+    titulo: "Diseñar Agente MT5 de análisis y señales rentables"
+    descripcion: >
+      Analizar los componentes existentes de MT5 en mcp-servers y tools,
+      definir una nueva herramienta llamada agente_mt5 para análisis de
+      símbolos en broker, generación de señales de compra/venta con enfoque
+      cuantitativo y control de riesgo, y preparar ejecución por agentes en
+      paralelo.
+    estado: "en_progreso"
+    riesgo: "medium"
+    skills_usados: ["agent-orchestration", "quant-analyst", "risk-manager", "backtesting-frameworks"]
+    resultado: >
+      En progreso: analisis tecnico completado de mt5_server.py y mt5_bridge.py,
+      plan de arquitectura y ejecucion paralela documentado en
+      docs/12-AGENTE-MT5-DISENO-Y-PLAN.md, y arranque de implementacion MVP
+      del nuevo servidor separado mcp-servers/agente_mt5/agente_mt5_server.py
+      en modo signals-only (sin auto-ejecucion de ordenes).
+  - id: "20260422-mt5-linux-install"
+    fecha: "2026-04-22"
+    titulo: "Instalar MetaTrader 5 en Linux sin sudo"
+    descripcion: >
+      Ejecutar instalacion completa de MT5 en Linux en modo usuario,
+      evaluando Bottles vs Wine y aplicando la opcion mas robusta segun
+      restricciones sin sudo. Validar apertura final de MT5.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["linux-troubleshooting", "os-scripting", "verification-before-completion"]
+    resultado: >
+      Completado: se detecto entorno Linux sin sudo y Bottles Flatpak en modo
+      offline sin runners gestionados, por lo que se aplico fallback robusto a
+      Wine en prefijo de usuario (`~/.local/share/freejt7-mt5/wineprefix`).
+      MT5 quedo instalado con `terminal64.exe` en Program Files y se creo
+      lanzador persistente `~/.local/bin/mt5`. Verificacion final: procesos
+      `terminal64.exe` activos y arranque funcional confirmado.
+  - id: "20260422-hf-provider-verification"
+    fecha: "2026-04-22"
+    titulo: "Verificar proveedor HF activo tras cambio de configuracion"
+    descripcion: >
+      Confirmar que la configuracion efectiva de Free JT7 quedo en `hf` con el
+      modelo `Qwen/Qwen2.5-7B-Instruct-Turbo` y validar con evidencia que el
+      router usa ese proveedor en la rama externa.
+    estado: "completado"
+    riesgo: "low"
+    skills_usados: ["systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: la configuracion efectiva de VS Code quedó en
+      `freejt7.apiProvider=hf` y
+      `freejt7.apiProviderModel=Qwen/Qwen2.5-7B-Instruct-Turbo`. La
+      verificacion controlada del router mostró `cli=skipped (external
+      provider active)` y `delegating to provider=hf model=Qwen/Qwen2.5-7B-Instruct-Turbo`,
+      confirmando que Free JT7 está usando Hugging Face con ese modelo en la
+      rama externa.
+  - id: "20260422-external-provider-copilot-bypass"
+    fecha: "2026-04-22"
+    titulo: "Verificar y corregir bypass real de Copilot al usar proveedor externo"
+    descripcion: >
+      Comprobar si al seleccionar un proveedor externo desde Free JT7 la
+      ejecución sigue pasando por GitHub Copilot o solo conserva metadatos y
+      telemetría engañosa; corregir la ruta efectiva y validar con evidencia
+      end-to-end.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: ["systematic-debugging", "agent-orchestration", "copilot-sdk", "verification-before-completion"]
+    resultado: >
+      Completado: `src-js/core/copilot_router.runtime.js` ahora resuelve el
+      proveedor externo antes de preparar la ruta Copilot, persiste
+      `model_resolution` y `execution_route` con `openrouter` /
+      `google/gemma-4-31b-it:free`, y deja `copilot_cli_resolved=false` /
+      `copilot_sdk_created=false` en la rama externa. Además,
+      `src-js/core/extension.runtime.js` advierte que el chat participant sigue
+      usando GitHub Copilot Chat como host y expone el comando directo
+      `freejt7.routeTaskDirect` para evitar ese consumo del host al usar el
+      proveedor activo fuera del chat.
   - id: "20260420-agent-selector-remediation"
     fecha: "2026-04-20"
     titulo: "Recuperar visibilidad de agentes en el selector de Copilot Chat"

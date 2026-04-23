@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [4.2.11] - 2026-04-23
+
+### Added
+- Documento `docs/13-VSCODE-UPDATE-IMPACTO-FREEJT7.md` con analisis aplicado de novedades de VS Code para la operacion de Free JT7.
+- Smoke test `tests/control_panel_ui_smoke.js` para validar la estructura minima del nuevo panel profesional.
+
+### Changed
+- Rediseño del panel en `src-js/core/control-panel.js` hacia una consola operativa profesional (sesiones, tareas, eventos, metricas y acciones contextuales).
+- Integracion del panel en runtime con comando `freejt7.openControlPanel` y feature flags `freejt7.panel.*`.
+- Versionado correlativo actualizado en `VERSION`, `package.json`, `package-lock.json` y `README.md`.
+
+### Fixed
+- Enrutamiento externo endurecido para reflejar `model_resolution` y `execution_route` reales cuando el proveedor activo no es Copilot.
+
 ## [4.2.10] - 2026-04-21
 
 ### Added

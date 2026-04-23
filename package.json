@@ -2,7 +2,7 @@
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
   "description": "Instala y valida Free JT7 en workspaces de VS Code usando runtime local, router Copilot y gateway OpenClaw.",
-  "version": "4.2.10",
+  "version": "4.2.11",
   "publisher": "javiertarazon",
   "license": "MIT",
   "engines": {
@@ -68,6 +68,14 @@
       {
         "command": "freejt7.routeTaskWithCopilot",
         "title": "Free JT7: Routed Copilot Task"
+      },
+      {
+        "command": "freejt7.routeTaskDirect",
+        "title": "Free JT7: Ejecutar tarea directa con proveedor activo"
+      },
+      {
+        "command": "freejt7.openControlPanel",
+        "title": "Free JT7: Abrir Control Panel"
       },
       {
         "command": "freejt7.launchDesignAgent",
@@ -192,6 +200,29 @@
           "default": true,
           "description": "Repara automaticamente el bridge minimo de Free JT7 solo en workspaces ya gestionados cuando falten archivos base."
         },
+        "freejt7.panel.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Habilita el runtime del Control Panel Webview de Free JT7."
+        },
+        "freejt7.panel.workerPool.size": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 16,
+          "description": "Cantidad de workers del motor de sesiones del panel."
+        },
+        "freejt7.panel.policy.mode": {
+          "type": "string",
+          "enum": ["mixed", "assisted", "autonomous"],
+          "default": "mixed",
+          "description": "Modo de autonomia del panel: mixed (low/medium auto + high con aprobacion), assisted (todo con aprobacion), autonomous (sin aprobacion)."
+        },
+        "freejt7.panel.chatParticipant.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Permite activar o desactivar el chat participant de Free JT7 cuando se usa el panel como interfaz principal."
+        },
         "freejt7.copilotRouter.cliPath": {
           "type": "string",
           "default": "",
@@ -282,6 +313,7 @@
   },
   "scripts": {
     "build:bundle": "node scripts/build-extension-bundle.js",
+    "test:control-panel-ui-smoke": "node tests/control_panel_ui_smoke.js",
     "test:agent-manifest-smoke": "node tests/agent_manifest_smoke.js",
     "test:global-settings-drift-smoke": "node tests/global_settings_drift_smoke.js",
     "test:router-core-concurrency-smoke": "node tests/router_core_concurrency_smoke.js",

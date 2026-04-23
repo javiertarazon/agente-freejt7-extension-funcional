@@ -12,6 +12,68 @@
   - [ ] Subtarea B
   - [ ] Verificacion
 
+## Release 4.2.11 panel pro (2026-04-23)
+- [x] Objetivo principal: publicar corte release completo con backup operativo
+  - [x] Crear rama `release/v4.2.11-panel-pro` y preparar push remoto
+  - [x] Subir version correlativa a `4.2.11` en metadatos de release
+  - [x] Ejecutar verificacion (`test:control-panel-ui-smoke`, `test:agent-manifest-smoke`, `build:bundle`)
+  - [x] Empaquetar VSIX `agente-freejt7-extension-funcional-4.2.11.vsix`
+  - [x] Crear backups en repo (`backups/releases/4.2.11`) y carpeta local externa (`/home/javier28/Backups/freejt7-release-4.2.11`)
+  - [x] Cifrar secretos locales y guardar copia en repo + local externo
+
+## VS Code update + panel pro (2026-04-23)
+- [x] Objetivo principal: aterrizar novedades de VS Code y subir el panel Free JT7 a UX profesional tipo chat de agente
+  - [x] Intake minimo confirmado (entregable, restricciones y validacion esperada)
+  - [x] Analizar impacto real de nuevas features de VS Code para Free JT7
+  - [x] Rediseñar UI del panel con layout profesional, lectura rapida de estado y acciones claras
+  - [x] Mantener compatibilidad con comandos actuales y chat participant activo
+  - [x] Agregar prueba automatica de smoke del nuevo panel
+  - [x] Verificacion final: build bundle + smoke funcional
+
+## Panel Webview Free JT7 + Copilot Pro (2026-04-22)
+- [x] Objetivo principal: ejecutar fases 0-5 del blueprint de panel Webview con control autonomo mixto
+  - [x] Fase 0: contratos base y blueprint tecnico documentado
+  - [x] Fase 1: shell de panel y Session Engine inicial con cola persistente
+  - [x] Fase 2: Policy Engine mixed con aprobaciones en high-risk
+  - [x] Fase 3: Provider Router simultaneo (externos + copilot)
+  - [x] Fase 4: Audit bus y persistencia de estado de panel
+  - [x] Fase 5: feature flag para desactivar chat participant y usar panel como interfaz principal
+  - [x] Verificacion final: build bundle y smoke de comandos/runtime
+
+## Agente MT5 señales cuantitativas (2026-04-22)
+- [ ] Objetivo principal: crear nueva herramienta agente_mt5 para análisis de símbolos y señales con riesgo controlado
+  - [x] Intake y criterios base definidos (demo, M15-H1, multiestrategia, métricas objetivo)
+  - [x] Análisis de componentes actuales (`mcp-servers/mt5/mt5_server.py`, `tools/mt5_bridge.py`)
+  - [x] Diseñar arquitectura objetivo de agente_mt5 (ingesta, features, señal, riesgo, ejecución)
+  - [x] Definir estrategia inicial y validación cuantitativa (walk-forward/backtest)
+  - [x] Desglosar plan en tareas ejecutables por agentes paralelos
+  - [x] Implementar MVP del nuevo servidor MCP agente_mt5
+  - [ ] Probar en demo y validar métricas mínimas
+  - [ ] Cerrar trazabilidad y documentación
+
+## Instalacion MT5 Linux sin sudo (2026-04-22)
+- [x] Objetivo principal: instalar MetaTrader 5 en Linux en modo usuario con la mejor opcion entre Bottles y Wine
+  - [x] Intake minimo confirmado (entregable, restricciones, verificacion)
+  - [x] Auditar entorno Linux y disponibilidad de Flatpak/Wine/Bottles
+  - [x] Elegir estrategia tecnica (Bottles o Wine) con criterio de robustez
+  - [x] Ejecutar instalacion completa de MT5 en modo usuario
+  - [x] Validar apertura real de MT5
+  - [x] Cierre de trazabilidad (tasks/audit/resume)
+
+## Verificacion proveedor HF activo (2026-04-22)
+- [x] Objetivo principal: confirmar que Free JT7 acepto el cambio a Hugging Face y usa Qwen 2.5 7B
+  - [x] Leer configuracion efectiva en VS Code User Settings
+  - [x] Validar la resolucion real del router con proveedor/modelo HF
+  - [x] Cerrar evidencia y trazabilidad
+
+## Bypass de Copilot con proveedor externo (2026-04-22)
+- [x] Objetivo principal: demostrar y corregir la ruta efectiva cuando Free JT7 usa OpenRouter/HF/ZAI
+  - [x] Confirmar si la selección UI termina en proveedor externo o en fallback silencioso a Copilot
+  - [x] Corregir metadatos/eventos para que reflejen el proveedor/modelo efectivos
+  - [x] Validar que la rama externa no cree `CopilotClient` ni importe el SDK cuando no corresponde
+  - [x] Documentar el consumo inevitable del host GitHub Copilot Chat si la invocación ocurre desde chat participant
+  - [x] Ejecutar verificación end-to-end con evidencia operativa
+
 ## Remediacion selector de agentes (2026-04-20)
 - [x] Recuperar visibilidad de `free-jt7`, `openclaw` y `skill-creator` en el selector de GitHub Copilot Chat
   - [x] Confirmar la causa raiz inicial en `.agent.md` y settings del selector
