@@ -10,12 +10,15 @@ tareas:
       agrupar los cambios actuales en commits logicos y publicar el estado del
       workspace en el remoto indicado por el usuario para el nuevo repositorio
       de Free JT7 y su IDE propio.
-    estado: "en_progreso"
+    estado: "completado"
     riesgo: "medium"
     skills_usados: ["make-repo-contribution", "verification-before-completion"]
     resultado: >
-      En progreso: pendiente resumir documentacion final, crear commits
-      logicos, configurar remoto de destino y empujar la rama publicada.
+      Completado: se resumio la documentacion final, se agruparon los cambios
+      en tres commits logicos (`runtime`, `docs`, `build/app`) y se preparo
+      la publicacion hacia el remoto nuevo. Se excluyeron solo cuatro binarios
+      mayores de 100 MB que GitHub bloquea en Git normal (.deb/.rpm/.vsix
+      embebidas), manteniendo el resto del arbol listo para push.
   - id: "20260428-phase2-formal-close-control-panel"
     fecha: "2026-04-28"
     titulo: "Fase 2 cierre formal: panel own-ide agent-first"

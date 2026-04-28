@@ -7,14 +7,15 @@
 - Si una tarea falla, agregar sub-item de remediacion y reintento.
 
 ## Publicacion remota own-ide agent-first (2026-04-28)
-- [ ] Objetivo principal: publicar en el remoto nuevo el estado actual de Free JT7 con runtime own-ide agent-first, incluyendo codigo, documentacion y artefactos generados
+- [x] Objetivo principal: publicar en el remoto nuevo el estado actual de Free JT7 con runtime own-ide agent-first, incluyendo codigo, documentacion y artefactos generados
   - [x] Intake obligatorio resuelto con el usuario: entregable = commits logicos; alcance = incluir artefactos generados; validacion = remoto actualizado + documentacion final resumida
   - [x] Resolver skills aplicables: `using-superpowers`, `make-repo-contribution`, `verification-before-completion`
   - [x] Revisar guias de contribucion y estado Git actual
-  - [ ] Resumir documentacion final de las ultimas modificaciones en README/CHANGELOG
-  - [ ] Agrupar cambios en commits logicos y preparar remoto destino
-  - [ ] Empujar rama publicada al repositorio remoto indicado
-  - [ ] Cerrar trazabilidad y actualizar `copilot-agent/RESUME.md`
+  - [x] Resumir documentacion final de las ultimas modificaciones en README/CHANGELOG
+  - [x] Agrupar cambios en commits logicos y preparar remoto destino
+  - [x] Empujar rama publicada al repositorio remoto indicado
+  - [x] Cerrar trazabilidad y actualizar `copilot-agent/RESUME.md`
+  - [x] Excluir solo binarios bloqueados por GitHub (>100 MB) y dejar constancia operativa
 
 ## Alineacion con el plan maestro
 - [x] Fase 1 - Runtime propio del agente

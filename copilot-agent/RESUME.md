@@ -63,3 +63,11 @@ Importante: los hotfixes no cuentan como cierre de Fase 4, 5 o 6. Desde ahora la
 
 ## Siguiente acción recomendada
 Propagar este cierre dentro de `20260428-phase256-parallel-integration` y rematar la integracion global pendiente sin reabrir Fase 5.
+
+## Publicacion remota 2026-04-28
+- Snapshot preparado para el remoto `https://github.com/javiertarazon/ide-agente-free-jt7-.git` sobre la rama `release/v4.2.11-panel-pro`.
+- Commits creados para esta publicacion:
+  - `82c7c2e` — `feat(runtime): Add own-ide agent-first runtimes and smokes`
+  - `6e73366` — `docs(agent): Publish own-ide audit and roadmap updates`
+  - `5a28520` — `build(app): Add own-ide bootstrap and packaged assets`
+- Limite operativo aplicado: se dejan fuera del historial Git solo cuatro binarios mayores de 100 MB (`.deb`, `.rpm` y dos `.vsix` embebidas) porque GitHub los rechaza sin Git LFS.
