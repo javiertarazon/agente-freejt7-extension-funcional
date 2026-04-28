@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -e
+echo "[freejt7-desktop] Instalado. Ejecuta: freejt7-desktop --no-launch"

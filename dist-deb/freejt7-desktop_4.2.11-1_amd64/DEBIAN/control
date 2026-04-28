@@ -1,0 +1,10 @@
+Package: freejt7-desktop
+Version: 4.2.11-1
+Section: editors
+Priority: optional
+Architecture: amd64
+Maintainer: Free JT7 Team <noreply@freejt7.local>
+Depends: nodejs (>= 20), ca-certificates, tar
+Description: Free JT7 Desktop standalone app launcher
+ Free JT7 Desktop instala y ejecuta un entorno aislado del agente Free JT7
+ con perfil propio, VSIX propia y runtime VSCodium portable.

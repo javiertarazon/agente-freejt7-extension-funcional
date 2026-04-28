@@ -1,0 +1,16 @@
+{
+  "id": "plan19-ui-onboarding-slo",
+  "version": 1,
+  "targets": {
+    "task_success_rate": 0.8,
+    "panel_state_visible": true,
+    "onboarding_visible": true,
+    "effective_backend_visible": true,
+    "risk_visible": true
+  },
+  "measurement": {
+    "source": "src-js/core/control-panel.js",
+    "method": "local taskIndex snapshot",
+    "smoke": "node tests/control_panel_ui_smoke.js"
+  }
+}

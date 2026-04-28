@@ -15,7 +15,13 @@ copilot-agent/**
 integrations/**
 mcp-servers/**
 temp_install_test/**
+dist-deb/**
+dist-rpm/**
+env api
 env api/**
+.env.free-jt7
+.env.free-jt7.local
+.env
 memory-archive.jsonl
 E:\javie\agente-freejt7-extension-funcional/**
 copilot-agent/runs/**
@@ -31,9 +37,28 @@ wallpapers/**
 out.txt
 *.vsix
 bundle-entry.js
+test-bypass.js
+test-router.js
+test-router-2.js
 src-js/**
+tools/**
+files/**
+files (1)/**
+node_modules/**
+!node_modules/@github/
+!node_modules/@github/copilot-sdk/**
+!node_modules/@github/copilot/**
+!node_modules/@github/copilot-linux-x64/**
+!node_modules/@github/copilot-linux-arm64/**
+!node_modules/@github/copilot-win32-x64/**
+!node_modules/@github/copilot-win32-arm64/**
+!node_modules/vscode-jsonrpc/**
+!node_modules/zod/**
 scripts/build-extension-bundle.js
 node_modules/.bin/**
+!node_modules/.bin/copilot
+!node_modules/.bin/copilot.cmd
+!node_modules/.bin/copilot.bat
 node_modules/**/.github/**
 node_modules/**/test/**
 node_modules/**/tests/**
@@ -47,10 +72,8 @@ node_modules/**/*.map
 node_modules/**/*.ts
 node_modules/**/*.md
 node_modules/@github/copilot/ripgrep/bin/darwin-*/**
-node_modules/@github/copilot/ripgrep/bin/linux-*/**
 node_modules/@github/copilot/ripgrep/bin/win32-arm64/**
 node_modules/@github/copilot/prebuilds/darwin-*/**
-node_modules/@github/copilot/prebuilds/linux-*/**
 node_modules/@github/copilot/prebuilds/win32-arm64/**
 node_modules/@github/copilot/prebuilds/**/*.pdb
 servidor mpc free jt7/node_modules/.bin/**
