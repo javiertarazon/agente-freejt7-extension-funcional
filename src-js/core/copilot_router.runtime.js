@@ -27,6 +27,8 @@ const ROUTER_DEFAULTS = {
   sessionWaitTimeoutMs: 180000,
 };
 
+const LEGACY_COPILOT_PROVIDER = "copilot";
+const LEGACY_COPILOT_COMPATIBILITY_MODE = "copilot-legacy-secondary";
 const DEFAULT_EXTERNAL_PROVIDER = "openrouter";
 const DEFAULT_EXTERNAL_PROVIDER_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
 
@@ -204,6 +206,81 @@ function mergeRouterConfig(workspacePath, vscode) {
     autoApproveSafeTools: editor.autoApproveSafeTools,
     cliPath: editor.cliPath || "",
     sessionWaitTimeoutMs: Number(routing.sessionWaitTimeoutMs || ROUTER_DEFAULTS.sessionWaitTimeoutMs),
+  };
+}
+
+function normalizeProviderName(value, fallback = "") {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized || fallback;
+}
+
+function readVsCodeLegacyCopilotConfig(vscode) {
+  if (!vscode?.workspace?.getConfiguration) {
+    return {
+      legacyProvider: LEGACY_COPILOT_PROVIDER,
+      legacyModel: "",
+      allowExternalProviderDelegation: false,
+      primaryProvider: DEFAULT_EXTERNAL_PROVIDER,
+      primaryModel: "",
+    };
+  }
+  const cfg = vscode.workspace.getConfiguration("freejt7");
+  return {
+    legacyProvider: normalizeProviderName(
+      cfg.get("copilotRouter.legacyProvider", LEGACY_COPILOT_PROVIDER),
+      LEGACY_COPILOT_PROVIDER,
+    ),
+    legacyModel: String(cfg.get("copilotRouter.legacyModel", "") || "").trim(),
+    allowExternalProviderDelegation: Boolean(cfg.get("copilotRouter.allowExternalProviderDelegation", false)),
+    primaryProvider: normalizeProviderName(cfg.get("apiProvider", DEFAULT_EXTERNAL_PROVIDER), DEFAULT_EXTERNAL_PROVIDER),
+    primaryModel: String(cfg.get("apiProviderModel", "") || "").trim(),
+  };
+}
+
+function resolveLegacyCopilotSelection(options = {}) {
+  const legacyConfig = readVsCodeLegacyCopilotConfig(options.vscode);
+  const explicitProvider = normalizeProviderName(options.providerOverride, "");
+  const explicitModel = options.modelOverride === undefined ? undefined : String(options.modelOverride || "").trim();
+  let selectedProvider = LEGACY_COPILOT_PROVIDER;
+  let selectedProviderModel = "";
+  let source = "default-copilot";
+
+  if (explicitProvider) {
+    selectedProvider = explicitProvider;
+    source = "provider-override";
+  } else if (legacyConfig.allowExternalProviderDelegation && legacyConfig.legacyProvider !== LEGACY_COPILOT_PROVIDER) {
+    selectedProvider = legacyConfig.legacyProvider;
+    source = "legacy-router-config";
+  }
+
+  if (selectedProvider !== LEGACY_COPILOT_PROVIDER) {
+    const { getFreeModelDefaults } = require("../providers/api-provider-adapter");
+    const providerDefaults = getFreeModelDefaults();
+    const fallbackModel = providerDefaults[selectedProvider] || DEFAULT_EXTERNAL_PROVIDER_MODEL;
+    if (source === "provider-override") {
+      selectedProviderModel = explicitModel === undefined ? fallbackModel : (explicitModel || fallbackModel);
+    } else {
+      selectedProviderModel = legacyConfig.legacyModel || fallbackModel;
+    }
+  }
+
+  const ignoredPrimaryProvider = (
+    selectedProvider === LEGACY_COPILOT_PROVIDER
+    && legacyConfig.primaryProvider !== LEGACY_COPILOT_PROVIDER
+  );
+
+  return {
+    selectedProvider,
+    selectedProviderModel,
+    source,
+    compatibilityMode: LEGACY_COPILOT_COMPATIBILITY_MODE,
+    isolatedFromPrimaryProvider: true,
+    ignoredPrimaryProvider,
+    primaryProviderObserved: legacyConfig.primaryProvider,
+    primaryModelObserved: legacyConfig.primaryModel,
+    legacyConfigEnabled: Boolean(legacyConfig.allowExternalProviderDelegation),
+    legacyConfigProvider: legacyConfig.legacyProvider,
+    legacyConfigModel: legacyConfig.legacyModel,
   };
 }
 
@@ -1151,6 +1228,16 @@ function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, selecte
       execution_mode: executionMeta.executionMode || "copilot-sdk",
       selected_provider: executionMeta.selectedProvider || resolvedProvider,
       selected_model: executionMeta.selectedModel || resolvedModel,
+      compatibility_mode: executionMeta.compatibilityMode || LEGACY_COPILOT_COMPATIBILITY_MODE,
+      legacy_route_isolated: executionMeta.legacyRouteIsolated ?? true,
+      legacy_provider_source: executionMeta.legacyProviderSource || "default-copilot",
+      ignored_primary_provider: Boolean(executionMeta.ignoredPrimaryProvider),
+      primary_provider_observed: executionMeta.primaryProviderObserved || "",
+      primary_model_observed: executionMeta.primaryModelObserved || "",
+      legacy_config_enabled: Boolean(executionMeta.legacyConfigEnabled),
+      legacy_config_provider: executionMeta.legacyConfigProvider || LEGACY_COPILOT_PROVIDER,
+      legacy_config_model: executionMeta.legacyConfigModel || "",
+      config_namespace: "freejt7.copilotRouter.*",
       routing_file: routing.routePath,
       router: {
         planner: routing.plannerModel,
@@ -1165,6 +1252,21 @@ function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, selecte
           autoFixMaxPasses: routing.autoFixMaxPasses,
         executionExperimental: routing.experimentalCodeModel || "",
       },
+    },
+    execution_route: {
+      host: resolvedProvider === LEGACY_COPILOT_PROVIDER ? "copilot" : "external-provider",
+      adapter: resolvedProvider === LEGACY_COPILOT_PROVIDER ? "copilot-sdk" : "external-provider",
+      provider: resolvedProvider,
+      model: resolvedModel,
+      compatibility_mode: executionMeta.compatibilityMode || LEGACY_COPILOT_COMPATIBILITY_MODE,
+      legacy_route_isolated: executionMeta.legacyRouteIsolated ?? true,
+      legacy_secondary: true,
+      legacy_provider_source: executionMeta.legacyProviderSource || "default-copilot",
+      ignored_primary_provider: Boolean(executionMeta.ignoredPrimaryProvider),
+      primary_provider_observed: executionMeta.primaryProviderObserved || "",
+      primary_model_observed: executionMeta.primaryModelObserved || "",
+      copilot_cli_resolved: false,
+      copilot_sdk_created: false,
     },
   };
 }
@@ -1196,25 +1298,71 @@ async function runCopilotRouter(options) {
   const runId = String(options.runId || "").trim() || createRunId();
   const runPaths = createRunPaths(workspacePath, runId);
   const routing = mergeRouterConfig(workspacePath, options.vscode);
-  const selectedProvider = options.vscode
-    ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim() || DEFAULT_EXTERNAL_PROVIDER
-    : DEFAULT_EXTERNAL_PROVIDER;
-  let selectedProviderModel = "";
-  if (selectedProvider !== "copilot") {
-    const { getFreeModelDefaults } = require("../providers/api-provider-adapter");
-    const providerDefaults = getFreeModelDefaults();
-    const resolvedDefaultModel = providerDefaults[selectedProvider] || DEFAULT_EXTERNAL_PROVIDER_MODEL;
-    selectedProviderModel = options.vscode
-      ? String(options.vscode.workspace.getConfiguration("freejt7").get("apiProviderModel") || "").trim() || resolvedDefaultModel
-      : resolvedDefaultModel;
-  }
-  const cli = selectedProvider === "copilot"
+  const legacySelection = resolveLegacyCopilotSelection({
+    providerOverride: options.providerOverride,
+    modelOverride: options.modelOverride,
+    vscode: options.vscode,
+  });
+  const {
+    selectedProvider,
+    selectedProviderModel,
+  } = legacySelection;
+  const cli = selectedProvider === LEGACY_COPILOT_PROVIDER
     ? resolveCopilotCliCommand(options.cliPath || routing.cliPath, options.extensionPath || "")
     : { cliPath: "", cliArgs: [], label: "skipped (external provider active)" };
-  const authInfo = selectedProvider === "copilot"
+  const authInfo = selectedProvider === LEGACY_COPILOT_PROVIDER
     ? getCopilotAuthInfo()
     : { githubToken: "", authMode: "external-provider", apiEnvVar: "" };
   const permissionHandler = createPermissionHandler(routing.autoApproveSafeTools);
+  const executionMeta = selectedProvider === LEGACY_COPILOT_PROVIDER
+    ? {
+        provider: LEGACY_COPILOT_PROVIDER,
+        model: routing.plannerModel,
+        authMode: authInfo.authMode,
+        reason: "copilot legacy secondary route",
+        preferIdeProfile: true,
+        allowApiFallback: false,
+        apiEnvVar: authInfo.apiEnvVar,
+        ideProfileAvailable: true,
+        requestedProfileAvailable: true,
+        ideDetectedProfiles: ["free-jt7"],
+        executionMode: "copilot-sdk",
+        selectedProvider: LEGACY_COPILOT_PROVIDER,
+        selectedModel: routing.plannerModel,
+        compatibilityMode: legacySelection.compatibilityMode,
+        legacyRouteIsolated: legacySelection.isolatedFromPrimaryProvider,
+        legacyProviderSource: legacySelection.source,
+        ignoredPrimaryProvider: legacySelection.ignoredPrimaryProvider,
+        primaryProviderObserved: legacySelection.primaryProviderObserved,
+        primaryModelObserved: legacySelection.primaryModelObserved,
+        legacyConfigEnabled: legacySelection.legacyConfigEnabled,
+        legacyConfigProvider: legacySelection.legacyConfigProvider,
+        legacyConfigModel: legacySelection.legacyConfigModel,
+      }
+    : {
+        provider: selectedProvider,
+        model: selectedProviderModel || "default",
+        authMode: "external-provider",
+        reason: "legacy compatibility external delegation",
+        preferIdeProfile: false,
+        allowApiFallback: false,
+        apiEnvVar: "",
+        ideProfileAvailable: false,
+        requestedProfileAvailable: false,
+        ideDetectedProfiles: [],
+        executionMode: "external-provider",
+        selectedProvider,
+        selectedModel: selectedProviderModel || "default",
+        compatibilityMode: legacySelection.compatibilityMode,
+        legacyRouteIsolated: legacySelection.isolatedFromPrimaryProvider,
+        legacyProviderSource: legacySelection.source,
+        ignoredPrimaryProvider: legacySelection.ignoredPrimaryProvider,
+        primaryProviderObserved: legacySelection.primaryProviderObserved,
+        primaryModelObserved: legacySelection.primaryModelObserved,
+        legacyConfigEnabled: legacySelection.legacyConfigEnabled,
+        legacyConfigProvider: legacySelection.legacyConfigProvider,
+        legacyConfigModel: legacySelection.legacyConfigModel,
+      };
   const baseRun = buildRunSkeleton(
     runId,
     goal,
@@ -1222,23 +1370,7 @@ async function runCopilotRouter(options) {
     routing,
     authInfo,
     options.selectedSkills || [],
-    selectedProvider === "copilot"
-      ? {}
-      : {
-          provider: selectedProvider,
-          model: selectedProviderModel || "default",
-          authMode: "external-provider",
-          reason: "external provider delegation",
-          preferIdeProfile: false,
-          allowApiFallback: false,
-          apiEnvVar: "",
-          ideProfileAvailable: false,
-          requestedProfileAvailable: false,
-          ideDetectedProfiles: [],
-          executionMode: "external-provider",
-          selectedProvider,
-          selectedModel: selectedProviderModel || "default",
-        },
+    executionMeta,
   );
   const existingRun = loadJson(runPaths.json, null);
   const run = existingRun && typeof existingRun === "object"
@@ -1290,12 +1422,18 @@ async function runCopilotRouter(options) {
   }));
 
   cliLog(options.output, `[freejt7-router] run_id=${runId}`);
+  if (legacySelection.ignoredPrimaryProvider) {
+    cliLog(
+      options.output,
+      `[freejt7-router] compat mode=${legacySelection.compatibilityMode}; ignoring freejt7.apiProvider=${legacySelection.primaryProviderObserved} for isolated Copilot legacy route`,
+    );
+  }
   cliLog(options.output, `[freejt7-router] cli=${cli.label}`);
   await _pr.emit('onRouteStart', { goal, runId, workspacePath });
   _bridge.appendSessionEvent(runId, 'route-start', { goal, workspacePath });
 
   // --- API Provider Delegation ---
-  if (selectedProvider !== "copilot") {
+  if (selectedProvider !== LEGACY_COPILOT_PROVIDER) {
     const { callProvider } = require("../providers/api-provider-adapter");
     cliLog(options.output, `[freejt7-router] delegating to provider=${selectedProvider} model=${selectedProviderModel || "default"}`);
     const providerResult = await callProvider(
@@ -1321,7 +1459,7 @@ async function runCopilotRouter(options) {
       provider: selectedProvider,
       model: selectedProviderModel || "default",
       auth_mode: "external-provider",
-      reason: "external provider delegation",
+      reason: "legacy compatibility external delegation",
       prefer_ide_profile: false,
       allow_api_fallback: false,
       api_env_var: "",
@@ -1331,6 +1469,16 @@ async function runCopilotRouter(options) {
       execution_mode: "external-provider",
       selected_provider: selectedProvider,
       selected_model: selectedProviderModel || "default",
+      compatibility_mode: legacySelection.compatibilityMode,
+      legacy_route_isolated: legacySelection.isolatedFromPrimaryProvider,
+      legacy_provider_source: legacySelection.source,
+      ignored_primary_provider: legacySelection.ignoredPrimaryProvider,
+      primary_provider_observed: legacySelection.primaryProviderObserved,
+      primary_model_observed: legacySelection.primaryModelObserved,
+      legacy_config_enabled: legacySelection.legacyConfigEnabled,
+      legacy_config_provider: legacySelection.legacyConfigProvider,
+      legacy_config_model: legacySelection.legacyConfigModel,
+      config_namespace: "freejt7.copilotRouter.*",
       router: null,
     };
     run.execution_route = {
@@ -1338,6 +1486,13 @@ async function runCopilotRouter(options) {
       adapter: "external-provider",
       provider: selectedProvider,
       model: selectedProviderModel || "default",
+      compatibility_mode: legacySelection.compatibilityMode,
+      legacy_route_isolated: legacySelection.isolatedFromPrimaryProvider,
+      legacy_secondary: true,
+      legacy_provider_source: legacySelection.source,
+      ignored_primary_provider: legacySelection.ignoredPrimaryProvider,
+      primary_provider_observed: legacySelection.primaryProviderObserved,
+      primary_model_observed: legacySelection.primaryModelObserved,
       copilot_cli_resolved: false,
       copilot_sdk_created: false,
     };
@@ -1400,6 +1555,15 @@ async function runCopilotRouter(options) {
       githubToken: authInfo.githubToken || undefined,
       useLoggedInUser: !authInfo.githubToken,
     });
+    run.execution_route = {
+      ...(run.execution_route || {}),
+      host: "copilot",
+      adapter: "copilot-sdk",
+      provider: LEGACY_COPILOT_PROVIDER,
+      model: routing.plannerModel,
+      copilot_cli_resolved: Boolean(cli.cliPath),
+      copilot_sdk_created: true,
+    };
 
     const budgetTelemetry = {
       router: {},
@@ -1890,6 +2054,8 @@ module.exports = {
   runWithRouterRunLock,
   resolveCopilotCliPath,
   resolveCopilotCliCommand,
+  readVsCodeLegacyCopilotConfig,
+  resolveLegacyCopilotSelection,
   mergeRouterConfig,
   shouldRunReviewStage,
   normalizeReviewResult,
@@ -1897,6 +2063,7 @@ module.exports = {
   shouldAttemptAutoFix,
   createSessionHooks,
   createNativeToolPolicy,
+  buildRunSkeleton,
   main,
 };
 

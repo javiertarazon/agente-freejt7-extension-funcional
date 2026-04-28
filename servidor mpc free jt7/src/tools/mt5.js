@@ -7,8 +7,41 @@ import { spawn } from "child_process";
 import fs from "node:fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isApproved } from "../policy.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TRADING_METHODS = new Set(["open_order", "close_order", "modify_order"]);
+
+function resolveApprovalToken(policy) {
+  return String(
+    policy?.mt5TradingApprovalToken ||
+    policy?.mt5?.tradingApprovalToken ||
+    process.env.FREEJT7_MT5_APPROVAL_TOKEN ||
+    process.env.MT5_TRADING_APPROVAL_TOKEN ||
+    ""
+  ).trim();
+}
+
+function isMt5TradingApproved(params, policy) {
+  if (isApproved(params)) {
+    return { ok: true };
+  }
+  const expected = resolveApprovalToken(policy);
+  const supplied = String(params?.approvalToken || params?.approval_token || "").trim();
+  if (expected && supplied && supplied === expected) {
+    return { ok: true };
+  }
+  return {
+    ok: false,
+    success: false,
+    error: "Operacion MT5 de trading bloqueada: requiere approved=true/allowHighRisk=true o approvalToken valido.",
+    requiresApproval: true,
+    approval: {
+      accepted: ["approved", "allowHighRisk", "approvalToken"],
+      tokenConfigured: Boolean(expected),
+    },
+  };
+}
 
 function stripQuotes(value) {
   if (typeof value !== "string") return value;
@@ -267,7 +300,36 @@ print(json.dumps(result))
 /**
  * Definir herramientas MT5
  */
-export const mt5Tools = {
+function withApprovalFields(properties) {
+  return {
+    ...properties,
+    approved: {
+      type: "boolean",
+      description: "Aprobacion explicita para operaciones reales de trading MT5",
+    },
+    allowHighRisk: {
+      type: "boolean",
+      description: "Alias de aprobacion explicita para operaciones de alto riesgo",
+    },
+    approvalToken: {
+      type: "string",
+      description: "Token de aprobacion MT5 configurado por policy/env",
+    },
+  };
+}
+
+export function createMt5Tools(policy = {}, options = {}) {
+  const execute = options.executePythonMT5 || executePythonMT5;
+  const runMt5 = async (method, params) => {
+    const args = params || {};
+    if (TRADING_METHODS.has(method)) {
+      const approval = isMt5TradingApproved(args, policy);
+      if (!approval.ok) return approval;
+    }
+    return await execute(method, args);
+  };
+
+  return {
   jt7_mt5_connect: {
     description:
       "Conectar a MetaTrader 5. Debe ejecutarse antes de cualquier operación.",
@@ -286,7 +348,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("connect", params || {});
+      return await runMt5("connect", params || {});
     },
   },
 
@@ -321,7 +383,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("login", params || {});
+      return await runMt5("login", params || {});
     },
   },
 
@@ -333,7 +395,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async () => {
-      return await executePythonMT5("disconnect", {});
+      return await runMt5("disconnect", {});
     },
   },
 
@@ -345,7 +407,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("get_account_info", params || {});
+      return await runMt5("get_account_info", params || {});
     },
   },
 
@@ -363,7 +425,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("get_symbols", params || {});
+      return await runMt5("get_symbols", params || {});
     },
   },
 
@@ -381,7 +443,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("get_symbol_info", params || {});
+      return await runMt5("get_symbol_info", params || {});
     },
   },
 
@@ -390,7 +452,7 @@ export const mt5Tools = {
       "Abrir una nueva orden (BUY/SELL a precio de mercado o límite)",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withApprovalFields({
         symbol: {
           type: "string",
           description: 'Símbolo (ej: "EURUSD")',
@@ -420,12 +482,12 @@ export const mt5Tools = {
           type: "string",
           description: "Comentario para la orden",
         },
-      },
+      }),
       required: ["symbol", "order_type", "volume"],
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("open_order", params || {});
+      return await runMt5("open_order", params || {});
     },
   },
 
@@ -433,7 +495,7 @@ export const mt5Tools = {
     description: "Cerrar una orden abierta (posición)",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withApprovalFields({
         ticket: {
           type: "number",
           description: "ID de la orden a cerrar",
@@ -442,12 +504,12 @@ export const mt5Tools = {
           type: "number",
           description: "Volumen a cerrar. Si no se incluye, cierra total.",
         },
-      },
+      }),
       required: ["ticket"],
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("close_order", params || {});
+      return await runMt5("close_order", params || {});
     },
   },
 
@@ -459,7 +521,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("get_positions", params || {});
+      return await runMt5("get_positions", params || {});
     },
   },
 
@@ -477,7 +539,7 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("get_history", params || {});
+      return await runMt5("get_history", params || {});
     },
   },
 
@@ -485,7 +547,7 @@ export const mt5Tools = {
     description: "Modificar Stop Loss y/o Take Profit de una orden",
     inputSchema: {
       type: "object",
-      properties: {
+      properties: withApprovalFields({
         ticket: {
           type: "number",
           description: "ID de la orden",
@@ -498,12 +560,12 @@ export const mt5Tools = {
           type: "number",
           description: "Nuevo Take Profit (precio)",
         },
-      },
+      }),
       required: ["ticket"],
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("modify_order", params || {});
+      return await runMt5("modify_order", params || {});
     },
   },
 
@@ -530,10 +592,13 @@ export const mt5Tools = {
       additionalProperties: false,
     },
     run: async (params) => {
-      return await executePythonMT5("get_candles", params || {});
+      return await runMt5("get_candles", params || {});
     },
   },
 };
+}
+
+export const mt5Tools = createMt5Tools();
 
 export const mt5ToolsList = Object.entries(mt5Tools).map(([name, tool]) => ({
   name,

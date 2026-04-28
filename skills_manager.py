@@ -114,6 +114,9 @@ IDE_ALIASES: dict[str, str] = {
     "vscode": "vscode",
     "vs-code": "vscode",
     "code": "vscode",
+    "own-ide": "vscode",
+    "freejt7-own-ide": "vscode",
+    "free-jt7-own-ide": "vscode",
     "cursor": "cursor",
     "kiro": "kiro",
     "antigravity": "antigravity",
@@ -2182,8 +2185,41 @@ def _normalize_shell_command(command: str, strategy: str, platform_family: str |
         return command
     family = platform_family or _platform_family()
     trimmed = command.strip()
+
     if family != "windows":
+        lower = trimmed.lower()
+        if lower in {"get-childitem", "gci", "dir"}:
+            return "ls"
+        if lower == "get-location":
+            return "pwd"
+        if lower.startswith("get-content "):
+            arg = trimmed[len("get-content "):].strip()
+            if arg.lower().startswith("-path "):
+                arg = arg[6:].strip()
+            return f"cat {arg}"
+        if lower.startswith("select-string "):
+            try:
+                parts = shlex.split(trimmed)
+            except Exception:
+                parts = []
+            path_value = ""
+            pattern_value = ""
+            index = 1
+            while index < len(parts):
+                token = parts[index].lower()
+                if token in {"-path", "-literalpath"} and index + 1 < len(parts):
+                    path_value = parts[index + 1]
+                    index += 2
+                    continue
+                if token == "-pattern" and index + 1 < len(parts):
+                    pattern_value = parts[index + 1]
+                    index += 2
+                    continue
+                index += 1
+            if path_value and pattern_value:
+                return f"grep -R {shlex.quote(pattern_value)} {shlex.quote(path_value)}"
         return command
+
     if trimmed == "ls":
         return "Get-ChildItem"
     if trimmed.startswith("cat "):
@@ -2296,6 +2332,12 @@ def _task_step_attempts(command: str, normalized: str, platform_family: str | No
         _push(f"{normalized} 2>$null")
         _push(f"cmd /c {command}")
     else:
+        try:
+            normalized_parts = shlex.split(normalized)
+        except Exception:
+            normalized_parts = []
+        if normalized_parts and normalized_parts[0] == "python" and not shutil.which("python") and shutil.which("python3"):
+            _push(" ".join(["python3", *[shlex.quote(part) for part in normalized_parts[1:]]]))
         _push(f"{normalized} 2>/dev/null")
         _push(command)
     return attempts
@@ -3194,42 +3236,107 @@ def _log_audit(action: str, detail: str = "") -> None:
 
 
 def _update_resume(action: str, detail: str = "") -> None:
-    """Actualiza copilot-agent/RESUME.md con la Ãºltima acciÃ³n."""
+    """Actualiza copilot-agent/RESUME.md usando el formato operativo vigente."""
     COPILOT_AGENT.mkdir(parents=True, exist_ok=True)
     resume = COPILOT_AGENT / "RESUME.md"
-    skills = load_index()
-    active = [s for s in skills if s.get("active")]
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    active_lines = '\n'.join(f'- `{s["id"]}` ({s["category"]})' for s in active) or '- (ninguna)'
-    content = f"""# copilot-agent â€” Estado del sistema
+    latest_success = "n/a"
+    latest_failure = "n/a"
+    blocked_lines: list[str] = []
+    next_action = "Revisar las últimas verificaciones y ejecutar el siguiente smoke pendiente."
 
+    tasks = _load_tasks_registry().get("tareas", [])
+    if isinstance(tasks, list):
+        completed = [task for task in tasks if str(task.get("estado", "")).strip().lower() == "completado"]
+        failed = [task for task in tasks if str(task.get("estado", "")).strip().lower() in {"fallido", "bloqueado"}]
+        blocked = [task for task in tasks if str(task.get("estado", "")).strip().lower() == "bloqueado"]
+
+        if completed:
+            latest = completed[-1]
+            latest_success = f"{latest.get('id', 'n/a')} ({latest.get('fecha', 'n/a')})"
+        if failed:
+            latest = failed[-1]
+            latest_failure = f"{latest.get('id', 'n/a')} ({latest.get('fecha', 'n/a')})"
+            reason = str(latest.get("resultado", "")).strip() or "sin detalle"
+            latest_failure = f"{latest_failure} — {reason}"
+        if blocked:
+            for task in blocked[:5]:
+                blocked_lines.append(
+                    f"- [ ] {task.get('titulo', task.get('id', 'bloqueo'))} — owner: runtime"
+                )
+            first_blocked = blocked[0]
+            next_action = str(first_blocked.get("descripcion", "")).strip() or next_action
+
+    action_label = f"{action}: {detail}".strip(": ")
+    if action_label and latest_success == "n/a":
+        latest_success = action_label
+    if not blocked_lines:
+        blocked_lines.append("- [ ] Sin bloqueos críticos detectados automáticamente; validar host Windows real y smoke cross-runtime final — owner: qa/runtime")
+
+    content = f"""# Estado actual
 *Actualizado: {ts}*
+- Último run exitoso: {latest_success}
+- Último run fallido: {latest_failure}
 
-## Ãšltima acciÃ³n
-- **{action}**: {detail}
+## Bloqueos activos
+{chr(10).join(blocked_lines)}
 
-## Estado del catÃ¡logo
-- Total skills: **{len(skills)}**
-- Skills activas: **{len(active)}**
-- CategorÃ­as: 9
-- Fuente: antigravity-awesome-skills v5.7
-
-## Skills activas
-{active_lines}
-
-## Comandos Ãºtiles
-```powershell
-python skills_manager.py search <query>
-python skills_manager.py activate <id>
-python skills_manager.py adapt-copilot
-python skills_manager.py sync-claude
-```
+## Siguiente acción recomendada
+{next_action}
 """
     resume.write_text(content, encoding="utf-8")
 
 
 def _tasks_file_path() -> Path:
     return COPILOT_AGENT / "tasks.yaml"
+
+
+def _load_tasks_registry() -> dict[str, Any]:
+    """Carga una vista mínima de copilot-agent/tasks.yaml sin depender de PyYAML."""
+    path = _tasks_file_path()
+    if not path.exists():
+        return {"tareas": []}
+
+    text = path.read_text(encoding="utf-8", errors="replace")
+    blocks = re.split(r'(?m)^  - id:\s+"', text)
+    tasks: list[dict[str, str]] = []
+    for block in blocks[1:]:
+        lines = block.splitlines()
+        if not lines:
+            continue
+
+        task: dict[str, str] = {"id": lines[0].rstrip('"')}
+        current_multiline: str | None = None
+        multiline_parts: list[str] = []
+
+        for raw_line in lines[1:]:
+            line = raw_line.rstrip()
+
+            if current_multiline and (line.startswith("      ") or line == "    "):
+                multiline_parts.append(line[6:] if line.startswith("      ") else "")
+                continue
+
+            if current_multiline:
+                task[current_multiline] = "\n".join(multiline_parts).strip()
+                current_multiline = None
+                multiline_parts = []
+
+            match = re.match(r'^\s{4}([a-zA-Z_]+):\s+"(.*)"\s*$', line)
+            if match:
+                task[match.group(1)] = match.group(2)
+                continue
+
+            match = re.match(r'^\s{4}([a-zA-Z_]+):\s*>\s*$', line)
+            if match:
+                current_multiline = match.group(1)
+                multiline_parts = []
+
+        if current_multiline:
+            task[current_multiline] = "\n".join(multiline_parts).strip()
+
+        tasks.append(task)
+
+    return {"tareas": tasks}
 
 
 def _yaml_quote(value: str) -> str:

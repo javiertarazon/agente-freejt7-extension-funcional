@@ -33,9 +33,31 @@ const { runCopilotRouter } = require("./copilot_router.runtime");
 const { createControlPanel } = require("./control-panel");
 const {
   callProvider: _callProvider,
+  getApiKey,
   getFreeModelsCatalog,
   getFreeModelDefaults,
 } = require("../providers/api-provider-adapter");
+const {
+  buildConversationRequest,
+  extractChatContextMessages,
+  serializeConversationRequest,
+} = require("./chat-context");
+const {
+  normalizeOpenClawModel,
+  ensureOpenClawRuntimeConfig,
+  cleanupOpenClawStaleLocks,
+  buildOpenClawAgentArgs,
+  buildOpenClawTaskSessionId,
+  getOpenClawGatewayConfig,
+  buildOpenClawGatewayUrl,
+  extractJsonTail,
+  summarizeOpenClawPayload,
+  isOpenClawFailure,
+  isOpenClawGatewayReady,
+  buildOpenClawEnv,
+} = require("./openclaw-agent-runtime");
+const { runLocalAgentTask, canResolveLocalGoal, deriveLocalActions } = require("./local-agent-runtime");
+const { createFreeJt7AgentRuntime } = require("./freejt7-agent-runtime");
 const { createDefaultScheduler } = require('../runtime/agent-scheduler');
 const { MemoryOrchestrator }     = require('../runtime/memory-orchestrator');
 const { getRemoteBridge }        = require('../runtime/remote-bridge');
@@ -88,6 +110,7 @@ const DEFAULT_ROUTER_SKILLS = [
 let activeCopilotRouterRun = null;
 let activeScheduler = null;
 let activeControlPanel = null;
+const NOOP_OUTPUT = { append() {}, appendLine() {} };
 
 function loadFreeModelsCatalog() {
   // From src-js/core/: "../" = src-js/ (correct)
@@ -121,6 +144,8 @@ function runCommand(bin, args, options, output) {
   return new Promise((resolve) => {
     const child = spawn(bin, args, { ...options, shell: false });
     let stderr = "";
+    const timeoutMs = Number(options?.timeoutMs || 0);
+    let timer = null;
 
     child.stdout.on("data", (chunk) => {
       output.append(chunk.toString());
@@ -137,7 +162,17 @@ function runCommand(bin, args, options, output) {
       output.appendLine(err.message);
     });
 
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        stderr += `Timeout de ${timeoutMs}ms\n`;
+        try {
+          child.kill();
+        } catch (_) {}
+      }, timeoutMs);
+    }
+
     child.on("close", (code) => {
+      if (timer) clearTimeout(timer);
       resolve({ code: code ?? 1, stderr });
     });
   });
@@ -148,6 +183,8 @@ function runCommandCapture(bin, args, options, output) {
     const child = spawn(bin, args, { ...options, shell: false });
     let stdout = "";
     let stderr = "";
+    const timeoutMs = Number(options?.timeoutMs || 0);
+    let timer = null;
 
     child.stdout.on("data", (chunk) => {
       const text = chunk.toString();
@@ -172,10 +209,144 @@ function runCommandCapture(bin, args, options, output) {
       }
     });
 
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        stderr += `Timeout de ${timeoutMs}ms\n`;
+        try {
+          child.kill();
+        } catch (_) {}
+      }, timeoutMs);
+    }
+
     child.on("close", (code) => {
+      if (timer) clearTimeout(timer);
       resolve({ code: code ?? 1, stdout, stderr });
     });
   });
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(ms || 0))));
+}
+
+function summarizeOpenClawGatewayStatus(rawText) {
+  const lines = String(rawText || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const interesting = lines.filter((line) => (
+    /^Runtime:/i.test(line)
+    || /^RPC probe:/i.test(line)
+    || /^Listening:/i.test(line)
+    || /^gateway closed/i.test(line)
+    || /^Error:/i.test(line)
+  ));
+  return (interesting[interesting.length - 1] || lines[lines.length - 1] || '').trim();
+}
+
+async function getOpenClawGatewayStatus(bin, options = {}) {
+  const response = await runCommandCapture(
+    bin,
+    ['gateway', 'status'],
+    {
+      cwd: options.cwd,
+      env: options.env,
+      timeoutMs: Number(options.timeoutMs || 15_000),
+    },
+    NOOP_OUTPUT,
+  );
+  const text = `${response.stdout || ''}\n${response.stderr || ''}`.trim();
+  return {
+    ...response,
+    text,
+    ready: isOpenClawGatewayReady(text),
+  };
+}
+
+function spawnDetachedOpenClawGateway(bin, options = {}) {
+  const logPath = String(options.logPath || '').trim();
+  if (!logPath) {
+    throw new Error('spawnDetachedOpenClawGateway requiere logPath.');
+  }
+  fs.mkdirSync(path.dirname(logPath), { recursive: true });
+  const logFd = fs.openSync(logPath, 'a');
+  const shell = process.platform === 'win32' && /\.(cmd|bat)$/i.test(bin);
+  const child = spawn(
+    bin,
+    ['gateway', '--force', '--verbose', 'run'],
+    {
+      cwd: options.cwd,
+      env: options.env,
+      detached: true,
+      shell,
+      stdio: ['ignore', logFd, logFd],
+    },
+  );
+  child.on('error', () => {});
+  child.unref();
+  fs.closeSync(logFd);
+  return child.pid || 0;
+}
+
+async function ensureOpenClawGatewayAvailable(output, options = {}) {
+  const bin = String(options.bin || '').trim();
+  const cwd = String(options.cwd || '').trim() || process.cwd();
+  const env = options.env && typeof options.env === 'object' ? options.env : process.env;
+  const config = options.config && typeof options.config === 'object' ? options.config : {};
+  const stateDir = String(options.stateDir || '').trim();
+  const gateway = getOpenClawGatewayConfig(config);
+  const gatewayUrl = buildOpenClawGatewayUrl(config);
+  const initialStatus = await getOpenClawGatewayStatus(bin, {
+    cwd,
+    env,
+    timeoutMs: options.statusTimeoutMs,
+  });
+  if (initialStatus.ready) {
+    output.appendLine(`[freejt7-openclaw] Gateway listo en ${gatewayUrl}`);
+    return {
+      started: false,
+      gatewayUrl,
+      gateway,
+      logPath: '',
+      status: initialStatus.text,
+    };
+  }
+
+  const logPath = path.join(stateDir || cwd, 'logs', 'freejt7-openclaw-gateway-autostart.log');
+  const pid = spawnDetachedOpenClawGateway(bin, { cwd, env, logPath });
+  output.appendLine(`[freejt7-openclaw] Gateway no listo; autostart en ${gatewayUrl} (pid=${pid || 'n/a'})`);
+  output.appendLine(`[freejt7-openclaw] Log gateway: ${logPath}`);
+
+  const startupTimeoutMs = Math.max(5_000, Number(options.startupTimeoutMs || 25_000));
+  const pollIntervalMs = Math.max(500, Number(options.pollIntervalMs || 1_250));
+  const deadline = Date.now() + startupTimeoutMs;
+  let lastStatus = initialStatus.text;
+  while (Date.now() < deadline) {
+    await sleep(pollIntervalMs);
+    const probe = await getOpenClawGatewayStatus(bin, {
+      cwd,
+      env,
+      timeoutMs: options.statusTimeoutMs,
+    });
+    if (probe.text) {
+      lastStatus = probe.text;
+    }
+    if (probe.ready) {
+      output.appendLine(`[freejt7-openclaw] Gateway operativo en ${gatewayUrl}`);
+      return {
+        started: true,
+        gatewayUrl,
+        gateway,
+        logPath,
+        status: probe.text,
+      };
+    }
+  }
+
+  throw createOpenClawTaggedError(
+    `Free JT7: el gateway OpenClaw no quedo operativo tras el autostart (${gatewayUrl}). ${summarizeOpenClawGatewayStatus(lastStatus) || 'Revisa openclaw gateway status.'}`,
+    { isRetryable: true, isConfigurationError: false, isUserActionRequired: false },
+  );
 }
 
 function createTrackedRunId() {
@@ -358,6 +529,52 @@ async function prepareAuditedTask(context, output, baseGoal) {
   return { goal, runId, intake, selectedSkills };
 }
 
+function buildAssumedPanelIntake(baseGoal) {
+  return {
+    deliverable: String(baseGoal || '').trim() || 'Resolver la solicitud del usuario en el panel.',
+    constraints: 'Cambios minimos, compatibles hacia atras y sin pedir al usuario que repita contexto ya visible en la sesion.',
+    verification: 'Validacion ligera con evidencia breve en la respuesta o en la trazabilidad.',
+  };
+}
+
+async function preparePanelTask(context, output, taskInput = {}, meta = {}) {
+  const goal = String(taskInput.goal || taskInput.prompt || '').trim();
+  if (!goal) {
+    return taskInput;
+  }
+  const intake = buildAssumedPanelIntake(goal);
+  let selectedSkills = DEFAULT_ROUTER_SKILLS;
+  let runId = '';
+
+  try {
+    const preSkillGoal = [
+      goal,
+      `Entregable: ${intake.deliverable}`,
+      `Restricciones: ${intake.constraints}`,
+      `Verificacion: ${intake.verification}`,
+    ].join('\n');
+    selectedSkills = await resolveSkillsForGoal(context, output, preSkillGoal);
+    const tracedGoal = buildAuditedRouterGoal(goal, intake, selectedSkills);
+    runId = createTrackedRunId();
+    await startTrackedTask(context, output, runId, tracedGoal);
+    output.appendLine(`[freejt7-panel] task preparada run_id=${runId} skills=${formatResolvedSkills(selectedSkills)}`);
+  } catch (error) {
+    const detail = String(error?.message || error);
+    output.appendLine(`[freejt7-panel] prepareTask degradado: ${detail}`);
+    // Modo degradado: no bloquear el chat por fallo de trazabilidad/skills.
+    runId = '';
+    selectedSkills = DEFAULT_ROUTER_SKILLS;
+  }
+
+  return {
+    ...taskInput,
+    runId,
+    intake,
+    selectedSkills,
+    sessionTitle: String(meta.sessionTitle || taskInput.sessionTitle || 'Sesion Free JT7').trim(),
+  };
+}
+
 function isWorkingPython(bin, prefixArgs = []) {
   try {
     const result = spawnSync(bin, [...prefixArgs, "-c", "import sys"], {
@@ -446,17 +663,20 @@ function getChatDiagnostics() {
   const copilotChat = getExtensionById("github.copilot-chat", "GitHub.copilot-chat");
   const chatApiAvailable = Boolean(vscode.chat?.createChatParticipant);
   const issues = [];
+  const optionalIssues = [];
 
   if (!copilotChat) {
-    issues.push("GitHub Copilot Chat no esta instalado o no esta disponible en este IDE/perfil.");
+    optionalIssues.push("GitHub Copilot Chat no esta instalado o no esta disponible en este IDE/perfil.");
   }
   if (!chatApiAvailable) {
-    issues.push("La API de chat de VS Code no esta disponible en esta sesion (`vscode.chat.createChatParticipant`).");
+    optionalIssues.push("La API de chat de VS Code no esta disponible en esta sesion (`vscode.chat.createChatParticipant`).");
   }
 
   return {
-    ok: issues.length === 0,
+    ok: true,
     issues,
+    optionalIssues,
+    participantAvailable: optionalIssues.length === 0,
     copilotChatInstalled: Boolean(copilotChat),
     chatApiAvailable,
   };
@@ -467,10 +687,11 @@ function appendDoctorDiagnostics(output, py) {
   output.appendLine(`[freejt7] Python: ${[py.bin, ...py.args].join(" ")}`);
   output.appendLine(`[freejt7] Copilot Chat instalado: ${diagnostics.copilotChatInstalled ? "si" : "no"}`);
   output.appendLine(`[freejt7] Chat API disponible: ${diagnostics.chatApiAvailable ? "si" : "no"}`);
-  if (!diagnostics.ok) {
-    for (const issue of diagnostics.issues) {
-      output.appendLine(`[freejt7] chat-diagnostico: ${issue}`);
-    }
+  for (const issue of diagnostics.issues || []) {
+    output.appendLine(`[freejt7] chat-diagnostico: ${issue}`);
+  }
+  for (const issue of diagnostics.optionalIssues || []) {
+    output.appendLine(`[freejt7] chat-opcional: ${issue}`);
   }
   return diagnostics;
 }
@@ -725,14 +946,15 @@ async function runtimeDoctor(context, output) {
   }
 
   const second = await runCommand(py.bin, [...py.args, managerPath, "ide-detect", "--json"], { cwd: context.extensionPath }, output);
-  if (second.code === 0 && chatDiagnostics.ok) {
+  if (second.code === 0) {
+    if (!chatDiagnostics.participantAvailable) {
+      const message = "Free JT7: runtime validado. El panel propio funciona sin Copilot; el participante `@freejt7` solo estara disponible si GitHub Copilot Chat existe en este IDE.";
+      vscode.window.showInformationMessage(message);
+      return { ok: true, message, participantAvailable: false };
+    }
     const message = "Free JT7: runtime validado.";
     vscode.window.showInformationMessage(message);
     return { ok: true, message };
-  } else if (second.code === 0) {
-    const message = "Free JT7: runtime base OK, pero el participante de chat no quedara disponible sin GitHub Copilot Chat y soporte de API chat en este IDE.";
-    vscode.window.showWarningMessage(message);
-    return { ok: false, message };
   } else {
     const message = "Free JT7: policy OK, pero ide-detect reporto errores.";
     vscode.window.showWarningMessage(message);
@@ -774,6 +996,12 @@ function getEffectiveProviderConfig() {
   const config = vscode.workspace.getConfiguration("freejt7");
   const configuredProvider = String(config.get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim();
   const provider = configuredProvider || DEFAULT_EXTERNAL_PROVIDER;
+  if (provider === "copilot" && isStandaloneOwnIdeMode()) {
+    return {
+      provider: DEFAULT_EXTERNAL_PROVIDER,
+      model: getDefaultModel(DEFAULT_EXTERNAL_PROVIDER) || DEFAULT_EXTERNAL_MODEL,
+    };
+  }
   if (provider === "copilot") {
     return { provider, model: "" };
   }
@@ -907,9 +1135,31 @@ function buildModelQuickPickItems(provider, currentModel) {
   }));
 }
 
+function isStandaloneOwnIdeMode() {
+  try {
+    const cfg = vscode.workspace.getConfiguration("freejt7");
+    return Boolean(cfg.get("app.standaloneMode", false));
+  } catch (_) {
+    return false;
+  }
+}
+
+function listSelectableApiProviders() {
+  const items = [
+    { label: "$(cloud) OpenRouter (default)", value: "openrouter" },
+    { label: "$(hubot) HuggingFace", value: "hf" },
+    { label: "$(zap) ZAI (ZhipuAI)", value: "zai" },
+    { label: "$(globe) CLŌD", value: "clod" },
+  ];
+  if (!isStandaloneOwnIdeMode()) {
+    items.push({ label: "$(copilot) GitHub Copilot (legacy)", value: "copilot" });
+  }
+  return items;
+}
+
 function formatProviderStatusBarText(provider, model) {
   if (provider === "copilot") {
-    return "$(copilot) Free JT7: Copilot";
+    return "$(copilot) Free JT7: Copilot legacy";
   }
   const shortModel = model && model.length > 34 ? `${model.slice(0, 31)}...` : model;
   return `$(radio-tower) Free JT7: ${provider}${shortModel ? ` | ${shortModel}` : ""}`;
@@ -917,7 +1167,7 @@ function formatProviderStatusBarText(provider, model) {
 
 function formatProviderStatusBarTooltip(provider, model) {
   if (provider === "copilot") {
-    return "Free JT7\nProveedor activo: Copilot\nModelo: integrado\nClick para cambiar proveedor o modelo.";
+    return "Free JT7\nProveedor activo: Copilot (legacy)\nModelo: integrado\nRuta heredada secundaria; el flujo principal own-ide usa proveedores externos.";
   }
   return `Free JT7\nProveedor activo: ${provider}\nModelo activo: ${model || "default"}\nClick para cambiar proveedor o modelo.`;
 }
@@ -929,6 +1179,28 @@ function updateProviderStatusBar(providerStatusBar) {
   const { provider, model } = getEffectiveProviderConfig();
   providerStatusBar.text = formatProviderStatusBarText(provider, model);
   providerStatusBar.tooltip = formatProviderStatusBarTooltip(provider, model);
+}
+
+function markCopilotLegacyResult(result) {
+  if (!result || typeof result !== 'object') {
+    return result;
+  }
+  const raw = result.raw && typeof result.raw === 'object' ? result.raw : {};
+  const routeMeta = raw.routeMeta && typeof raw.routeMeta === 'object' ? raw.routeMeta : {};
+  return {
+    ...result,
+    provider: 'copilot',
+    model: '',
+    raw: {
+      ...raw,
+      executionRoute: String(raw.executionRoute || result.executionRoute || 'copilot-legacy').trim() || 'copilot-legacy',
+      routeMeta: {
+        ...routeMeta,
+        compatibility: 'legacy-copilot',
+        primarySurface: 'own-ide-panel',
+      },
+    },
+  };
 }
 
 function slugifyDesignText(value) {
@@ -1115,6 +1387,7 @@ async function launchDesignAgent(context, output) {
 async function routeTaskWithGoal(context, output, goal) {
   const preparedTask = goal && typeof goal === "object" ? goal : null;
   const finalGoal = String(preparedTask?.goal || goal || "").trim();
+  const conversationRequest = preparedTask?.conversationRequest || null;
   if (!finalGoal) {
     return null;
   }
@@ -1126,7 +1399,7 @@ async function routeTaskWithGoal(context, output, goal) {
     try {
       const workspacePathForProvider = getPrimaryWorkspacePath() || context.extensionPath;
       const result = await _callProvider(
-        finalGoal,
+        conversationRequest || finalGoal,
         { provider: effectiveProvider, model: effectiveModel },
         context.secrets,
         { workspacePath: workspacePathForProvider },
@@ -1151,8 +1424,17 @@ async function routeTaskWithGoal(context, output, goal) {
 
   output.appendLine(`[freejt7-router] starting goal=${finalGoal}`);
   output.show(true);
+  const copilotGoal = conversationRequest
+    ? serializeConversationRequest({
+      ...conversationRequest,
+      messages: Array.isArray(conversationRequest.messages) && conversationRequest.messages.length > 0
+        ? conversationRequest.messages
+        : [{ role: 'user', content: finalGoal }],
+      text: finalGoal,
+    })
+    : finalGoal;
   activeCopilotRouterRun = runCopilotRouter({
-    goal: finalGoal,
+    goal: copilotGoal,
     workspacePath,
     vscode,
     output,
@@ -1225,10 +1507,62 @@ function openRuntimeDocs(context) {
 }
 
 // helpers for OpenClaw CLI detection and invocation
+function looksLikeOpenClawDirectoryName(name) {
+  const compact = String(name || '').toLowerCase().replace(/[\s._-]+/g, '');
+  return compact.includes('openclaw');
+}
+
+function listOpenClawBinCandidates(baseDir) {
+  const names = process.platform === 'win32'
+    ? ['openclaw.cmd', 'openclaw.exe', 'openclaw.bat', 'openclaw']
+    : ['openclaw'];
+  const relPaths = [
+    ['node_modules', '.bin'],
+    ['.bin'],
+    ['bin'],
+    [],
+  ];
+  const out = [];
+  for (const rel of relPaths) {
+    for (const name of names) {
+      out.push(path.join(baseDir, ...rel, name));
+    }
+  }
+  return out;
+}
+
+function pickFirstExistingPath(paths) {
+  for (const candidate of paths) {
+    try {
+      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+        return candidate;
+      }
+    } catch {
+      // ignore unreadable or transient files during discovery
+    }
+  }
+  return '';
+}
+
 function findOpenClawBinary(workspacePath) {
-  if (workspacePath && isManagedWorkspace(workspacePath)) {
-    const localBin = path.join(workspacePath, "OPEN CLAW", "node_modules", ".bin", "openclaw");
-    if (fs.existsSync(localBin)) {
+  if (workspacePath) {
+    const candidateRoots = [workspacePath];
+
+    try {
+      const entries = fs.readdirSync(workspacePath, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory() && looksLikeOpenClawDirectoryName(entry.name)) {
+          candidateRoots.push(path.join(workspacePath, entry.name));
+        }
+      }
+    } catch {
+      // ignore directory listing issues and keep PATH fallback
+    }
+
+    const localBin = pickFirstExistingPath(
+      candidateRoots.flatMap((root) => listOpenClawBinCandidates(root))
+    );
+    if (localBin) {
       return localBin;
     }
   }
@@ -1246,9 +1580,347 @@ async function runOpenClaw(args, output) {
   }
 }
 
+function createOpenClawTaggedError(message, flags = {}) {
+  const error = new Error(message);
+  Object.assign(error, flags);
+  return error;
+}
+
+async function runOpenClawAgentTask(context, output, options = {}) {
+  const provider = String(options.provider || '').trim();
+  if (!provider || provider === 'copilot') {
+    throw new Error('runOpenClawAgentTask requiere un proveedor externo valido.');
+  }
+
+  const workspacePath = String(options.workspacePath || getPrimaryWorkspacePath() || '').trim();
+  if (!workspacePath) {
+    throw createOpenClawTaggedError(
+      'Free JT7: abre un workspace antes de usar modo agent con OpenClaw.',
+      { isUserActionRequired: true, isConfigurationError: true, isRetryable: false },
+    );
+  }
+
+  const model = String(options.model || getDefaultModel(provider) || '').trim();
+  const authProfile = String(options.authProfile || 'default').trim() || 'default';
+  const runtimeBackend = String(options.runtimeBackend || 'openclaw').trim() || 'openclaw';
+  const policyProfile = String(options.policyProfile || 'coding').trim() || 'coding';
+  const fallbackProviders = Array.isArray(options.fallbackProviders)
+    ? options.fallbackProviders
+    : [];
+  const executionRoute = String(options.executionRoute || 'openclaw-agent').trim() || 'openclaw-agent';
+  const apiKey = await getApiKey(provider, options.secretStorage, { workspacePath });
+  if (!apiKey) {
+    throw createOpenClawTaggedError(
+      `Free JT7: falta la API key de ${provider} para ejecutar el modo agent via OpenClaw.`,
+      { isUserActionRequired: true, isConfigurationError: true, isRetryable: false },
+    );
+  }
+
+  await ensureMcpDependencies(context.extensionPath, output);
+
+  const runtimeRoot = String(options.runtimeRoot || getOperationalRoot(context) || workspacePath).trim();
+  const mcpServerEntry = path.join(context.extensionPath, 'servidor mpc free jt7', 'src', 'index.js');
+  const ensured = ensureOpenClawRuntimeConfig(runtimeRoot, {
+    provider,
+    model,
+    authProfile,
+    policyProfile,
+    fallbackModels: fallbackProviders,
+    workspacePath,
+    mcpCommand: 'node',
+    mcpArgs: [mcpServerEntry],
+  });
+  if (ensured.changed) {
+    output.appendLine(`[freejt7-openclaw] Config actualizada en ${ensured.configPath}`);
+  }
+  const lockCleanup = cleanupOpenClawStaleLocks(runtimeRoot);
+  if (lockCleanup.removed.length > 0) {
+    output.appendLine(`[freejt7-openclaw] Locks stale limpiados: ${lockCleanup.removed.length}`);
+  }
+
+  const env = buildOpenClawEnv(provider, apiKey, {
+    ...process.env,
+    OPENCLAW_CONFIG_PATH: ensured.configPath,
+    OPENCLAW_STATE_DIR: ensured.stateDir,
+    OPENCLAW_AUTH_PROFILE: authProfile,
+  });
+  const sessionId = buildOpenClawTaskSessionId(options);
+  const bin = findOpenClawBinary(workspacePath);
+  await ensureOpenClawGatewayAvailable(output, {
+    bin,
+    cwd: workspacePath,
+    env,
+    config: ensured.config,
+    stateDir: ensured.stateDir,
+  });
+  const args = buildOpenClawAgentArgs({
+    sessionId,
+    message: String(options.goal || options.prompt || '').trim(),
+    thinking: 'medium',
+    timeoutSeconds: 600,
+  });
+  output.appendLine(`[freejt7-openclaw] Ejecutando modo agent provider=${provider} model=${normalizeOpenClawModel(provider, model)}`);
+  let response = await runCommandCapture(
+    bin,
+    args,
+    { cwd: workspacePath, env, timeoutMs: 620000 },
+    output,
+  );
+  let rawOutput = `${response.stdout || ''}\n${response.stderr || ''}`.trim();
+  let payload = extractJsonTail(response.stdout || rawOutput);
+  let summary = summarizeOpenClawPayload(payload, rawOutput);
+
+  if (response.code !== 0 && /session file locked|\.lock|timeout \d+ms/i.test(summary || rawOutput)) {
+    const retrySessionId = `${sessionId || 'freejt7'}-${Date.now().toString(36)}`;
+    const retryArgs = buildOpenClawAgentArgs({
+      sessionId: retrySessionId,
+      message: String(options.goal || options.prompt || '').trim(),
+      thinking: 'medium',
+      timeoutSeconds: 600,
+    });
+    const retryCleanup = cleanupOpenClawStaleLocks(runtimeRoot, { maxAgeMs: 1_000 });
+    if (retryCleanup.removed.length > 0) {
+      output.appendLine(`[freejt7-openclaw] Locks limpiados antes de reintento: ${retryCleanup.removed.length}`);
+    }
+    output.appendLine(`[freejt7-openclaw] Reintento por lock con sesion aislada ${retrySessionId}`);
+    response = await runCommandCapture(
+      bin,
+      retryArgs,
+      { cwd: workspacePath, env, timeoutMs: 620000 },
+      output,
+    );
+    rawOutput = `${response.stdout || ''}\n${response.stderr || ''}`.trim();
+    payload = extractJsonTail(response.stdout || rawOutput);
+    summary = summarizeOpenClawPayload(payload, rawOutput);
+  }
+
+  if (response.code !== 0 || isOpenClawFailure({ code: response.code, summary })) {
+    const detail = summary || rawOutput || `openclaw exit code ${response.code}`;
+    const isAuth = /No API key found|token expired|incorrect|401|403|auth/i.test(detail);
+    throw createOpenClawTaggedError(
+      `Free JT7 (${provider}/OpenClaw agent): ${detail}`,
+      {
+        isUserActionRequired: isAuth,
+        isConfigurationError: isAuth,
+        isRetryable: !isAuth,
+      },
+    );
+  }
+
+  return {
+    provider,
+    model: model || getDefaultModel(provider) || '',
+    executionMode: 'agent',
+    executionRoute,
+    rawOutput,
+    payload,
+    routeMeta: {
+      runtimeBackend,
+      authProfile,
+      fallbackProviders,
+      executionRoute,
+    },
+    run: {
+      status: 'completed',
+      summary,
+      provider,
+      model: model || getDefaultModel(provider) || '',
+    },
+    final: {
+      status: 'completed',
+      summary,
+      changedFiles: [],
+      verification: [
+        `OpenClaw agent local ejecutado con ${provider}/${model || getDefaultModel(provider) || 'default'}.`,
+        `MCP activo: free-jt7-local -> ${mcpServerEntry}.`,
+        `Auth profile: ${authProfile}.`,
+        `Runtime backend: ${runtimeBackend}.`,
+      ],
+      residualRisks: [],
+    },
+  };
+}
+
+function shouldUseLocalAgentFallback(goal, error, options = {}) {
+  if (!canResolveLocalGoal(goal)) {
+    return false;
+  }
+  const message = String(error && error.message ? error.message : error || '');
+  if (options.forceForDeterministicGoal) {
+    return true;
+  }
+  return Boolean(
+    error?.isUserActionRequired
+    || error?.isConfigurationError
+    || /ENOENT|not found|no such file|falta la API key|openclaw|gateway|Agent couldn't generate a response|network connection error|timeout|timed out|ECONN|EHOST|socket hang up|HTTP 5\d\d|403 status code/i.test(message)
+  );
+}
+
+function shouldUseProviderDirectFallback(error) {
+  const message = String(error && error.message ? error.message : error || '');
+  return Boolean(
+    error?.isRetryable
+    || error?.isRateLimitError
+    || /FailoverError|session file locked|loopback|start the gateway|gateway|EADDRINUSE|EACCES|Agent couldn't generate a response|network connection error|timeout|timed out|ECONN|EHOST|socket hang up|HTTP 429|HTTP 5\d\d|403 status code/i.test(message)
+  );
+}
+
+function shouldPreferLocalExecution(goal) {
+  const text = String(goal || '').toLowerCase();
+  if (!canResolveLocalGoal(goal)) {
+    return false;
+  }
+  return /\b(instala|instalar|install)\b.*\bgit\b|\b(directorio siguiente:|el nombre de la car\w*ta|quecrees|mkdir)\b|\b(crea|crear|cree|crees)\b.*\b(carpeta|directorio)\b|\b(revisa|revise|inspecciona|inspeccione|lista|ls|verifica|verifique)\b.*\b(carpeta|directorio|ruta)\b|\blee\b.*\b(package\.json|readme|archivo)\b|\bverifica\b.*\b(build|test|script|archivo)\b/i.test(text);
+}
+
+async function runProviderDirectFallbackTask(context, output, options = {}) {
+  const workspacePath = String(options.workspacePath || getPrimaryWorkspacePath() || context.extensionPath || process.cwd()).trim();
+  const provider = String(options.provider || getEffectiveProviderConfig().provider || '').trim();
+  const model = String(options.model || getEffectiveProviderConfig().model || '').trim();
+  const authProfile = String(options.authProfile || 'default').trim() || 'default';
+  if (!provider || provider === 'copilot') {
+    throw new Error('Fallback directo requiere proveedor externo valido.');
+  }
+
+  const requestPayload = options.conversationRequest || String(options.goal || options.prompt || '').trim();
+  const direct = await _callProvider(
+    requestPayload,
+    { provider, model, authProfile },
+    context.secrets,
+    { workspacePath, authProfile },
+  );
+  const summary = String(direct?.run?.summary || direct?.final?.summary || direct?.summary || 'ok').trim() || 'ok';
+  const existingVerification = Array.isArray(direct?.final?.verification)
+    ? direct.final.verification.filter(Boolean).map((item) => String(item))
+    : [];
+
+  return {
+    ...direct,
+    provider,
+    model: model || getDefaultModel(provider) || '',
+    executionMode: 'agent',
+    executionRoute: 'provider-direct-fallback',
+    routeMeta: {
+      runtimeBackend: String(options.runtimeBackend || 'auto').trim().toLowerCase() || 'auto',
+      fallback: 'provider-direct',
+      fallbackReason: String(options.fallbackReason || '').trim(),
+    },
+    run: {
+      ...(direct?.run || {}),
+      status: 'completed',
+      summary,
+      provider,
+      model: model || getDefaultModel(provider) || '',
+    },
+    final: {
+      ...(direct?.final || {}),
+      status: 'completed',
+      summary,
+      changedFiles: Array.isArray(direct?.final?.changedFiles) ? direct.final.changedFiles : [],
+      verification: [
+        ...existingVerification,
+        `Fallback directo ${provider}/${model || getDefaultModel(provider) || 'default'} aplicado por indisponibilidad temporal del runtime agente OpenClaw.`,
+      ],
+      residualRisks: [
+        'La ejecucion uso fallback directo del proveedor; capacidades completas de herramientas/agente pueden estar degradadas hasta recuperar OpenClaw.',
+      ],
+    },
+  };
+}
+
+async function runFreeJt7LocalAgentTask(context, output, options = {}) {
+  const workspacePath = String(options.workspacePath || getPrimaryWorkspacePath() || context.extensionPath || process.cwd()).trim();
+  const provider = String(options.provider || getEffectiveProviderConfig().provider || 'local').trim();
+  const model = String(options.model || getEffectiveProviderConfig().model || 'freejt7-local-tools').trim();
+  output.appendLine(`[freejt7-local-agent] Ejecutando herramientas locales provider=${provider} model=${model}`);
+  return runLocalAgentTask(String(options.goal || options.prompt || '').trim(), {
+    ...options,
+    workspacePath,
+    provider,
+    model,
+  });
+}
+
+async function runFreeJt7AcpTask(context, output, options = {}) {
+  const runtimeBackend = String(options.runtimeBackend || '').trim().toLowerCase();
+  const harness = runtimeBackend.startsWith('acp:')
+    ? runtimeBackend.split(':').slice(1).join(':') || 'codex'
+    : 'codex';
+  const provider = String(options.provider || getEffectiveProviderConfig().provider || '').trim();
+  const model = String(options.model || getEffectiveProviderConfig().model || '').trim();
+  output.appendLine(`[freejt7-acp] runtime=${runtimeBackend || 'acp'} harness=${harness} provider=${provider || 'auto'} model=${model || 'default'}`);
+
+  if (provider && provider !== 'copilot') {
+    try {
+      return await runOpenClawAgentTask(context, output, {
+        ...options,
+        provider,
+        model,
+        runtimeBackend,
+        executionRoute: `acp:${harness}`,
+      });
+    } catch (error) {
+      output.appendLine(`[freejt7-acp] Fallback local por fallo ACP/OpenClaw: ${String(error?.message || error)}`);
+      if (shouldPreferLocalExecution(options.goal || options.prompt || '')) {
+        return runFreeJt7LocalAgentTask(context, output, {
+          ...options,
+          provider: provider || 'local',
+          model: model || `acp-${harness}-local`,
+          runtimeBackend: runtimeBackend || `acp:${harness}`,
+          fallbackReason: String(error?.message || error),
+        });
+      }
+      if (shouldUseProviderDirectFallback(error)) {
+        try {
+          return await runProviderDirectFallbackTask(context, output, {
+            ...options,
+            provider,
+            model,
+            runtimeBackend: runtimeBackend || `acp:${harness}`,
+            fallbackReason: String(error?.message || error),
+          });
+        } catch (directError) {
+          output.appendLine(`[freejt7-acp] Fallback directo provider falló: ${String(directError?.message || directError)}`);
+          if (shouldUseLocalAgentFallback(options.goal || options.prompt || '', error, { forceForDeterministicGoal: true })) {
+            return runFreeJt7LocalAgentTask(context, output, {
+              ...options,
+              provider: provider || 'local',
+              model: model || `acp-${harness}-local`,
+              runtimeBackend: runtimeBackend || `acp:${harness}`,
+              fallbackReason: String(directError?.message || directError),
+            });
+          }
+        }
+      }
+      if (!shouldUseLocalAgentFallback(options.goal || options.prompt || '', error)) {
+        throw error;
+      }
+    }
+  }
+
+  const local = await runFreeJt7LocalAgentTask(context, output, {
+    ...options,
+    provider: provider || 'local',
+    model: model || `acp-${harness}-local`,
+    runtimeBackend: runtimeBackend || `acp:${harness}`,
+    fallbackReason: 'ACP fallback local',
+  });
+  return {
+    ...local,
+    executionRoute: `acp:${harness}:local-fallback`,
+    routeMeta: {
+      runtimeBackend: runtimeBackend || `acp:${harness}`,
+      harness,
+      fallback: 'local',
+    },
+  };
+}
+
 async function handleChatRequest(context, output, request, chatContext, stream) {
   const command = request.command || "route";
   const activeProviderConfig = getEffectiveProviderConfig();
+  const workspacePathForConversation = getPrimaryWorkspacePath() || context.extensionPath;
+  const priorMessages = extractChatContextMessages(chatContext);
 
   if (command === "docs") {
     openRuntimeDocs(context);
@@ -1298,6 +1970,13 @@ async function handleChatRequest(context, output, request, chatContext, stream) 
       stream.markdown("Se canceló el intake obligatorio. Vuelve a lanzar la tarea cuando quieras continuar.");
       return { metadata: { command, ok: false, cancelled: true } };
     }
+    preparedTask.conversationRequest = buildConversationRequest({
+      prompt: preparedTask.goal,
+      history: priorMessages,
+      sessionTitle: 'VS Code Chat',
+      workspacePath: workspacePathForConversation,
+      channel: 'chat-participant',
+    });
     stream.progress("Ejecutando el router auditado de Free JT7...");
     const result = await routeTaskWithGoal(context, output, preparedTask);
     stream.markdown(formatRouterMarkdown(result));
@@ -1403,12 +2082,63 @@ function activate(context) {
   const panelEnabled = panelConfig.get("panel.enabled", true);
   if (panelEnabled) {
     try {
+      const ownAgentRuntime = createFreeJt7AgentRuntime({
+        context,
+        output,
+        runtimeRoot: operationalRoot,
+        getWorkspacePath: () => getPrimaryWorkspacePath(),
+        getProviderConfig: () => getEffectiveProviderConfig(),
+        runLocalAgentTask: runFreeJt7LocalAgentTask,
+        runOpenClawAgentTask,
+        runProviderDirectFallbackTask,
+        runAcpTask: runFreeJt7AcpTask,
+        runCopilotTask: async (goal, taskContext = {}) => {
+          const workspacePath = getPrimaryWorkspacePath();
+          if (!workspacePath) {
+            throw new Error("Free JT7: abre un workspace antes de usar Copilot Pro desde el panel.");
+          }
+          const copilotGoal = taskContext?.conversationRequest
+            ? serializeConversationRequest(taskContext.conversationRequest)
+            : goal;
+          return runCopilotRouter({
+            goal: copilotGoal,
+            workspacePath,
+            vscode,
+            output,
+            extensionPath: context.extensionPath,
+            secretStorage: context.secrets,
+            runId: taskContext?.runId || "",
+            selectedSkills: Array.isArray(taskContext?.selectedSkills) && taskContext.selectedSkills.length
+              ? taskContext.selectedSkills
+              : DEFAULT_ROUTER_SKILLS,
+            intake: taskContext?.intake || null,
+            providerOverride: "copilot",
+            modelOverride: "",
+          });
+        },
+        shouldPreferLocalExecution,
+        canResolveLocalGoal,
+        buildLocalActions: (goal, taskContext = {}) => deriveLocalActions(goal, taskContext),
+        getMcpServers: () => ([
+          {
+            id: 'free-jt7-local',
+            transport: 'stdio',
+            enabled: true,
+          },
+        ]),
+        shouldUseProviderDirectFallback,
+        shouldUseLocalAgentFallback,
+      });
+
       activeControlPanel = createControlPanel(context, output, {
         workspacePath: operationalRoot,
         workerCount: Number(panelConfig.get("panel.workerPool.size", 3) || 3),
         policyMode: String(panelConfig.get("panel.policy.mode", "mixed") || "mixed"),
         remoteBridge: getRemoteBridge({ rootDir: operationalRoot }),
-        executeCopilotTask: async (goal) => {
+        agentRuntime: ownAgentRuntime,
+        prepareTask: async (taskInput, meta) => preparePanelTask(context, output, taskInput, meta),
+        finalizeTaskTrace: async (task, summary) => closeTrackedTask(context, output, task.runId, summary),
+        executeCopilotTask: async (goal, taskContext = {}) => {
           const workspacePath = getPrimaryWorkspacePath();
           if (!workspacePath) {
             throw new Error("Free JT7: abre un workspace antes de usar Copilot Pro desde el panel.");
@@ -1420,7 +2150,38 @@ function activate(context) {
             output,
             extensionPath: context.extensionPath,
             secretStorage: context.secrets,
-            selectedSkills: DEFAULT_ROUTER_SKILLS,
+            runId: taskContext?.runId || "",
+            selectedSkills: Array.isArray(taskContext?.selectedSkills) && taskContext.selectedSkills.length
+              ? taskContext.selectedSkills
+              : DEFAULT_ROUTER_SKILLS,
+            intake: taskContext?.intake || null,
+          });
+        },
+        executeAcpTask: async (goal, taskContext = {}) => {
+          const workspacePath = getPrimaryWorkspacePath();
+          if (!workspacePath) {
+            throw new Error("Free JT7: abre un workspace antes de usar backend ACP.");
+          }
+          return runFreeJt7AcpTask(context, output, {
+            goal,
+            workspacePath,
+            runtimeRoot: operationalRoot,
+            provider: String(taskContext?.provider || getEffectiveProviderConfig().provider || '').trim(),
+            model: String(taskContext?.model || getEffectiveProviderConfig().model || '').trim(),
+            runtimeBackend: String(taskContext?.runtimeBackend || 'acp:codex').trim().toLowerCase(),
+            authProfile: String(taskContext?.authProfile || 'default').trim(),
+            policyProfile: String(taskContext?.policyProfile || 'coding').trim(),
+            fallbackProviders: Array.isArray(taskContext?.fallbackProviders) ? taskContext.fallbackProviders : [],
+            sessionId: String(taskContext?.sessionId || '').trim(),
+            runId: String(taskContext?.runId || '').trim(),
+            secretStorage: context.secrets,
+          });
+        },
+        executeAgentTask: async (goal, taskContext = {}) => {
+          return ownAgentRuntime.executeAgentTask(goal, {
+            ...taskContext,
+            runtimeRoot: operationalRoot,
+            secretStorage: context.secrets,
           });
         },
       });
@@ -1480,12 +2241,7 @@ function activate(context) {
     }),
     vscode.commands.registerCommand("freejt7.openClawChannelsLogin", () => runOpenClaw(["channels","login"], output)),
     vscode.commands.registerCommand("freejt7.selectApiProvider", async () => {
-      const providers = [
-        { label: "$(cloud) OpenRouter (default)", value: "openrouter" },
-        { label: "$(hubot) HuggingFace", value: "hf" },
-        { label: "$(zap) ZAI (ZhipuAI)", value: "zai" },
-        { label: "$(copilot) GitHub Copilot", value: "copilot" },
-      ];
+      const providers = listSelectableApiProviders();
       const picked = await vscode.window.showQuickPick(providers, { placeHolder: "Selecciona el proveedor de API" });
       if (!picked) return;
       let model = "";
@@ -1528,6 +2284,7 @@ function activate(context) {
         { label: "OpenRouter", value: "openrouter" },
         { label: "HuggingFace", value: "hf" },
         { label: "ZAI (ZhipuAI)", value: "zai" },
+        { label: "CLŌD", value: "clod" },
       ];
       const picked = await vscode.window.showQuickPick(providers, { placeHolder: "¿Para qué proveedor deseas configurar la API key?" });
       if (!picked) return;
@@ -1621,6 +2378,28 @@ function activate(context) {
     output.appendLine("[freejt7-panel] chat participant deshabilitado por configuracion.");
   }
 
+  const sidebarProvider = {
+    resolveWebviewView(webviewView) {
+      webviewView.webview.options = { enableScripts: true, enableCommandUris: true };
+      webviewView.webview.html = `
+        <!doctype html>
+        <html lang="es">
+        <body style="margin:0;padding:12px;font-family:Segoe UI,sans-serif;color:var(--vscode-foreground);background:var(--vscode-editor-background);">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-weight:600;">Free JT7 Panel</div>
+            <div style="opacity:.8;">Si el panel principal no se abre automáticamente, usa este acceso directo.</div>
+            <a href="command:freejt7.openControlPanel" style="color:var(--vscode-textLink-foreground);text-decoration:none;">Abrir Control Panel</a>
+          </div>
+        </body>
+        </html>
+      `;
+      void vscode.commands.executeCommand('freejt7.openControlPanel');
+    }
+  };
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('freejt7.controlPanelView', sidebarProvider)
+  );
+
   context.subscriptions.push(...subscriptions);
 }
 
@@ -1641,5 +2420,9 @@ module.exports = {
   activate,
   deactivate,
   runOpenClaw,
+  findOpenClawBinary,
   getGlobalVsCodeSettingsRepairState,
+  shouldPreferLocalExecution,
+  shouldUseLocalAgentFallback,
+  shouldUseProviderDirectFallback,
 };

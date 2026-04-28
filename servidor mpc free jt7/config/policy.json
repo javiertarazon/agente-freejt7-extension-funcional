@@ -1,25 +1,63 @@
 {
   "mode": "high-autonomy-with-guardrails",
-  "allowedWebDomains": ["*"],
+  "allowWildcardWebDomains": false,
+  "allowedWebDomains": [
+    "example.com",
+    "github.com",
+    "raw.githubusercontent.com",
+    "registry.npmjs.org",
+    "npmjs.org",
+    "openrouter.ai",
+    "huggingface.co",
+    "api.clod.io",
+    "google.com",
+    "bing.com",
+    "duckduckgo.com"
+  ],
+  "allowedFileRoots": [
+    ".",
+    ".."
+  ],
   "allowedDesktopPrograms": [
     "terminal64.exe",
     "metatrader64.exe",
     "mt5.exe",
     "acad.exe",
     "affinityphoto2.exe",
-    "affinitydesigner2.exe"
+    "affinitydesigner2.exe",
+    "explorer.exe",
+    "nautilus",
+    "dolphin",
+    "thunar",
+    "finder"
+  ],
+  "allowedBrowserPrograms": [
+    "msedge.exe",
+    "chrome.exe",
+    "google-chrome",
+    "google-chrome-stable",
+    "chromium",
+    "chromium-browser",
+    "microsoft-edge",
+    "firefox",
+    "brave",
+    "brave-browser"
   ],
   "allowedCommands": [
     "whoami",
-    "ipconfig",
-    "tasklist",
     "echo",
+    "pwd",
+    "ls",
     "dir",
-    "powershell",
-    "cmd",
+    "git",
     "node",
-    "python"
+    "npm",
+    "python",
+    "python3"
   ],
+  "interpreterCommands": ["python", "python3", "node", "powershell", "pwsh", "cmd"],
+  "blockedInterpreterFlags": ["-c", "-e", "--eval", "-Command", "-command", "/c"],
+  "allowInterpreterEval": false,
   "requireApproval": [
     "registry.modify",
     "external.publish",

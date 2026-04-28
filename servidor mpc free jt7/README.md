@@ -14,9 +14,14 @@ Servidor **Model Context Protocol (MCP)** completo con automatización web, scra
 - `jt7_ping`: Verificar estado del servidor
 - `jt7_web_fetch`: Descargas HTTP con control de política
 - `jt7_scrape_text`: Extrae texto plano de URLs
+- `jt7_browser_open`: Abre una URL permitida en el navegador por defecto
 - `jt7_system_exec`: Ejecuta comandos (allowlist + timeout)
 - `jt7_desktop_open`: Abre programas permitidos
 - `jt7_file_read` / `jt7_file_write`: I/O de archivos
+- `jt7_path_stat` / `jt7_dir_list`: Inspección de rutas y directorios
+- `jt7_pdf_extract_text`: Lectura local de PDFs a texto
+- `jt7_document_read`: Lectura normalizada de texto/JSON/HTML/CSV/PDF
+- `jt7_path_search`: Búsqueda por nombre o contenido en rutas locales
 - `jt7_youtube_info`: Metadatos vía oEmbed
 - `jt7_youtube_download_request`: Descarga controlada
 
