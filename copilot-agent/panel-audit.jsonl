@@ -1,0 +1,316 @@
+{"ts":"2026-04-23T00:48:39.081Z","sessionId":"panel-2651573c","type":"session.created","payload":{"title":"Sesion Free JT7"}}
+{"ts":"2026-04-23T00:57:27.037Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-ed63ecb5-1","risk":"low"}}
+{"ts":"2026-04-23T00:57:27.148Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-ed63ecb5-1","workerId":1}}
+{"ts":"2026-04-23T00:57:27.151Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-ed63ecb5-1","retries":1,"maxRetries":2,"error":"Free JT7: No hay API Key para \"hf\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-23T00:57:27.154Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-ed63ecb5-1","workerId":1}}
+{"ts":"2026-04-23T00:57:27.166Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-ed63ecb5-1","retries":2,"maxRetries":2,"error":"Free JT7: No hay API Key para \"hf\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-23T00:57:27.169Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-ed63ecb5-1","workerId":1}}
+{"ts":"2026-04-23T00:57:27.175Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-ed63ecb5-1","retries":3,"error":"Free JT7: No hay API Key para \"hf\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-23T00:58:41.425Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-543f2e9c-0","risk":"low"}}
+{"ts":"2026-04-23T00:58:41.560Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-543f2e9c-0","workerId":1}}
+{"ts":"2026-04-23T00:58:41.562Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-543f2e9c-0","retries":1,"maxRetries":2,"error":"Free JT7: No hay API Key para \"openrouter\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-23T00:58:41.564Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-543f2e9c-0","workerId":1}}
+{"ts":"2026-04-23T00:58:41.571Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-543f2e9c-0","retries":2,"maxRetries":2,"error":"Free JT7: No hay API Key para \"openrouter\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-23T00:58:41.574Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-543f2e9c-0","workerId":1}}
+{"ts":"2026-04-23T00:58:41.584Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-543f2e9c-0","retries":3,"error":"Free JT7: No hay API Key para \"openrouter\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-24T12:14:20.552Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-60e8d19b-9","risk":"low"}}
+{"ts":"2026-04-24T12:14:20.584Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-60e8d19b-9","workerId":1}}
+{"ts":"2026-04-24T12:14:21.498Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-60e8d19b-9","retries":1,"maxRetries":2,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T12:14:21.503Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-60e8d19b-9","workerId":1}}
+{"ts":"2026-04-24T12:14:22.183Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-60e8d19b-9","retries":2,"maxRetries":2,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T12:14:22.189Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-60e8d19b-9","workerId":1}}
+{"ts":"2026-04-24T12:14:23.003Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-60e8d19b-9","retries":3,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T12:48:47.531Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-7af4f807-9","risk":"low"}}
+{"ts":"2026-04-24T12:48:47.563Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-7af4f807-9","workerId":2}}
+{"ts":"2026-04-24T12:48:49.813Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-7af4f807-9","retries":1,"maxRetries":2,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T12:48:49.815Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-7af4f807-9","workerId":2}}
+{"ts":"2026-04-24T12:48:50.443Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-7af4f807-9","retries":2,"maxRetries":2,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T12:48:50.451Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-7af4f807-9","workerId":2}}
+{"ts":"2026-04-24T12:48:51.755Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-7af4f807-9","retries":3,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T13:00:55.266Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-0a51f37d-2","risk":"low"}}
+{"ts":"2026-04-24T13:00:55.439Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-0a51f37d-2","workerId":1}}
+{"ts":"2026-04-24T13:00:56.435Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-0a51f37d-2","retries":1,"maxRetries":2,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T13:00:56.437Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-0a51f37d-2","workerId":1}}
+{"ts":"2026-04-24T13:00:57.043Z","sessionId":"panel-2651573c","type":"task.retry.scheduled","payload":{"taskId":"task-0a51f37d-2","retries":2,"maxRetries":2,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T13:00:57.046Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-0a51f37d-2","workerId":1}}
+{"ts":"2026-04-24T13:00:57.658Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-0a51f37d-2","retries":3,"error":"Free JT7 (openrouter): error HTTP 429. Provider returned error"}}
+{"ts":"2026-04-24T13:12:28.514Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-41d26517-3","risk":"low"}}
+{"ts":"2026-04-24T13:12:28.745Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-41d26517-3","workerId":1}}
+{"ts":"2026-04-24T13:12:29.939Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-41d26517-3","retries":1,"error":"Free JT7 (openrouter): HTTP 429 para el modelo nousresearch/hermes-3-llama-3.1-405b:free. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel."}}
+{"ts":"2026-04-24T13:17:17.011Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-6a6bcacc-0","risk":"low"}}
+{"ts":"2026-04-24T13:17:17.031Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-6a6bcacc-0","workerId":1}}
+{"ts":"2026-04-24T13:17:52.363Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-6a6bcacc-0","provider":"openrouter","model":"google/gemma-4-31b-it:free"}}
+{"ts":"2026-04-24T13:21:42.075Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-517232ba-2","risk":"low"}}
+{"ts":"2026-04-24T13:21:42.097Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-517232ba-2","workerId":1}}
+{"ts":"2026-04-24T13:23:43.097Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-517232ba-2","retries":1,"error":"Free JT7 (openrouter): error HTTP 200."}}
+{"ts":"2026-04-25T14:59:42.928Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-b6c7c6af-1","risk":"low"}}
+{"ts":"2026-04-25T14:59:43.106Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-b6c7c6af-1","workerId":1}}
+{"ts":"2026-04-25T14:59:44.595Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-b6c7c6af-1","retries":1,"error":"Free JT7 (openrouter): HTTP 429 para el modelo nousresearch/hermes-3-llama-3.1-405b:free. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel."}}
+{"ts":"2026-04-25T15:01:00.517Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-384d2327-e","risk":"low"}}
+{"ts":"2026-04-25T15:01:00.766Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-384d2327-e","workerId":1}}
+{"ts":"2026-04-25T15:01:01.702Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-384d2327-e","retries":1,"error":"Free JT7 (clod): HTTP 429 para el modelo claude-opus-4-6. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel.\n\nDetalle remoto: Team quota exceeded"}}
+{"ts":"2026-04-25T15:01:37.456Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-02d452d9-c","risk":"low"}}
+{"ts":"2026-04-25T15:01:37.539Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-02d452d9-c","workerId":1}}
+{"ts":"2026-04-25T15:01:42.357Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-02d452d9-c","provider":"clod","model":"OpenAI/gpt-oss-20B"}}
+{"ts":"2026-04-25T15:02:48.696Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-c9408c67-8","risk":"low"}}
+{"ts":"2026-04-25T15:02:48.726Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-c9408c67-8","workerId":2}}
+{"ts":"2026-04-25T15:03:04.677Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-c9408c67-8","provider":"clod","model":"OpenAI/gpt-oss-20B"}}
+{"ts":"2026-04-25T15:05:14.010Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-fbf70be0-8","risk":"low"}}
+{"ts":"2026-04-25T15:05:14.167Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-fbf70be0-8","workerId":2}}
+{"ts":"2026-04-25T15:05:15.367Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-fbf70be0-8","retries":1,"error":"Free JT7 (clod): HTTP 429 para el modelo claude-opus-4-5. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel.\n\nDetalle remoto: Team quota exceeded"}}
+{"ts":"2026-04-25T15:06:04.858Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-ee7f4f6f-b","risk":"low"}}
+{"ts":"2026-04-25T15:06:04.984Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-ee7f4f6f-b","workerId":2}}
+{"ts":"2026-04-25T15:06:14.026Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-ee7f4f6f-b","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-25T15:07:48.079Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-2a60dd15-7","risk":"low"}}
+{"ts":"2026-04-25T15:07:48.212Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-2a60dd15-7","workerId":2}}
+{"ts":"2026-04-25T15:07:58.788Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-2a60dd15-7","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-25T15:09:00.167Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-ef2dd5c7-e","risk":"low"}}
+{"ts":"2026-04-25T15:09:00.365Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-ef2dd5c7-e","workerId":3}}
+{"ts":"2026-04-25T15:09:11.895Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-ef2dd5c7-e","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-25T15:10:40.199Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-cad1fc6e-9","risk":"low"}}
+{"ts":"2026-04-25T15:10:40.327Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-cad1fc6e-9","workerId":1}}
+{"ts":"2026-04-25T15:10:47.128Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-cad1fc6e-9","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-25T15:13:15.367Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-1857d636-9","risk":"low"}}
+{"ts":"2026-04-25T15:13:15.378Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-1857d636-9","workerId":2}}
+{"ts":"2026-04-25T15:13:27.996Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-1857d636-9","provider":"openrouter","model":"minimax/minimax-m2.5:free"}}
+{"ts":"2026-04-25T15:14:26.216Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-1427b057-f","risk":"low"}}
+{"ts":"2026-04-25T15:14:26.258Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-1427b057-f","workerId":3}}
+{"ts":"2026-04-25T15:14:37.220Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-1427b057-f","provider":"openrouter","model":"minimax/minimax-m2.5:free"}}
+{"ts":"2026-04-25T15:52:22.045Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-4d08ab81-d","risk":"low"}}
+{"ts":"2026-04-25T15:52:22.070Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-4d08ab81-d","workerId":1}}
+{"ts":"2026-04-25T15:52:39.889Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-4d08ab81-d","provider":"openrouter","model":"minimax/minimax-m2.5:free"}}
+{"ts":"2026-04-25T15:53:32.613Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-0fd03e58-e","risk":"low"}}
+{"ts":"2026-04-25T15:53:32.757Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-0fd03e58-e","workerId":2}}
+{"ts":"2026-04-25T15:53:56.791Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-0fd03e58-e","provider":"openrouter","model":"minimax/minimax-m2.5:free"}}
+{"ts":"2026-04-26T02:29:35.677Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-3b73420d-0","risk":"low"}}
+{"ts":"2026-04-26T02:29:35.848Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-3b73420d-0","workerId":1}}
+{"ts":"2026-04-26T02:29:57.440Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-3b73420d-0","provider":"openrouter","model":"minimax/minimax-m2.5:free"}}
+{"ts":"2026-04-26T02:30:48.743Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-df036d97-a","risk":"low"}}
+{"ts":"2026-04-26T02:30:48.987Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-df036d97-a","workerId":1}}
+{"ts":"2026-04-26T02:31:11.032Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-df036d97-a","provider":"openrouter","model":"minimax/minimax-m2.5:free"}}
+{"ts":"2026-04-26T02:33:51.389Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-cefa4a62-4","risk":"low"}}
+{"ts":"2026-04-26T02:33:51.516Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-cefa4a62-4","workerId":1}}
+{"ts":"2026-04-26T02:33:52.479Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-cefa4a62-4","retries":1,"error":"Free JT7 (clod): HTTP 429 para el modelo zai-org/GLM-5. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel.\n\nDetalle remoto: Team quota exceeded"}}
+{"ts":"2026-04-26T02:34:57.361Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-6b01a454-c","risk":"low"}}
+{"ts":"2026-04-26T02:34:57.502Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-6b01a454-c","workerId":1}}
+{"ts":"2026-04-26T02:34:58.232Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-6b01a454-c","retries":1,"error":"Free JT7 (clod): HTTP 429 para el modelo gpt-5. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel.\n\nDetalle remoto: Team quota exceeded"}}
+{"ts":"2026-04-26T02:35:51.231Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-059e4d52-3","risk":"low"}}
+{"ts":"2026-04-26T02:35:51.248Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-059e4d52-3","workerId":1}}
+{"ts":"2026-04-26T02:35:51.997Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-059e4d52-3","retries":1,"error":"Free JT7 (clod): HTTP 429 para el modelo gpt-5.3-codex. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel.\n\nDetalle remoto: Team quota exceeded"}}
+{"ts":"2026-04-26T02:38:23.545Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-a77eb44d-a","risk":"low"}}
+{"ts":"2026-04-26T02:38:23.575Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-a77eb44d-a","workerId":1}}
+{"ts":"2026-04-26T02:38:24.362Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-a77eb44d-a","retries":1,"error":"Free JT7 (clod): HTTP 429 para el modelo zai-org/GLM-5.1. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel.\n\nDetalle remoto: Team quota exceeded"}}
+{"ts":"2026-04-26T02:39:05.220Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-ed4e38de-9","risk":"low"}}
+{"ts":"2026-04-26T02:39:05.409Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-ed4e38de-9","workerId":1}}
+{"ts":"2026-04-26T02:39:06.343Z","sessionId":"panel-2651573c","type":"task.failed","payload":{"taskId":"task-ed4e38de-9","retries":1,"error":"Free JT7 (clod): HTTP 429 para el modelo gpt-5. El proveedor devolvió un rate limit temporal.\n\nEspera un momento y vuelve a intentar, o cambia a un modelo/proveedor menos saturado desde el panel.\n\nDetalle remoto: Team quota exceeded"}}
+{"ts":"2026-04-26T02:39:39.322Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-b6460c95-4","risk":"low"}}
+{"ts":"2026-04-26T02:39:39.465Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-b6460c95-4","workerId":1}}
+{"ts":"2026-04-26T02:39:48.228Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-b6460c95-4","provider":"clod","model":"Qwen/Qwen3-235B-A22B-Thinking-2507"}}
+{"ts":"2026-04-26T03:39:45.838Z","sessionId":"panel-6a62ee38","type":"session.created","payload":{"title":"pruebas de chat"}}
+{"ts":"2026-04-26T03:40:34.124Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-f02e9edb-e","risk":"low"}}
+{"ts":"2026-04-26T03:40:34.237Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-f02e9edb-e","workerId":1}}
+{"ts":"2026-04-26T03:40:41.302Z","sessionId":"panel-6a62ee38","type":"task.completed","payload":{"taskId":"task-f02e9edb-e","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-26T03:41:27.019Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-94665fe0-9","risk":"low"}}
+{"ts":"2026-04-26T03:41:27.182Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-94665fe0-9","workerId":1}}
+{"ts":"2026-04-26T03:41:36.690Z","sessionId":"panel-6a62ee38","type":"task.completed","payload":{"taskId":"task-94665fe0-9","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-26T04:37:31.592Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-290218e5-6","risk":"low"}}
+{"ts":"2026-04-26T04:37:31.619Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-290218e5-6","workerId":1}}
+{"ts":"2026-04-26T04:37:31.661Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-290218e5-6","retries":1,"error":"Copilot CLI not found at copilot. Ensure @github/copilot is installed."}}
+{"ts":"2026-04-26T04:38:18.092Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-7b518325-8","risk":"low"}}
+{"ts":"2026-04-26T04:38:18.124Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-7b518325-8","workerId":1}}
+{"ts":"2026-04-26T04:38:18.169Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-7b518325-8","retries":1,"error":"Copilot CLI not found at copilot. Ensure @github/copilot is installed."}}
+{"ts":"2026-04-26T04:39:37.995Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-36a2894f-8","risk":"low"}}
+{"ts":"2026-04-26T04:39:38.241Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-36a2894f-8","workerId":1}}
+{"ts":"2026-04-26T04:39:38.264Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-36a2894f-8","retries":1,"error":"Copilot CLI not found at copilot. Ensure @github/copilot is installed."}}
+{"ts":"2026-04-26T15:05:50.832Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-270bcb3e-1","risk":"medium"}}
+{"ts":"2026-04-26T15:05:51.027Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-270bcb3e-1","workerId":1}}
+{"ts":"2026-04-26T15:05:57.862Z","sessionId":"panel-6a62ee38","type":"task.retry.scheduled","payload":{"taskId":"task-270bcb3e-1","retries":1,"maxRetries":2,"error":"Free JT7 (clod/OpenClaw agent): Run: openclaw doctor --fix"}}
+{"ts":"2026-04-26T15:05:57.887Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-270bcb3e-1","workerId":1}}
+{"ts":"2026-04-26T15:06:02.868Z","sessionId":"panel-6a62ee38","type":"task.retry.scheduled","payload":{"taskId":"task-270bcb3e-1","retries":2,"maxRetries":2,"error":"Free JT7 (clod/OpenClaw agent): Run: openclaw doctor --fix"}}
+{"ts":"2026-04-26T15:06:02.895Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-270bcb3e-1","workerId":1}}
+{"ts":"2026-04-26T15:06:06.992Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-270bcb3e-1","retries":3,"error":"Free JT7 (clod/OpenClaw agent): Run: openclaw doctor --fix"}}
+{"ts":"2026-04-26T15:07:11.117Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-42bcfc8e-8","risk":"medium"}}
+{"ts":"2026-04-26T15:07:11.246Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-42bcfc8e-8","workerId":1}}
+{"ts":"2026-04-26T15:07:15.469Z","sessionId":"panel-6a62ee38","type":"task.retry.scheduled","payload":{"taskId":"task-42bcfc8e-8","retries":1,"maxRetries":2,"error":"Free JT7 (clod/OpenClaw agent): Run: openclaw doctor --fix"}}
+{"ts":"2026-04-26T15:07:15.494Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-42bcfc8e-8","workerId":1}}
+{"ts":"2026-04-26T15:07:19.689Z","sessionId":"panel-6a62ee38","type":"task.retry.scheduled","payload":{"taskId":"task-42bcfc8e-8","retries":2,"maxRetries":2,"error":"Free JT7 (clod/OpenClaw agent): Run: openclaw doctor --fix"}}
+{"ts":"2026-04-26T15:07:19.716Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-42bcfc8e-8","workerId":1}}
+{"ts":"2026-04-26T15:07:23.961Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-42bcfc8e-8","retries":3,"error":"Free JT7 (clod/OpenClaw agent): Run: openclaw doctor --fix"}}
+{"ts":"2026-04-27T02:18:24.059Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-cccdc911-f","risk":"medium"}}
+{"ts":"2026-04-27T02:18:24.366Z","sessionId":"panel-2651573c","type":"approval.requested","payload":{"taskId":"task-cccdc911-f","risk":"medium","profile":"coding","askTools":["subagent"]}}
+{"ts":"2026-04-27T02:21:19.616Z","sessionId":"panel-2651573c","type":"task.enqueued","payload":{"taskId":"task-93fe9898-c","risk":"medium"}}
+{"ts":"2026-04-27T02:21:19.848Z","sessionId":"panel-2651573c","type":"approval.requested","payload":{"taskId":"task-93fe9898-c","risk":"medium","profile":"coding","askTools":["subagent"]}}
+{"ts":"2026-04-27T02:22:16.749Z","sessionId":"panel-2be4d81b","type":"session.created","payload":{"title":"Sesión Free JT75"}}
+{"ts":"2026-04-27T02:22:59.699Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-02bc9392-5","risk":"medium"}}
+{"ts":"2026-04-27T02:22:59.840Z","sessionId":"panel-2be4d81b","type":"approval.requested","payload":{"taskId":"task-02bc9392-5","risk":"medium","profile":"coding","askTools":["subagent"]}}
+{"ts":"2026-04-27T02:23:50.660Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-3c6c66d4-4","risk":"medium"}}
+{"ts":"2026-04-27T02:23:50.724Z","sessionId":"panel-2be4d81b","type":"subagent.spawned","payload":{"subagentId":"sub-24fd6718-0","taskId":"task-3c6c66d4-4","runtimeBackend":"auto","authProfile":"default"}}
+{"ts":"2026-04-27T02:23:50.840Z","sessionId":"panel-2be4d81b","type":"approval.requested","payload":{"taskId":"task-3c6c66d4-4","risk":"medium","profile":"coding","askTools":["subagent"]}}
+{"ts":"2026-04-27T02:23:51.591Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-540e3635-f","risk":"medium"}}
+{"ts":"2026-04-27T02:23:51.685Z","sessionId":"panel-2be4d81b","type":"subagent.spawned","payload":{"subagentId":"sub-9e629d43-4","taskId":"task-540e3635-f","runtimeBackend":"auto","authProfile":"default"}}
+{"ts":"2026-04-27T02:23:51.804Z","sessionId":"panel-2be4d81b","type":"approval.requested","payload":{"taskId":"task-540e3635-f","risk":"medium","profile":"coding","askTools":["subagent"]}}
+{"ts":"2026-04-27T02:23:52.310Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-89aece9c-b","risk":"medium"}}
+{"ts":"2026-04-27T02:23:52.392Z","sessionId":"panel-2be4d81b","type":"subagent.spawned","payload":{"subagentId":"sub-f7cb6033-b","taskId":"task-89aece9c-b","runtimeBackend":"auto","authProfile":"default"}}
+{"ts":"2026-04-27T02:23:52.486Z","sessionId":"panel-2be4d81b","type":"approval.requested","payload":{"taskId":"task-89aece9c-b","risk":"medium","profile":"coding","askTools":["subagent"]}}
+{"ts":"2026-04-27T02:23:53.509Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T02:23:54.613Z","sessionId":"panel-2be4d81b","type":"session.resumed","payload":{}}
+{"ts":"2026-04-27T02:38:13.446Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-41c088dc-d","risk":"medium"}}
+{"ts":"2026-04-27T02:38:13.755Z","sessionId":"panel-2be4d81b","type":"approval.requested","payload":{"taskId":"task-41c088dc-d","risk":"medium","profile":"coding","askTools":["subagent"]}}
+{"ts":"2026-04-27T02:39:27.438Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T02:39:30.272Z","sessionId":"panel-2be4d81b","type":"session.resumed","payload":{}}
+{"ts":"2026-04-27T02:50:47.238Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-cccdc911-f","workerId":1}}
+{"ts":"2026-04-27T02:50:47.290Z","sessionId":"panel-2651573c","type":"task.started","payload":{"taskId":"task-93fe9898-c","workerId":2}}
+{"ts":"2026-04-27T02:50:47.324Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-02bc9392-5","workerId":3}}
+{"ts":"2026-04-27T02:51:27.598Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-40b29c08-3","risk":"medium"}}
+{"ts":"2026-04-27T02:51:38.310Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-cccdc911-f","provider":"openrouter","model":"openai/gpt-oss-20b:free"}}
+{"ts":"2026-04-27T02:51:38.315Z","sessionId":"panel-2651573c","type":"task.verified","payload":{"taskId":"task-cccdc911-f","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T02:51:38.420Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-3c6c66d4-4","workerId":1}}
+{"ts":"2026-04-27T02:52:53.657Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-02bc9392-5","provider":"clod","model":"meta-llama/Llama-3.3-70B-Instruct-Turbo"}}
+{"ts":"2026-04-27T02:52:53.678Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-02bc9392-5","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T02:52:53.924Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-540e3635-f","workerId":3}}
+{"ts":"2026-04-27T02:52:58.104Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T02:52:59.478Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T02:53:00.391Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T02:53:05.186Z","sessionId":"panel-2651573c","type":"task.completed","payload":{"taskId":"task-93fe9898-c","provider":"clod","model":"meta-llama/Llama-3.3-70B-Instruct-Turbo"}}
+{"ts":"2026-04-27T02:53:05.190Z","sessionId":"panel-2651573c","type":"task.verified","payload":{"taskId":"task-93fe9898-c","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T02:53:05.395Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-89aece9c-b","workerId":2}}
+{"ts":"2026-04-27T02:53:10.444Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-3c6c66d4-4","provider":"clod","model":"meta-llama/Llama-3.3-70B-Instruct-Turbo"}}
+{"ts":"2026-04-27T02:53:10.447Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-3c6c66d4-4","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T02:53:10.500Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-41c088dc-d","workerId":1}}
+{"ts":"2026-04-27T02:53:59.958Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-f6c73944-c","risk":"medium"}}
+{"ts":"2026-04-27T02:54:19.106Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-540e3635-f","provider":"clod","model":"meta-llama/Llama-3.3-70B-Instruct-Turbo"}}
+{"ts":"2026-04-27T02:54:19.113Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-540e3635-f","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T02:54:19.255Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-40b29c08-3","workerId":3}}
+{"ts":"2026-04-27T02:54:24.628Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-89aece9c-b","provider":"clod","model":"meta-llama/Llama-3.3-70B-Instruct-Turbo"}}
+{"ts":"2026-04-27T02:54:24.638Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-89aece9c-b","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T02:54:24.697Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-f6c73944-c","workerId":2}}
+{"ts":"2026-04-27T02:54:31.011Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-41c088dc-d","provider":"clod","model":"meta-llama/Llama-3.3-70B-Instruct-Turbo"}}
+{"ts":"2026-04-27T02:54:31.016Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-41c088dc-d","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T02:55:29.074Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-40b29c08-3","provider":"clod","model":"meta-llama/Llama-3.3-70B-Instruct-Turbo"}}
+{"ts":"2026-04-27T02:55:29.078Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-40b29c08-3","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T02:55:29.921Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-f6c73944-c","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T02:55:29.926Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-f6c73944-c","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T02:55:49.973Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-caa13547-d","risk":"medium"}}
+{"ts":"2026-04-27T02:55:50.171Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-caa13547-d","workerId":2}}
+{"ts":"2026-04-27T11:39:40.167Z","sessionId":"panel-2be4d81b","type":"task.recovered.failed","payload":{"taskId":"task-caa13547-d","reason":"La tarea quedo en ejecucion durante un reinicio del runtime. Reintenta para continuar."}}
+{"ts":"2026-04-27T11:40:44.127Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-97f0b42b-6","risk":"medium"}}
+{"ts":"2026-04-27T11:40:44.249Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-97f0b42b-6","workerId":1}}
+{"ts":"2026-04-27T11:41:28.239Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-97f0b42b-6","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T11:41:28.244Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-97f0b42b-6","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T12:08:20.880Z","sessionId":"panel-2be4d81b","type":"task.recovered.failed","payload":{"taskId":"task-caa13547-d","reason":"La tarea quedo en ejecucion durante un reinicio del runtime. Reintenta para continuar."}}
+{"ts":"2026-04-27T12:08:53.128Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-991e889c-a","risk":"medium"}}
+{"ts":"2026-04-27T12:08:53.230Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-991e889c-a","workerId":1}}
+{"ts":"2026-04-27T12:09:30.400Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-991e889c-a","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T12:09:30.402Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-991e889c-a","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T15:25:12.067Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-5526fe07-d","risk":"medium"}}
+{"ts":"2026-04-27T15:25:12.263Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-5526fe07-d","workerId":1}}
+{"ts":"2026-04-27T15:25:41.627Z","sessionId":"panel-2be4d81b","type":"session.resumed","payload":{}}
+{"ts":"2026-04-27T15:25:44.303Z","sessionId":"panel-2be4d81b","type":"session.resumed","payload":{}}
+{"ts":"2026-04-27T15:25:48.913Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T15:25:52.357Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-102f9fe0-f","risk":"medium"}}
+{"ts":"2026-04-27T15:25:52.397Z","sessionId":"panel-2be4d81b","type":"subagent.spawned","payload":{"subagentId":"sub-12a4c666-d","taskId":"task-102f9fe0-f","runtimeBackend":"acp:opencode","authProfile":"default"}}
+{"ts":"2026-04-27T15:25:52.596Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-102f9fe0-f","workerId":2}}
+{"ts":"2026-04-27T15:26:10.848Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-5526fe07-d","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T15:26:10.850Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-5526fe07-d","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T15:26:56.912Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-102f9fe0-f","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T15:26:56.917Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-102f9fe0-f","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T15:28:21.494Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-a2332ebc-0","risk":"medium"}}
+{"ts":"2026-04-27T15:28:21.621Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-a2332ebc-0","workerId":1}}
+{"ts":"2026-04-27T15:29:23.251Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-a2332ebc-0","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T15:29:23.262Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-a2332ebc-0","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T15:29:49.877Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T15:44:13.949Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-db8ee256-3","risk":"medium"}}
+{"ts":"2026-04-27T15:44:14.028Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-db8ee256-3","workerId":1}}
+{"ts":"2026-04-27T15:44:14.227Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-db8ee256-3","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T15:44:14.230Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-db8ee256-3","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T15:45:20.603Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-51b5bf77-8","risk":"medium"}}
+{"ts":"2026-04-27T15:45:20.754Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-51b5bf77-8","workerId":1}}
+{"ts":"2026-04-27T15:45:20.918Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-51b5bf77-8","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T15:45:20.921Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-51b5bf77-8","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T15:46:00.885Z","sessionId":"panel-2be4d81b","type":"task.enqueued","payload":{"taskId":"task-d3072626-c","risk":"medium"}}
+{"ts":"2026-04-27T15:46:01.073Z","sessionId":"panel-2be4d81b","type":"task.started","payload":{"taskId":"task-d3072626-c","workerId":1}}
+{"ts":"2026-04-27T15:46:01.193Z","sessionId":"panel-2be4d81b","type":"task.completed","payload":{"taskId":"task-d3072626-c","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T15:46:01.196Z","sessionId":"panel-2be4d81b","type":"task.verified","payload":{"taskId":"task-d3072626-c","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T15:46:19.762Z","sessionId":"panel-2be4d81b","type":"session.resumed","payload":{}}
+{"ts":"2026-04-27T15:46:28.091Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T15:46:28.488Z","sessionId":"panel-2be4d81b","type":"session.yielded","payload":{"reason":"yield manual desde panel"}}
+{"ts":"2026-04-27T16:13:30.798Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-04633b42-4","risk":"medium"}}
+{"ts":"2026-04-27T16:13:30.912Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-04633b42-4","workerId":1}}
+{"ts":"2026-04-27T16:13:31.122Z","sessionId":"panel-6a62ee38","type":"task.completed","payload":{"taskId":"task-04633b42-4","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T16:13:31.125Z","sessionId":"panel-6a62ee38","type":"task.verified","payload":{"taskId":"task-04633b42-4","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T17:55:37.648Z","sessionId":"panel-7c314cb8","type":"session.created","payload":{"title":"Sesión Free JT7"}}
+{"ts":"2026-04-27T17:56:20.505Z","sessionId":"panel-7c314cb8","type":"task.enqueued","payload":{"taskId":"task-05a6d2da-e","risk":"medium"}}
+{"ts":"2026-04-27T17:56:20.592Z","sessionId":"panel-7c314cb8","type":"task.started","payload":{"taskId":"task-05a6d2da-e","workerId":1}}
+{"ts":"2026-04-27T17:56:35.187Z","sessionId":"panel-7c314cb8","type":"task.completed","payload":{"taskId":"task-05a6d2da-e","provider":"openrouter","model":"qwen/qwen3-next-80b-a3b-instruct:free"}}
+{"ts":"2026-04-27T17:56:35.191Z","sessionId":"panel-7c314cb8","type":"task.verified","payload":{"taskId":"task-05a6d2da-e","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T17:58:44.441Z","sessionId":"panel-7c314cb8","type":"task.enqueued","payload":{"taskId":"task-e4a27cab-0","risk":"medium"}}
+{"ts":"2026-04-27T17:58:44.493Z","sessionId":"panel-7c314cb8","type":"subagent.spawned","payload":{"subagentId":"sub-0b7ac065-1","taskId":"task-e4a27cab-0","runtimeBackend":"auto","authProfile":"default"}}
+{"ts":"2026-04-27T17:58:44.633Z","sessionId":"panel-7c314cb8","type":"task.started","payload":{"taskId":"task-e4a27cab-0","workerId":1}}
+{"ts":"2026-04-27T18:00:44.685Z","sessionId":"panel-7c314cb8","type":"task.failed","payload":{"taskId":"task-e4a27cab-0","retries":1,"error":"Tiempo de ejecucion excedido (120000ms)."}}
+{"ts":"2026-04-27T18:01:12.122Z","sessionId":"panel-7c314cb8","type":"task.enqueued","payload":{"taskId":"task-b7c683b9-7","risk":"medium"}}
+{"ts":"2026-04-27T18:01:12.338Z","sessionId":"panel-7c314cb8","type":"task.started","payload":{"taskId":"task-b7c683b9-7","workerId":2}}
+{"ts":"2026-04-27T18:01:54.206Z","sessionId":"panel-7c314cb8","type":"task.completed","payload":{"taskId":"task-b7c683b9-7","provider":"clod","model":"MiniMaxAI/MiniMax-M2.5"}}
+{"ts":"2026-04-27T18:01:54.221Z","sessionId":"panel-7c314cb8","type":"task.verified","payload":{"taskId":"task-b7c683b9-7","verificationStatus":"verified","evidenceCount":11,"warnings":[]}}
+{"ts":"2026-04-27T18:31:10.131Z","sessionId":"panel-30582836","type":"session.created","payload":{"title":"Sesión instalar git"}}
+{"ts":"2026-04-27T18:31:39.047Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-d2b056da-2","risk":"medium"}}
+{"ts":"2026-04-27T18:31:39.295Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-d2b056da-2","workerId":1}}
+{"ts":"2026-04-27T18:32:24.865Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-d2b056da-2","provider":"clod","model":"OpenAI/gpt-oss-20B"}}
+{"ts":"2026-04-27T18:32:24.876Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-d2b056da-2","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T18:33:35.903Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-fbff88e1-4","risk":"medium"}}
+{"ts":"2026-04-27T18:33:36.041Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-fbff88e1-4","workerId":1}}
+{"ts":"2026-04-27T18:34:13.529Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-fbff88e1-4","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T18:34:13.532Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-fbff88e1-4","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T18:44:43.511Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-153d88a0-1","risk":"medium"}}
+{"ts":"2026-04-27T18:44:43.661Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-153d88a0-1","workerId":1}}
+{"ts":"2026-04-27T18:45:14.850Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-153d88a0-1","provider":"clod","model":"Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"}}
+{"ts":"2026-04-27T18:45:14.854Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-153d88a0-1","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-27T23:31:48.900Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-80632df0-7","risk":"medium"}}
+{"ts":"2026-04-27T23:31:49.053Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-80632df0-7","workerId":1}}
+{"ts":"2026-04-27T23:32:37.992Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-80632df0-7","provider":"clod","model":"OpenAI/gpt-oss-20B"}}
+{"ts":"2026-04-27T23:32:37.999Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-80632df0-7","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-27T23:34:14.573Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-322ce56a-c","risk":"medium"}}
+{"ts":"2026-04-27T23:34:14.826Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-322ce56a-c","workerId":1}}
+{"ts":"2026-04-27T23:34:26.834Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-322ce56a-c","provider":"openrouter","model":"qwen/qwen3-coder:free"}}
+{"ts":"2026-04-27T23:34:26.837Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-322ce56a-c","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-28T02:18:40.256Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-5265f8c3-6","risk":"medium"}}
+{"ts":"2026-04-28T02:18:40.470Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-5265f8c3-6","workerId":1}}
+{"ts":"2026-04-28T02:19:09.462Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-5265f8c3-6","provider":"openrouter","model":"qwen/qwen3-coder:free"}}
+{"ts":"2026-04-28T02:19:09.469Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-5265f8c3-6","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-28T02:20:50.876Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-301eff2e-d","risk":"medium"}}
+{"ts":"2026-04-28T02:20:51.087Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-301eff2e-d","workerId":1}}
+{"ts":"2026-04-28T02:21:00.136Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-301eff2e-d","provider":"openrouter","model":"qwen/qwen3-coder:free"}}
+{"ts":"2026-04-28T02:21:00.140Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-301eff2e-d","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-28T02:45:31.385Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-622777ed-1","risk":"medium"}}
+{"ts":"2026-04-28T02:45:31.550Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-622777ed-1","workerId":1}}
+{"ts":"2026-04-28T02:46:06.017Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-622777ed-1","provider":"openrouter","model":"qwen/qwen3-coder:free"}}
+{"ts":"2026-04-28T02:46:06.022Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-622777ed-1","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-28T02:55:59.277Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-e56c61cc-6","risk":"medium"}}
+{"ts":"2026-04-28T02:55:59.431Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-e56c61cc-6","workerId":1}}
+{"ts":"2026-04-28T02:56:51.014Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-e56c61cc-6","provider":"openrouter","model":"qwen/qwen3-coder:free"}}
+{"ts":"2026-04-28T02:56:51.030Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-e56c61cc-6","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-28T12:18:51.762Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-6918fc74-1","risk":"medium"}}
+{"ts":"2026-04-28T12:18:51.974Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-6918fc74-1","workerId":1}}
+{"ts":"2026-04-28T12:19:28.230Z","sessionId":"panel-30582836","type":"task.failed","payload":{"taskId":"task-6918fc74-1","retries":1,"error":"Free JT7 router fallback exhausted: The argument 'args[12]' must be a string without null bytes. Received 'Instrucciones base del agente:\\n' +\n  'Eres free jt7, un agente tecnico pragmatico dentro del runtime local de una extension.\\n..."}}
+{"ts":"2026-04-28T12:20:52.856Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-06fc8031-b","risk":"medium"}}
+{"ts":"2026-04-28T12:20:53.010Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-06fc8031-b","workerId":1}}
+{"ts":"2026-04-28T12:20:57.535Z","sessionId":"panel-30582836","type":"task.failed","payload":{"taskId":"task-06fc8031-b","retries":1,"error":"Free JT7 router fallback exhausted: The argument 'args[12]' must be a string without null bytes. Received 'Instrucciones base del agente:\\n' +\n  'Eres free jt7, un agente tecnico pragmatico dentro del runtime local de una extension.\\n..."}}
+{"ts":"2026-04-28T12:28:23.947Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-c80916f3-b","risk":"medium"}}
+{"ts":"2026-04-28T12:28:24.098Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-c80916f3-b","workerId":1}}
+{"ts":"2026-04-28T12:29:04.416Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-c80916f3-b","provider":"openrouter","model":"minimax/minimax-m2.5:free"}}
+{"ts":"2026-04-28T12:29:04.431Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-c80916f3-b","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-28T12:30:30.160Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-9ce71a2e-7","risk":"medium"}}
+{"ts":"2026-04-28T12:30:30.357Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-9ce71a2e-7","workerId":1}}
+{"ts":"2026-04-28T12:32:12.797Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-9ce71a2e-7","provider":"openrouter","model":"nvidia/nemotron-3-super-120b-a12b:free"}}
+{"ts":"2026-04-28T12:32:12.807Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-9ce71a2e-7","verificationStatus":"verified","evidenceCount":1,"warnings":[]}}
+{"ts":"2026-04-28T12:34:21.013Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-9a1417c7-f","risk":"medium"}}
+{"ts":"2026-04-28T12:34:21.252Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-9a1417c7-f","workerId":1}}
+{"ts":"2026-04-28T12:35:08.830Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-9a1417c7-f","provider":"openrouter","model":"nvidia/nemotron-3-super-120b-a12b:free"}}
+{"ts":"2026-04-28T12:35:08.835Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-9a1417c7-f","verificationStatus":"verified","evidenceCount":1,"warnings":[]}}
+{"ts":"2026-04-28T12:37:14.820Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-fbc8a258-8","risk":"medium"}}
+{"ts":"2026-04-28T12:37:15.033Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-fbc8a258-8","workerId":1}}
+{"ts":"2026-04-28T12:37:49.606Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-fbc8a258-8","provider":"openrouter","model":"nvidia/nemotron-3-super-120b-a12b:free"}}
+{"ts":"2026-04-28T12:37:49.611Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-fbc8a258-8","verificationStatus":"verified","evidenceCount":1,"warnings":[]}}
+{"ts":"2026-04-28T13:55:45.455Z","sessionId":"panel-30582836","type":"task.enqueued","payload":{"taskId":"task-57c18f8e-3","risk":"medium"}}
+{"ts":"2026-04-28T13:55:45.654Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-57c18f8e-3","workerId":1}}
+{"ts":"2026-04-28T13:55:46.103Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-57c18f8e-3","provider":"local","model":"freejt7-local-tools"}}
+{"ts":"2026-04-28T13:55:46.109Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-57c18f8e-3","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}

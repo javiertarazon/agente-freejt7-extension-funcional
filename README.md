@@ -15,6 +15,27 @@ Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - Extension VS Code incluida (`package.json` + `extension.js`).
 - Variante Linux documentada y validada en la rama `feature/linux-v4.2.3`.
 
+## Ultimas modificaciones destacadas
+
+El estado actual del repositorio consolida el giro hacia un modelo agent-first
+con IDE propia y runtime autonomo de Free JT7.
+
+- Runtime propio del agente en `src-js/core/freejt7-agent-runtime.js`, con
+  planificacion por tarea, continuidad de sesion y `capabilityPlan` para
+  skills, MCP y tools nativas.
+- Panel own-ide chat-first en `src-js/core/control-panel.js`, con inspector
+  lateral, modos `agent/direct`, persistencia de estado y trazabilidad visible.
+- Backends subordinados: OpenClaw y providers externos quedan detras del
+  runtime de Free JT7, mientras la compatibilidad Copilot se mantiene aislada
+  como ruta heredada.
+- Nueva capa app/desktop para Free JT7: bootstrap standalone, perfil `own-ide`,
+  empaquetado `.deb` y `.rpm`, instaladores rootless y launchers dedicados.
+- Servidor MCP ampliado con tools de navegador y documentos, mas validaciones de
+  policy y selftests para el entorno local.
+- Documentacion de cierre y auditoria en `docs/14-*` hasta `docs/21-*`, donde
+  se describe la evolucion del runtime, la UI agent-first y el plan maestro de
+  IDE propia.
+
 ## Origen y trazabilidad
 
 - Repositorio fuente: `https://github.com/javiertarazon/agente-copilot.git`
@@ -90,6 +111,79 @@ python3 skills_manager.py policy-validate
 python3 skills_manager.py ide-detect --json
 python3 skills_manager.py install "/ruta/mi-proyecto" --ide all --update-user-settings
 ```
+
+## Modo app standalone (sin dependencia de Copilot/Claude/Codex)
+
+Para usar Free JT7 como una app aislada (perfil propio, VSIX propia y panel como interfaz principal):
+
+```bash
+npm run app:standalone
+```
+
+Esto prepara un perfil en `~/.freejt7-app/profiles/default`, instala la VSIX activa en ese perfil y abre la IDE con extensiones Copilot/Claude deshabilitadas para ese entorno.
+
+Opciones utiles:
+
+```bash
+npm run app:standalone:setup   # prepara perfil e instala VSIX, sin abrir la IDE
+npm run app:standalone:dry-run # simula comandos y rutas, sin ejecutar binarios externos
+```
+
+Wrappers directos:
+
+- Linux/macOS: `scripts/run-freejt7-app.sh`
+- Windows: `scripts/run-freejt7-app.ps1`
+
+### Modo IDE propio (Free JT7 Desktop con VSCodium portable)
+
+Para avanzar hacia IDE propia sin depender de `code` del sistema, Free JT7 incluye un bootstrap que instala runtime VSCodium portable en `~/.freejt7-app/runtime/vscodium` y lo usa como host del perfil aislado:
+
+```bash
+npm run app:own-ide:setup   # descarga/prepara IDE propia + instala VSIX (sin abrir)
+npm run app:own-ide         # idem, y abre ventana nueva sobre IDE propia
+```
+
+Diagnóstico en seco:
+
+```bash
+npm run app:own-ide:dry-run
+```
+
+### Instalador nativo `.deb` (Linux)
+
+Construir paquete Debian:
+
+```bash
+npm run package:deb
+```
+
+Instalar:
+
+```bash
+npm run install:deb
+```
+
+Notas:
+- Si hay permisos root/sudo non-interactive, instala con `dpkg -i` del sistema.
+- Si no hay permisos root, aplica fallback local en `~/.local/freejt7-desktop` y crea launcher `~/.local/bin/freejt7-desktop`.
+
+### Instalador nativo `.rpm` (Linux)
+
+Construir paquete RPM:
+
+```bash
+npm run package:rpm
+```
+
+Instalar:
+
+```bash
+npm run install:rpm
+```
+
+Notas:
+- Si hay permisos root/sudo non-interactive y runtime RPM disponible, instala con `rpm -Uvh`.
+- Si no hay permisos root, aplica fallback local en `~/.local/freejt7-desktop-rpm` y crea launcher `~/.local/bin/freejt7-desktop-rpm`.
 
 ## Router real con Copilot SDK
 

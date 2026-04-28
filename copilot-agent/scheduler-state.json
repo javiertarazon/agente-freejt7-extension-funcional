@@ -1,27 +1,27 @@
 {
   "memoriaConsolidar": {
-    "lastRun": "2026-04-22T03:08:58.108Z",
-    "runCount": 25,
+    "lastRun": "2026-04-28T22:55:18.430Z",
+    "runCount": 75,
     "errors": 0
   },
   "datasetExtraer": {
-    "lastRun": "2026-04-22T03:08:58.113Z",
-    "runCount": 54,
+    "lastRun": "2026-04-28T22:55:18.438Z",
+    "runCount": 164,
     "errors": 0
   },
   "doctorNocturno": {
-    "lastRun": "2026-04-20T19:37:44.356Z",
-    "runCount": 2,
+    "lastRun": "2026-04-28T21:55:18.648Z",
+    "runCount": 5,
     "errors": 0
   },
   "gatewayStatus": {
-    "lastRun": "2026-04-22T03:08:58.137Z",
-    "runCount": 110,
+    "lastRun": "2026-04-28T23:10:18.444Z",
+    "runCount": 344,
     "errors": 0
   },
   "revisarPendientes": {
-    "lastRun": "2026-04-22T03:08:58.144Z",
-    "runCount": 81,
+    "lastRun": "2026-04-28T23:15:18.433Z",
+    "runCount": 252,
     "errors": 0
   },
   "nightlyTrain": {
@@ -29,5 +29,5 @@
     "runCount": 0,
     "errors": 0
   },
-  "_savedAt": "2026-04-22T03:08:58.144Z"
+  "_savedAt": "2026-04-28T23:15:18.433Z"
 }

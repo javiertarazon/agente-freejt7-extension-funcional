@@ -1,68 +1,65 @@
-# copilot-agent â€” Estado del sistema
+# Estado actual
+*Actualizado: 2026-04-28 23:25 UTC*
+- Últimos runs en progreso: `20260428-phase256-parallel-integration` (2026-04-28).
+- Últimos cierres completados: `20260428-phase4-native-capabilities-runtime`, `20260428-phase5-provider-backends-subordinated` y `20260428-phase6-copilot-legacy-isolation` (2026-04-28).
+- Resultado clave: Fase 5 queda cerrada formalmente. El runtime propio y `provider-router` ya presentan a Free JT7 como control-plane visible en rutas agent con providers/OpenClaw, y dejan el backend real en `routeMeta.backend` para diagnostico tecnico sin volver a filtrar identidad del proveedor al frente principal.
+- Plan maestro persistido: `docs/21-PLAN-MAESTRO-OWN-IDE-AGENT-FIRST.md`
+- Instalación final conocida: VSIX 4.2.11 reempaquetada e instalada en el perfil `own-ide` con `app:own-ide:setup`.
 
-*Actualizado: 2026-04-23 12:00 UTC*
+## Alineacion de fases
+- Fase 1: ejecutada por `phase1a`, `phase1b`, `phase1c`.
+- Fase 2: cerrada por `phase2-capability-plan-runtime`, `phase2-runtime-local-dispatch`, hotfixes de soporte UI/local y `20260428-phase2-formal-close-control-panel`.
+- Fase 3: cerrada por `phase3-session-agent-state-continuity` y `phase3-formal-close-session-continuity`.
+- Fase 4: cerrada por `20260428-phase4-native-capabilities-runtime`.
+- Fase 5: cerrada formalmente por `20260428-phase5-provider-backends-subordinated`; `20260428-phase256-parallel-integration` sigue abierto para la integracion global restante.
+- Fase 6: cerrada formalmente por `20260428-phase6-copilot-legacy-isolation`; `20260428-phase256-parallel-integration` sigue abierto para la integracion global restante.
 
-## Ultima accion
-- **task-close**: 20260423-release-4-2-11-panel-pro: rama release + versionado 4.2.11 + paquete + backups cifrados completados
+## Runs activos adicionales
+- `20260428-phase5-provider-backends-subordinated`
+  - Scope: `src-js/core/provider-router.js`, `src-js/core/freejt7-agent-runtime.js`, `src-js/core/openclaw-agent-runtime.js`, `src-js/core/provider-registry.js`, `tests/provider_router_failover_smoke.js`, `tests/openclaw_runtime_smoke.js`, `tests/provider_direct_mode_smoke.js`, `tests/provider_model_catalog_smoke.js`, `tests/provider_registry_config_smoke.js`
+  - Meta: cierre formal de Fase 5 para dejar OpenClaw/providers como backends subordinados al runtime propio, con menor filtracion visible del control-plane
+  - Estado: completado
+- `20260428-phase6-copilot-legacy-isolation`
+  - Scope: `src-js/core/copilot_router.runtime.js` y pruebas dedicadas nuevas del router
+  - Meta: cierre formal de Fase 6 aislando Copilot como ruta legacy secundaria y separando su config/flags del `apiProvider` principal
+  - Estado: completado
 
-## Resultado reciente
-- Rama de release creada: `release/v4.2.11-panel-pro`.
-- Versionado correlativo actualizado a `4.2.11` en `VERSION`, `package.json`, `package-lock.json`, `README.md` y `CHANGELOG.md`.
-- Verificacion ejecutada y OK: `npm run test:control-panel-ui-smoke`, `npm run test:agent-manifest-smoke`, `npm run build:bundle`.
-- VSIX generado: `agente-freejt7-extension-funcional-4.2.11.vsix`.
-- Backups release creados en `backups/releases/4.2.11` y `/home/javier28/Backups/freejt7-release-4.2.11` (incluye bundle git e instantanea de workspace).
-- Secretos locales cifrados en `security/encrypted-secrets/freejt7-secrets-4.2.11.tar.enc` con copia externa y hash SHA256.
-- Se documento el impacto de la nueva version de VS Code sobre Free JT7 en `docs/13-VSCODE-UPDATE-IMPACTO-FREEJT7.md`.
-- Se rediseño `src-js/core/control-panel.js` hacia una UX profesional tipo consola de agente: layout de 3 columnas, cards de metricas, sesiones ordenables, tareas con acciones contextuales y feed de eventos persistente en UI.
-- Se mantuvo compatibilidad con comandos existentes y chat participant activo.
-- Se agrego smoke test de UI en `tests/control_panel_ui_smoke.js` y script `test:control-panel-ui-smoke`.
-- Verificacion ejecutada: `npm run test:control-panel-ui-smoke`, `npm run test:agent-manifest-smoke`, `npm run build:bundle` (todo OK, exit 0).
-- Se integró el runtime del panel Webview en `src-js/core/extension.runtime.js` con comando `freejt7.openControlPanel`.
-- Se añadió feature flag para desacoplar el chat participant (`freejt7.panel.chatParticipant.enabled`) y operar desde panel.
-- Se agregaron settings de panel (`freejt7.panel.*`) y contribución de comando en `package.json`.
-- Verificación ejecutada: `npm run build:bundle` OK (exit 0). Tarea cerrada.
-- Se creo el nuevo servidor `mcp-servers/agente_mt5/agente_mt5_server.py` con herramientas MCP de conexion, universo, features, signal y risk_check.
-- El MVP reutiliza `tools/mt5_bridge.py` y aplica enfoque de seguridad operativa: sin auto-ejecucion de ordenes, solo analisis y senales.
-- Se genero documentacion inicial en `mcp-servers/agente_mt5/README.md` y dependencias en `mcp-servers/agente_mt5/requirements.txt`.
-- Instalación de MT5 completada en modo usuario con fallback robusto a Wine.
-- Bottles Flatpak fue evaluado primero pero quedó bloqueado en `offline mode` por ausencia de runners gestionados para crear bottle automáticamente.
-- MT5 quedó instalado en `~/.local/share/freejt7-mt5/wineprefix/drive_c/Program Files/MetaTrader 5/terminal64.exe`.
-- Lanzador persistente creado en `~/.local/bin/mt5` y validación final con procesos `terminal64.exe` activos.
+Importante: los hotfixes no cuentan como cierre de Fase 4, 5 o 6. Desde ahora la lectura oficial del avance debe seguir esta matriz.
 
-## Estado del catÃ¡logo
-- Total skills: **964**
-- Skills activas: **22**
-- CategorÃ­as: 9
-- Fuente: antigravity-awesome-skills v5.7
+## Verificación más reciente
+- `node tests/control_panel_ui_smoke.js` -> OK
+- `node tests/control_panel_state_regression_smoke.js` -> OK
+- `node tests/panel_execution_mode_smoke.js` -> OK
+- `node tests/control_panel_script_syntax_smoke.js` -> OK
+- `npm run build:bundle` -> OK
+- `python3 skills_manager.py policy-validate` -> OK
+- `python3 skills_manager.py doctor --strict` -> OK
+- `python3 skills_manager.py rollout-mode` -> `autonomous`
+- `python3 skills_manager.py host-mode status` -> `full`
+- `python3 skills_manager.py ide-detect --json` -> VS Code/Codex/Claude Code detectados; `own-ide` sigue siendo perfil VSCodium aislado
+- `python3 skills_manager.py task-run --goal "runtime-audit" --commands "Get-ChildItem" "python3 --version"` -> OK (`20260428T131508Z-81891140`)
+- `python3 skills_manager.py task-list --limit 10` -> OK
+- `python3 skills_manager.py task-checklist --run-id 20260428T131508Z-81891140` -> OK
+- `node tests/freejt7_agent_runtime_smoke.js` -> OK
+- `node tests/provider_router_failover_smoke.js` -> OK
+- `node tests/provider_direct_mode_smoke.js` -> OK
+- `node tests/provider_model_catalog_smoke.js` -> OK
+- `node tests/provider_registry_config_smoke.js` -> OK
+- `node tests/session_engine_context_smoke.js` -> OK
+- `node tests/control_panel_ui_smoke.js` -> OK
+- `node tests/local_agent_runtime_smoke.js` -> OK
+- `node tests/extension_runtime_fallback_policy_smoke.js` -> OK
+- `node tests/chat_context_smoke.js` -> OK
+- `node tests/openclaw_runtime_smoke.js` -> OK
+- `node tests/control_panel_ui_smoke.js` -> OK
+- `npm run build:bundle` -> OK
+- `npm run package:local` -> OK
+- `npm run app:own-ide:setup` -> OK
+- `node tests/installed_extension_smoke.js` -> OK
 
-## Skills activas
-- `agent-orchestration` (data-ai)
-- `ai-agent-development` (data-ai)
-- `ai-agents-architect` (architecture)
-- `autonomous-agents` (general)
-- `backtesting-frameworks` (testing)
-- `crewai` (business)
-- `fastapi-pro` (development)
-- `free-jt7-global-runtime-audit` (general)
-- `langgraph` (data-ai)
-- `mcp-builder` (business)
-- `mcp-cli` (business)
-- `multi-agent-patterns` (architecture)
-- `python-pro` (development)
-- `python-testing-patterns` (testing)
-- `quant-analyst` (testing)
-- `risk-manager` (general)
-- `risk-metrics-calculation` (general)
-- `systematic-debugging` (general)
-- `using-superpowers` (general)
-- `verification-before-completion` (general)
-- `vscode-ext-commands` (general)
-- `vscode-ext-localization` (general)
+## Bloqueos activos
+- [x] Fase 5 cerrada formalmente: providers y OpenClaw quedan subordinados al runtime propio con facade visible `freejt7-agent` y metadata tecnica de backend.
+- [x] Fase 6 cerrada formalmente: compatibilidad heredada Copilot aislada como ruta secundaria en `copilot_router.runtime`.
 
-## Comandos Ãºtiles
-```powershell
-python skills_manager.py search <query>
-python skills_manager.py activate <id>
-python skills_manager.py adapt-copilot
-python skills_manager.py sync-claude
-```
+## Siguiente acción recomendada
+Propagar este cierre dentro de `20260428-phase256-parallel-integration` y rematar la integracion global pendiente sin reabrir Fase 5.

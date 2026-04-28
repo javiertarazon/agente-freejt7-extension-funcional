@@ -2,6 +2,35 @@
 
 ## [Unreleased]
 
+### Added
+- Bootstrap y wrappers de app propia para Free JT7, incluyendo modo standalone,
+  perfil `own-ide`, empaquetado nativo `.deb`/`.rpm` y utilidades de
+  instalacion/ejecucion en `scripts/`.
+- Runtime propio agent-first con modulos dedicados para continuidad,
+  configuracion de providers, OpenClaw, ACP y fallback local seguro.
+- Ampliacion del servidor MCP local con tools de documentos y navegador.
+- Nueva bateria de smokes para runtime del agente, continuidad de sesion,
+  empaquetado desktop, panel own-ide y aislamiento de compatibilidad legacy.
+- Documentacion de auditoria y plan maestro en `docs/14-*` a `docs/21-*` para
+  dejar trazabilidad del salto a Free JT7 como IDE propia.
+
+### Changed
+- El panel principal pasa a ser chat-first/agent-first con inspector lateral y
+  menor tono de dashboard operativo.
+- El router de providers y el runtime del agente subordinan OpenClaw y
+  proveedores externos al control-plane de Free JT7.
+- La continuidad de sesion se reconstruye desde `agentState` persistido y las
+  tareas del `session-engine`, mejorando `continua`, `yield/resume` y la
+  recuperacion tras reinicio.
+
+### Fixed
+- Aislamiento de la ruta legacy de Copilot para que no herede el provider
+  principal del flujo own-ide.
+- Politica de fallback del modo agente para priorizar rutas verificables y no
+  degradar a respuestas locales genericas cuando el problema es del backend.
+- Varias regresiones del panel y del runtime local relacionadas con estado
+  persistido, sintaxis del webview y extraccion del texto final visible.
+
 ## [4.2.11] - 2026-04-23
 
 ### Added
