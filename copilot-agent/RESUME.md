@@ -13,6 +13,7 @@
 - Justificación RPM vigente: los warnings `Missing build-id` confirmados en `package:rpm` provienen solo de módulos nativos precompilados del runtime VSCodium embebido; el spec generado ya los trata como payload vendor no bloqueante.
 - Regla operativa vigente: en validaciones de árbol/working tree excluir `dist-deb/**` y `dist-rpm/**` salvo auditoría explícita de packaging para no inflar contexto con artefactos generados.
 - Iteración operativa vigente: `own-ide` fue desmontado y reinstalado sobre perfil/runtime limpio; la evidencia de ejecución y estado real de providers quedó consolidada en `docs/23-REINSTALACION-LIMPIA-OWN-IDE-Y-VERIFICACION-PROVIDERS.md`.
+- Rama remota vigente para esta iteración: `origin/release/v4.2.12-clean-install`.
 
 ## Verificación más reciente
 - `node tests/control_panel_enqueue_cancel_smoke.js` -> OK
