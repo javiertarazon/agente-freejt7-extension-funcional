@@ -19,7 +19,11 @@ function main() {
   assert.equal(merged['freejt7.apiProvider'], 'openrouter');
   assert.equal(merged['freejt7.panel.enabled'], true);
   assert.equal(merged['freejt7.panel.chatParticipant.enabled'], false);
+  assert.equal(merged['freejt7.panel.openOnStartup'], true);
   assert.equal(merged['freejt7.panel.policy.mode'], 'autonomous');
+  assert.equal(merged['freejt7.panel.runtimeBackend'], 'freejt7-v2');
+  assert.equal(merged['freejt7.ide.ownerMode'], 'agent');
+  assert.equal(merged['freejt7.ide.hostVisibility'], 'minimal');
   assert.deepEqual(merged['github.copilot.enable'], { '*': false });
 
   const tempBase = fs.mkdtempSync(path.join(os.tmpdir(), 'freejt7-app-smoke-'));
@@ -48,10 +52,15 @@ function main() {
   const settings = JSON.parse(fs.readFileSync(result.paths.settingsPath, 'utf8'));
   assert.equal(settings['freejt7.panel.enabled'], true);
   assert.equal(settings['freejt7.panel.chatParticipant.enabled'], false);
+  assert.equal(settings['freejt7.panel.openOnStartup'], true);
   assert.equal(settings['freejt7.panel.policy.mode'], 'autonomous');
+  assert.equal(settings['freejt7.panel.runtimeBackend'], 'freejt7-v2');
   assert.equal(settings['freejt7.autoRepairGlobalSettings'], false);
   assert.equal(settings['freejt7.autoInstallWorkspaceBridge'], false);
+  assert.equal(settings['freejt7.ide.ownerMode'], 'agent');
+  assert.equal(settings['freejt7.ide.hostVisibility'], 'minimal');
   assert.equal(settings['freejt7.app.standaloneMode'], true);
+  assert.equal(settings['workbench.startupEditor'], 'none');
 
   console.log('freejt7_app_bootstrap_smoke: ok');
 }

@@ -18,6 +18,11 @@ VERSION="$(node -e "console.log(require(process.argv[1]).version)" "$PKG_JSON")"
 DEB_VERSION="${VERSION}-1"
 ARCH="$(dpkg --print-architecture 2>/dev/null || echo amd64)"
 
+if [[ "$ARCH" != "amd64" ]]; then
+  echo "[freejt7-deb] ERROR: Free JT7 Desktop solo soporta amd64/x64 por ahora (host=${ARCH})." >&2
+  exit 1
+fi
+
 VSIX_PATH="$ROOT_DIR/agente-freejt7-extension-funcional-${VERSION}.vsix"
 if [[ ! -f "$VSIX_PATH" ]]; then
   echo "[freejt7-deb] VSIX ${VSIX_PATH} no encontrada. Ejecutando npm run package:local..."
@@ -35,6 +40,7 @@ DEBIAN_DIR="$PKG_ROOT/DEBIAN"
 APP_DIR="$PKG_ROOT/opt/freejt7-desktop"
 BIN_DIR="$PKG_ROOT/usr/bin"
 DESKTOP_DIR="$PKG_ROOT/usr/share/applications"
+BUNDLED_RUNTIME_SOURCE="${FREEJT7_VSCODIUM_RUNTIME_DIR:-$HOME/.freejt7-app/runtime/vscodium/current}"
 
 rm -rf "$PKG_ROOT"
 mkdir -p "$DEBIAN_DIR" "$APP_DIR/scripts" "$BIN_DIR" "$DESKTOP_DIR"
@@ -86,10 +92,17 @@ if ! command -v "$NODE_BIN" >/dev/null 2>&1; then
 fi
 
 WORKSPACE="${FREEJT7_WORKSPACE:-$PWD}"
+BUNDLED_IDE="$APP_ROOT/runtime/vscodium/current/bin/codium"
+
+EXTRA_ARGS=()
+if [[ -x "$BUNDLED_IDE" ]]; then
+  EXTRA_ARGS+=("--ide-bin=$BUNDLED_IDE")
+fi
 
 exec "$NODE_BIN" "$APP_ROOT/scripts/freejt7-own-ide-bootstrap.js" \
   --repo-root="$APP_ROOT" \
   --workspace="$WORKSPACE" \
+  "${EXTRA_ARGS[@]}" \
   "$@"
 EOF
 chmod 0755 "$APP_DIR/scripts/freejt7-desktop-launcher.sh"
@@ -106,6 +119,7 @@ cat > "$DESKTOP_DIR/freejt7-desktop.desktop" <<'EOF'
 Name=Free JT7 Desktop
 Comment=Agente Free JT7 en perfil aislado
 Exec=freejt7-desktop
+TryExec=freejt7-desktop
 Terminal=false
 Type=Application
 Categories=Development;IDE;
@@ -117,9 +131,16 @@ cp "$ROOT_DIR/README.md" "$APP_DIR/README.md"
 cp "$VSIX_PATH" "$APP_DIR/"
 cp "$ROOT_DIR/scripts/freejt7-app-bootstrap.js" "$APP_DIR/scripts/freejt7-app-bootstrap.js"
 cp "$ROOT_DIR/scripts/freejt7-own-ide-bootstrap.js" "$APP_DIR/scripts/freejt7-own-ide-bootstrap.js"
+cp "$ROOT_DIR/scripts/freejt7-vscodium-linux-x64.json" "$APP_DIR/scripts/freejt7-vscodium-linux-x64.json"
 chmod 0755 "$APP_DIR/scripts/freejt7-app-bootstrap.js" "$APP_DIR/scripts/freejt7-own-ide-bootstrap.js"
+if [[ -d "$BUNDLED_RUNTIME_SOURCE" ]]; then
+  mkdir -p "$APP_DIR/runtime/vscodium"
+  cp -a "$BUNDLED_RUNTIME_SOURCE" "$APP_DIR/runtime/vscodium/current"
+else
+  echo "[freejt7-deb] WARN: no se encontro runtime VSCodium local en $BUNDLED_RUNTIME_SOURCE; el launcher quedara en modo descarga/cache." >&2
+fi
 
 OUTPUT_DEB="$BUILD_ROOT/freejt7-desktop_${DEB_VERSION}_${ARCH}.deb"
-dpkg-deb --build "$PKG_ROOT" "$OUTPUT_DEB" >/dev/null
+dpkg-deb --root-owner-group --build "$PKG_ROOT" "$OUTPUT_DEB" >/dev/null
 
 echo "[freejt7-deb] OK => $OUTPUT_DEB"

@@ -138,7 +138,7 @@ async function main() {
   assert.equal(agentResult.raw.routeMeta.executionPlan.capabilityPlan.toolMode, 'agent-backends');
   assert.equal(agentResult.raw.routeMeta.attempts[1].backendProvider, 'hf');
 
-  const directResult = await router.execute({
+  const forcedAgentResult = await router.execute({
     goal: 'responde ok',
     executionMode: 'direct',
     provider: 'openrouter',
@@ -150,9 +150,10 @@ async function main() {
     workspacePath: process.cwd(),
   });
 
-  assert.equal(directCalls.length >= 1, true, 'modo direct debe intentar provider viable (respetando cooldown)');
-  assert.equal(directResult.provider, 'zai', 'fallback direct debe terminar en provider secundario');
-  assert.equal(directResult.raw.routeMeta.fallbackUsed, true, 'fallback direct debe quedar trazado');
+  assert.equal(directCalls.length, 0, 'modo direct ya no debe llamar proveedor directo');
+  assert.equal(forcedAgentResult.executionMode, 'agent', 'modo direct debe forzarse a agente');
+  assert.equal(forcedAgentResult.provider, 'freejt7-agent', 'modo direct forzado debe exponer Free JT7');
+  assert.equal(forcedAgentResult.raw.routeMeta.fallbackUsed, true, 'fallback de agente debe quedar trazado');
 
   console.log('provider_router_failover_smoke: OK');
 }

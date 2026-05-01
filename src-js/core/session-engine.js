@@ -5,10 +5,12 @@ const path = require('path');
 const { EventEmitter } = require('events');
 const { randomUUID } = require('crypto');
 
+const PANEL_STATE_SCHEMA_VERSION = '2026-04-29-agent-first-v2';
+
 function normalizeRuntimeBackend(value) {
   const backend = String(value || '').trim().toLowerCase();
   if (!backend) return 'auto';
-  if (backend === 'auto' || backend === 'openclaw' || backend === 'local') return backend;
+  if (backend === 'auto' || backend === 'freejt7' || backend === 'freejt7-v2' || backend === 'openclaw' || backend === 'local') return backend;
   if (backend.startsWith('acp:')) return backend;
   return 'auto';
 }
@@ -18,6 +20,8 @@ class SessionEngine extends EventEmitter {
     super();
     this.rootDir = opts.rootDir || process.cwd();
     this.statePath = opts.statePath || path.join(this.rootDir, 'copilot-agent', 'panel-state.json');
+    this.stateSchemaVersion = String(opts.stateSchemaVersion || PANEL_STATE_SCHEMA_VERSION).trim() || PANEL_STATE_SCHEMA_VERSION;
+    this.resetStateOnSchemaMismatch = Boolean(opts.resetStateOnSchemaMismatch);
     this.workerCount = Number(opts.workerCount || 3);
     this.maxChatHistoryEntries = Number(opts.maxChatHistoryEntries || 24);
     this.taskExecutionTimeoutMs = Math.max(30_000, Number(opts.taskExecutionTimeoutMs || 120_000));
@@ -43,6 +47,7 @@ class SessionEngine extends EventEmitter {
 
   _saveState() {
     const state = {
+      schemaVersion: this.stateSchemaVersion,
       savedAt: new Date().toISOString(),
       sessions: this._sessions,
       queue: this._queue,
@@ -88,6 +93,9 @@ class SessionEngine extends EventEmitter {
       lastUserGoal: '',
       lastAssistantSummary: '',
       lastRoutePlan: null,
+      lastOutcomeStatus: '',
+      lastVerificationStatus: '',
+      continuationEligible: false,
       continuationHint: '',
       updatedAt: '',
     };
@@ -199,6 +207,42 @@ class SessionEngine extends EventEmitter {
     };
   }
 
+  _isTrustedContinuationCandidate(task, summary) {
+    if (!task || String(task.status || '').trim() !== 'completed') {
+      return false;
+    }
+    if (this._isJunkSummary(summary)) {
+      return false;
+    }
+    const verificationStatus = String(task.verification?.status || '').trim();
+    if (verificationStatus === 'unverified') {
+      return false;
+    }
+    const evidence = Array.isArray(task.verification?.evidence) ? task.verification.evidence.filter(Boolean) : [];
+    const changedFiles = Array.isArray(task.verification?.changedFiles) ? task.verification.changedFiles.filter(Boolean) : [];
+    return evidence.length > 0 || changedFiles.length > 0;
+  }
+
+  _resolveTaskTerminalStatus(task, result, verification) {
+    const explicitStatus = String(
+      result?.final?.status
+      || result?.run?.status
+      || result?.raw?.final?.status
+      || result?.raw?.run?.status
+      || ''
+    ).trim().toLowerCase();
+    if (explicitStatus === 'failed' || explicitStatus === 'rejected' || explicitStatus === 'canceled') {
+      return explicitStatus;
+    }
+    if (explicitStatus && explicitStatus !== 'completed') {
+      return 'failed';
+    }
+    if (verification && verification.status === 'unverified') {
+      return 'failed';
+    }
+    return 'completed';
+  }
+
   _buildSessionAgentStateFromTask(task, previousState = null) {
     const base = previousState && typeof previousState === 'object'
       ? { ...previousState }
@@ -211,9 +255,10 @@ class SessionEngine extends EventEmitter {
     const routePlan = task.routePlan || task.routeMeta?.executionPlan || base.lastRoutePlan || null;
     const summary = this._extractTaskSummary(task) || String(task.error || '').trim();
     const status = String(task.status || '').trim();
+    const continuationEligible = this._isTrustedContinuationCandidate(task, summary);
     const pieces = [
       task.goal ? `Objetivo: ${String(task.goal).trim()}` : '',
-      summary ? `Ultimo resultado: ${summary}` : '',
+      continuationEligible && summary ? `Ultimo resultado: ${summary}` : '',
       status && status !== 'completed' ? `Estado: ${status}` : '',
       routePlan?.primaryRoute ? `Ruta: ${routePlan.primaryRoute}` : '',
       routePlan?.capabilityPlan?.toolMode ? `Capacidades: ${routePlan.capabilityPlan.toolMode}` : '',
@@ -222,9 +267,12 @@ class SessionEngine extends EventEmitter {
     return {
       lastTaskId: String(task.taskId || '').trim(),
       lastUserGoal: String(task.goal || '').trim(),
-      lastAssistantSummary: summary,
+      lastAssistantSummary: continuationEligible ? summary : '',
       lastRoutePlan: routePlan ? JSON.parse(JSON.stringify(routePlan)) : null,
-      continuationHint: pieces.join(' | '),
+      lastOutcomeStatus: status,
+      lastVerificationStatus: String(task.verification?.status || '').trim(),
+      continuationEligible,
+      continuationHint: continuationEligible ? pieces.join(' | ') : '',
       updatedAt: String(task.updatedAt || new Date().toISOString()).trim(),
     };
   }
@@ -379,6 +427,20 @@ class SessionEngine extends EventEmitter {
         return;
       }
       const data = JSON.parse(fs.readFileSync(this.statePath, 'utf8'));
+      const loadedSchemaVersion = String(data.schemaVersion || '').trim();
+      if (this.resetStateOnSchemaMismatch && loadedSchemaVersion !== this.stateSchemaVersion) {
+        try {
+          const backupPath = `${this.statePath}.schema-backup-${Date.now()}.json`;
+          fs.copyFileSync(this.statePath, backupPath);
+        } catch (_) {
+          // ignore backup issues and continue with state reset
+        }
+        this._sessions = {};
+        this._queue = [];
+        this._taskIndex = {};
+        this._saveState();
+        return;
+      }
       this._sessions = data.sessions || {};
       this._queue = Array.isArray(data.queue) ? data.queue : [];
       this._taskIndex = data.taskIndex || {};
@@ -1077,16 +1139,21 @@ class SessionEngine extends EventEmitter {
           fallbackProviders: task.fallbackProviders || [],
         }),
       );
-      task.status = 'completed';
       task.result = result;
       task.routeMeta = result?.raw?.routeMeta || {};
       task.acp = result?.raw?.acp || null;
       task.verification = this._deriveVerification(task, result);
-      task.error = null;
+      task.status = this._resolveTaskTerminalStatus(task, result, task.verification);
+      const failureSummary = this._extractTaskSummary({ ...task, result }) || String(result?.error || '').trim();
+      task.error = task.status === 'completed'
+        ? null
+        : (failureSummary || 'La tarea no devolvio evidencia suficiente para declararse completada.');
       task.updatedAt = new Date().toISOString();
       this._appendSessionMessage(this._sessions[task.sessionId], {
         role: 'assistant',
-        text: this._extractTaskSummary(task) || 'Tarea completada.',
+        text: task.status === 'completed'
+          ? (this._extractTaskSummary(task) || 'Tarea completada.')
+          : (task.error || 'La tarea fallo o quedo sin evidencia verificable.'),
         taskId: task.taskId,
         provider: result?.provider || task.provider,
         model: result?.model || task.model,

@@ -10,17 +10,21 @@ function testPanelHtmlIncludesProfessionalLayoutAndActions() {
       openrouter: [{ label: "Model A", value: "model-a" }],
       hf: ["hf-model"],
       zai: ["zai-model"],
+      nvidia: ["deepseek-ai/deepseek-v4-pro"],
+      ddeksee: ["deepseek-chat"],
       clod: ["clod-model"],
     },
     defaultModelByProvider: {
       openrouter: "model-a",
       hf: "hf-model",
       zai: "zai-model",
+      nvidia: "deepseek-ai/deepseek-v4-pro",
+      ddeksee: "deepseek-chat",
       clod: "clod-model",
     },
   });
 
-  assert.ok(html.includes("Chat principal de Free JT7"), "Debe renderizar un encabezado claramente chat-first");
+  assert.ok(html.includes("Free JT7 como superficie principal del IDE"), "Debe renderizar un encabezado claramente agent-first y dueño del IDE");
   assert.ok(html.includes("id=\"sessions\""), "Debe incluir columna de sesiones");
   assert.ok(html.includes("id=\"chatHistory\""), "Debe incluir historial principal de chat");
   assert.ok(html.includes("appendFormattedMessageText"), "Debe renderizar mensajes de asistente con tratamiento de chat");
@@ -30,12 +34,16 @@ function testPanelHtmlIncludesProfessionalLayoutAndActions() {
   assert.ok(html.includes("id=\"events\""), "Debe incluir columna de eventos");
   assert.ok(html.includes("data-tab=\"tasks\">Tareas</button>"), "Debe priorizar tareas como pestaña del inspector");
   assert.ok(html.includes("tab-btn active\" data-tab=\"tasks\""), "La pestaña de tareas debe abrir activa por defecto");
-  assert.ok(html.includes("id=\"executionMode\""), "Debe incluir selector de modo de ejecucion");
+  assert.ok(html.includes("id=\"executionMode\""), "Debe incluir modo de ejecucion forzado");
   assert.ok(html.includes("id=\"runtimeBackend\""), "Debe incluir selector de backend runtime");
+  assert.ok(html.includes("value=\"freejt7-v2\""), "Debe incluir backend profesional freejt7 core-v2 en el panel");
+  assert.ok(html.includes("value=\"freejt7\""), "Debe incluir backend propio freejt7 en el panel");
+  assert.ok(html.includes("freejt7 core-v2"), "Debe etiquetar el backend profesional freejt7 core-v2 en el selector");
+  assert.ok(html.includes("freejt7 (propio)"), "Debe etiquetar el backend propio freejt7 en el selector");
   assert.ok(html.includes("id=\"policyProfile\""), "Debe incluir selector de policy profile");
   assert.ok(html.includes("id=\"authProfile\""), "Debe incluir selector de auth profile");
   assert.ok(html.includes("id=\"fallbackProviders\""), "Debe incluir entrada de fallback providers");
-  assert.ok(html.includes("value=\"direct\">modelo directo"), "En modo normal debe permitir modo directo");
+  assert.ok(!html.includes("value=\"direct\""), "No debe exponer modo directo en el panel principal");
   assert.ok(html.includes("id=\"activeMode\""), "Debe mostrar el modo activo en el encabezado");
   assert.ok(html.includes("id=\"activeRuntime\""), "Debe separar runtime/profile del chip de modelo");
   assert.ok(html.includes("id=\"sessionSort\""), "Debe incluir selector de orden de sesiones");
@@ -45,7 +53,21 @@ function testPanelHtmlIncludesProfessionalLayoutAndActions() {
   assert.ok(html.includes("data-tab=\"settings\""), "Debe incluir pestaña de configuracion en el inspector");
   assert.ok(html.includes("data-tab=\"status\""), "Debe incluir pestaña de estado/onboarding/SLO");
   assert.ok(html.includes("id=\"operationalStatus\""), "Debe incluir contenedor de estado operativo");
+  assert.ok(html.includes("id=\"settingsSummaryProvider\""), "Debe resumir proveedor activo desde ajustes del IDE");
+  assert.ok(html.includes("id=\"settingsSummaryRuntime\""), "Debe resumir runtime activo desde ajustes del IDE");
+  assert.ok(html.includes("id=\"settingsSummaryOwnerMode\""), "Debe resumir owner mode activo desde ajustes del IDE");
+  assert.ok(html.includes("id=\"settingsSummaryHostVisibility\""), "Debe resumir host visibility desde ajustes del IDE");
+  assert.ok(html.includes("id=\"settingsSummaryStartup\""), "Debe resumir si el panel abre al arranque");
+  assert.ok(html.includes("id=\"settingsSelectProvider\""), "Debe incluir accion visible para cambiar proveedor");
+  assert.ok(html.includes("id=\"settingsSelectModel\""), "Debe incluir accion visible para cambiar modelo");
+  assert.ok(html.includes("id=\"settingsSetApiKey\""), "Debe incluir accion visible para configurar API key");
+  assert.ok(html.includes("id=\"settingsOpenVsCode\""), "Debe incluir accion visible para abrir ajustes");
+  assert.ok(html.includes("Free JT7 gobierna la configuración operativa desde los ajustes del IDE"), "La configuracion visible debe presentar a Free JT7 como autoridad del IDE");
   assert.ok(html.includes("value=\"clod\""), "Debe incluir proveedor CLŌD en el panel");
+  assert.ok(html.includes("value=\"nvidia\""), "Debe incluir proveedor NVIDIA en el panel");
+  assert.ok(html.includes(">NVIDIA</option>"), "Debe renderizar la etiqueta visible NVIDIA en el selector");
+  assert.ok(html.includes("value=\"ddeksee\""), "Debe incluir proveedor DeepSeek en el panel");
+  assert.ok(html.includes(">DeepSeek</option>"), "Debe renderizar la etiqueta visible DeepSeek en el selector");
   assert.ok(!html.includes("value=\"copilot\""), "El panel propio no debe ofrecer Copilot como proveedor");
   assert.ok(html.includes("data-action=\"approve\""), "Debe incluir acciones para aprobacion");
   assert.ok(html.includes("data-action=\"continue\""), "Debe incluir acción para continuar una tarea previa");
@@ -76,6 +98,11 @@ function testPanelHtmlIncludesProfessionalLayoutAndActions() {
   assert.ok(source.includes("function getSloSnapshot"), "Debe calcular SLO basico desde tareas locales");
   assert.ok(source.includes("capabilityPlan"), "Debe poder reflejar el plan de capacidades del runtime propio en la UI");
   assert.ok(source.includes("plan: "), "Debe mostrar resumen del plan operativo/capacidades en las tarjetas de tarea");
+  assert.ok(source.includes("aprobación requerida"), "Debe mostrar cuando una tarea requiere aprobacion");
+  assert.ok(source.includes("plannedActions"), "Debe poder exponer acciones planeadas antes de aprobar");
+  assert.ok(source.includes("dispatch.trace"), "Debe poder exponer trace de dispatch antes de aprobar");
+  assert.ok(source.includes("config.selectProvider"), "Debe enlazar la accion visible de proveedor con el backend del panel");
+  assert.ok(source.includes("workbench.action.openSettings"), "Debe poder abrir ajustes del IDE desde el panel");
   assert.ok(html.includes("$('modelCustom').addEventListener('input'"), "Debe sincronizar modelo manual en tiempo real");
   assert.ok(html.includes("$('provider').onchange"), "Debe mantener controlador de cambio de proveedor");
   assert.ok(html.includes("setCustomModelVisibility(false);"), "Debe limpiar modelo manual al cambiar proveedor");
@@ -85,16 +112,20 @@ function testPanelHtmlIncludesProfessionalLayoutAndActions() {
   const standaloneHtml = createPanelHtml({}, "Free JT7", {
     modelsByProvider: {
       openrouter: [{ label: "Model A", value: "model-a" }],
+      nvidia: ["deepseek-ai/deepseek-v4-pro"],
+      ddeksee: ["deepseek-chat"],
     },
     defaultModelByProvider: {
       openrouter: "model-a",
+      nvidia: "deepseek-ai/deepseek-v4-pro",
+      ddeksee: "deepseek-chat",
     },
   }, {
     standaloneMode: true,
   });
-  assert.ok(standaloneHtml.includes("const directModeAllowed = false;"), "En standalone debe desactivar modo directo en cliente");
-  assert.ok(standaloneHtml.includes("value=\"direct\" disabled"), "En standalone el selector directo debe quedar deshabilitado");
-  assert.ok(standaloneHtml.includes("panel fuerza modo agente"), "En standalone debe mostrar hint de modo agente");
+  assert.ok(standaloneHtml.includes("const directModeAllowed = false;"), "El cliente debe desactivar modo directo");
+  assert.ok(!standaloneHtml.includes("value=\"direct\""), "Standalone tampoco debe renderizar modo directo");
+  assert.ok(standaloneHtml.includes("fuerza modo agente"), "Debe mostrar hint de modo agente");
 }
 
 function main() {

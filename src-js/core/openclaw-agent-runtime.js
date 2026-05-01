@@ -40,6 +40,34 @@ const PROVIDER_SPECS = Object.freeze({
     modelPrefix: 'zai',
     envKeys: ['ZAI_API_KEY'],
   },
+  nvidia: {
+    modelPrefix: 'nvidia',
+    envKeys: ['NVIDIA_API_KEY'],
+    customProviderBase: {
+      baseUrl: 'https://integrate.api.nvidia.com/v1',
+      api: 'openai-completions',
+      auth: 'api-key',
+      apiKey: {
+        source: 'env',
+        provider: 'default',
+        id: 'NVIDIA_API_KEY',
+      },
+    },
+  },
+  ddeksee: {
+    modelPrefix: 'deepseek',
+    envKeys: ['DDEKSEE_API_KEY', 'DEEPSEEK_API_KEY'],
+    customProviderBase: {
+      baseUrl: 'https://api.deepseek.com/v1',
+      api: 'openai-completions',
+      auth: 'api-key',
+      apiKey: {
+        source: 'env',
+        provider: 'default',
+        id: 'DDEKSEE_API_KEY',
+      },
+    },
+  },
   clod: {
     modelPrefix: 'clod',
     envKeys: ['CLOD_API_KEY'],
@@ -83,6 +111,12 @@ function normalizeModelSuffix(provider, model) {
   }
   if (provider === 'zai') {
     return raw.replace(/^z-ai\//i, '').replace(/^zai\//i, '');
+  }
+  if (provider === 'nvidia') {
+    return raw.replace(/^nvidia\//i, '');
+  }
+  if (provider === 'ddeksee') {
+    return raw.replace(/^ddeksee\//i, '').replace(/^deepseek\//i, '');
   }
   if (provider === 'clod') {
     return raw.replace(/^clod\//i, '');
@@ -295,13 +329,21 @@ function applyOpenClawRuntimeConfig(existingConfig, options = {}) {
   next.models.providers = next.models.providers && typeof next.models.providers === 'object' ? next.models.providers : {};
 
   // Evita que providers custom stale exijan secrets no relacionados al provider activo.
-  if (next.models.providers.clod && provider !== 'clod') {
-    delete next.models.providers.clod;
+  const customProviderIds = Object.entries(PROVIDER_SPECS)
+    .filter(([, spec]) => spec && spec.customProviderBase)
+    .map(([providerId]) => providerId);
+  for (const providerId of customProviderIds) {
+    if (next.models.providers[providerId] && provider !== providerId) {
+      delete next.models.providers[providerId];
+    }
   }
 
-  if (provider === 'clod') {
-    next.models.providers.clod = {
-      ...cloneJson(PROVIDER_SPECS.clod.customProviderBase),
+  const customProviderSpec = PROVIDER_SPECS[provider] && PROVIDER_SPECS[provider].customProviderBase
+    ? PROVIDER_SPECS[provider]
+    : null;
+  if (customProviderSpec) {
+    next.models.providers[provider] = {
+      ...cloneJson(customProviderSpec.customProviderBase),
       models: buildOpenClawProviderModels(provider, model),
     };
   }
@@ -497,6 +539,10 @@ function buildSubordinateBackendDescriptor(options = {}) {
 
   if (fallbackSelected === 'provider-direct' || /provider-direct/i.test(executionRoute)) {
     kind = 'provider-direct';
+  } else if (executionRoute === 'freejt7-agent-core-v2' || runtimeBackend === 'freejt7-v2') {
+    kind = 'freejt7-core-v2';
+  } else if (executionRoute === 'freejt7-owned-agent' || runtimeBackend === 'freejt7') {
+    kind = 'freejt7-owned';
   } else if (executionRoute.startsWith('acp:') || runtimeBackend.startsWith('acp:')) {
     kind = 'acp-harness';
   } else if (executionRoute === 'openclaw-agent' || runtimeBackend === 'openclaw') {

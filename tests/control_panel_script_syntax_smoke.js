@@ -10,8 +10,8 @@ const { createPanelHtml } = require('../src-js/core/control-panel.js');
 
 function main() {
   const html = createPanelHtml({}, 'Free JT7 Control Panel', {
-    modelsByProvider: { openrouter: [], hf: [], zai: [], clod: [] },
-    defaultModelByProvider: { openrouter: '', hf: '', zai: '', clod: '' },
+    modelsByProvider: { openrouter: [], hf: [], zai: [], nvidia: [], ddeksee: [], clod: [] },
+    defaultModelByProvider: { openrouter: '', hf: '', zai: '', nvidia: '', ddeksee: '', clod: '' },
   });
   const scriptMatch = html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/);
   assert.ok(scriptMatch && scriptMatch[1], 'Debe extraer script del webview');
@@ -36,4 +36,3 @@ try {
   console.error(String(error?.stack || error?.message || error));
   process.exitCode = 1;
 }
-

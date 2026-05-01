@@ -2,494 +2,111 @@
 # Actualizado automaticamente por skills_manager.py
 
 tareas:
-  - id: "20260428-remote-publish-own-ide-repo"
-    fecha: "2026-04-28"
-    titulo: "Publicacion remota del snapshot agent-first y own-ide"
+  - id: "20260501-own-ide-clean-reinstall-provider-verification-remote-branch"
+    fecha: "2026-05-01"
+    titulo: "Reinstalar own-ide limpio, verificar providers live y publicar rama correlativa"
     descripcion: >
-      Preparar documentacion resumida de las ultimas modificaciones,
-      agrupar los cambios actuales en commits logicos y publicar el estado del
-      workspace en el remoto indicado por el usuario para el nuevo repositorio
-      de Free JT7 y su IDE propio.
-    estado: "completado"
-    riesgo: "medium"
-    skills_usados: ["make-repo-contribution", "verification-before-completion"]
-    resultado: >
-      Completado: se resumio la documentacion final, se agruparon los cambios
-      en tres commits logicos (`runtime`, `docs`, `build/app`) y se preparo
-      la publicacion hacia el remoto nuevo. Se excluyeron solo cuatro binarios
-      mayores de 100 MB que GitHub bloquea en Git normal (.deb/.rpm/.vsix
-      embebidas), manteniendo el resto del arbol listo para push.
-  - id: "20260428-phase2-formal-close-control-panel"
-    fecha: "2026-04-28"
-    titulo: "Fase 2 cierre formal: panel own-ide agent-first"
-    descripcion: >
-      Cerrar formalmente la Fase 2 del plan maestro desde el ownership de
-      `src-js/core/control-panel.js` y sus smokes dedicados, dejando el panel
-      como chat principal de Free JT7 con tareas, eventos y configuracion en
-      inspector lateral, y reduciendo el lenguaje visible de dashboard/router.
-    estado: "completado"
-    riesgo: "medium"
-    skills_usados: []
-    resultado: >
-      Completado: `control-panel.js` ahora abre con tareas como tab lateral
-      por defecto, separa modelo de runtime/profile en el header, y mueve el
-      tono principal a chat-first agent-first mientras conserva trazabilidad
-      tecnica en el inspector. Verificado con
-      `control_panel_ui_smoke`, `control_panel_state_regression_smoke`,
-      `panel_execution_mode_smoke`, `control_panel_script_syntax_smoke` y
-      `build:bundle`.
-  - id: "20260428-phase5-provider-backends-subordinated"
-    fecha: "2026-04-28"
-    titulo: "Fase 5 formal: providers y OpenClaw subordinados al runtime propio"
-    descripcion: >
-      Cerrar formalmente la Fase 5 del plan maestro own-ide agent-first
-      dentro del ownership de `provider-router`, `freejt7-agent-runtime`,
-      `openclaw-agent-runtime` y `provider-registry`, para que OpenClaw y los
-      providers externos queden como backends subordinados al runtime propio,
-      con trazabilidad tecnica pero sin filtrar el control-plane visible.
+      Ejecutar una iteracion operativa cerrada sobre el IDE propio de Free JT7:
+      verificar primero el runtime base y los providers/modelos con credencial
+      detectable, desmontar el perfil/runtime aislado actual de `own-ide`,
+      reinstalar limpio la VSIX y finalmente publicar todos los cambios en una
+      rama correlativa derivada de `release/v4.2.11-panel-pro`.
     estado: "completado"
     riesgo: "high"
-    skills_usados: []
+    skills_usados: ["verification-before-completion", "free-jt7-global-runtime-audit"]
     resultado: >
-      Completado: `freejt7-agent-runtime` y `provider-router` ahora exponen a
-      Free JT7 como facade visible del control-plane para rutas agent con
-      backends externos, mientras `routeMeta.backend` conserva el backend
-      tecnico efectivo (`openclaw-harness` o `provider-direct`). Se reforzo
-      `provider-registry` con el facade interno y `openclaw-agent-runtime`
-      con descriptor reusable de backend subordinado. Verificado con
-      `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`,
-      `openclaw_runtime_smoke`, `provider_direct_mode_smoke`,
-      `provider_model_catalog_smoke` y `provider_registry_config_smoke`.
-  - id: "20260428-phase6-copilot-legacy-isolation"
-    fecha: "2026-04-28"
-    titulo: "Fase 6: aislamiento formal de Copilot como compatibilidad heredada"
+      Completado: se confirmo que `own-ide` no tiene uninstall interno y se
+      ejecuto limpieza real purgando `~/.freejt7-app/profiles/own-ide` y
+      `~/.freejt7-app/runtime/vscodium`. La auditoria runtime minima quedo en
+      verde; los probes live marcaron `hf`, `zai` y `ddeksee` operativos,
+      `openrouter` y `clod` autenticados pero limitados por `HTTP 429`, y
+      `nvidia` sin key detectable. La reinstalacion limpia (`package:local` +
+      `app:own-ide:setup`) quedo validada con `freejt7_own_ide_bootstrap_smoke`,
+      `installed_extension_smoke` y `own_ide_panel_headless_e2e_smoke`. El
+      informe operativo queda en `docs/23-REINSTALACION-LIMPIA-OWN-IDE-Y-VERIFICACION-PROVIDERS.md`.
+  - id: "20260430-rpm-buildid-justification-tree-validation"
+    fecha: "2026-04-30"
+    titulo: "Justificar Missing build-id del RPM y fijar regla de validacion de arbol"
     descripcion: >
-      Cerrar formalmente la Fase 6 del plan maestro limitando el ownership a
-      `src-js/core/copilot_router.runtime.js` y pruebas dedicadas del router,
-      para que la compatibilidad Copilot quede como ruta secundaria/legacy
-      aislada del flujo principal own-ide agent-first y deje de depender del
-      provider general activo.
+      Cerrar una iteracion corta posterior al hardening de own-ide para
+      confirmar con evidencia el origen de los warnings `Missing build-id` del
+      paquete RPM, formalizar en el spec que esos binarios vendorizados no deben
+      bloquear el build y registrar una regla operativa para excluir `dist-deb`
+      y `dist-rpm` de validaciones de arbol salvo auditoria explicita.
     estado: "completado"
-    riesgo: "medium"
-    skills_usados: []
+    riesgo: "low"
+    skills_usados: ["verification-before-completion", "free-jt7-global-runtime-audit"]
     resultado: >
-      Completado: `copilot_router.runtime` ya no hereda
-      `freejt7.apiProvider` para decidir la ruta legacy; ahora usa
-      seleccion/config separada bajo `freejt7.copilotRouter.*`, publica
-      metadata explicita de compatibilidad secundaria y conserva override
-      explicito compatible hacia atras. Se añadió
-      `tests/copilot_router_legacy_isolation_smoke.js` y se verificó con
-      `router_core_concurrency_smoke`, `router_review_stage_smoke`, la smoke
-      nueva y `build:bundle`.
-  - id: "20260428-phase4-native-capabilities-runtime"
-    fecha: "2026-04-28"
-    titulo: "Fase 4 formal: runtime propio controla skills, MCP y tools nativos"
+      Completado: un build RPM fresco confirmo que los warnings `Missing build-id`
+      provienen solo de modulos nativos precompilados dentro del runtime
+      VSCodium embebido (`runtime/vscodium/.../node_modules/**`). El builder RPM
+      ahora genera un spec con `%global _missing_build_ids_terminate_build 0` y
+      comentario explicito de payload vendor; ademas `docs/MEMORY.md` registra
+      la regla operativa de excluir `dist-deb/**` y `dist-rpm/**` durante
+      validaciones de arbol para no inflar contexto ni ocultar la superficie
+      fuente real.
+  - id: "20260501-own-ide-gap-closure-hardening"
+    fecha: "2026-05-01"
+    titulo: "Cerrar gap own-ide: cancel-path del panel, E2E headless y hardening standalone"
     descripcion: >
-      Cerrar formalmente la Fase 4 del plan maestro dentro del ownership del
-      runtime propio: reforzar en `freejt7-agent-runtime` y
-      `local-agent-runtime` el control sobre activacion, trazabilidad y
-      despacho de skills resueltos, snapshot MCP y tools nativos del panel
-      own-ide, sin depender del provider para decidir ni dejar evidencia.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: []
-    resultado: >
-      Completado: `freejt7-agent-runtime` ahora deja un `capabilityPlan`
-      con dispatch provider-independent para skills, snapshot MCP y tools
-      nativos, y reinyecta esa traza en `local-agent-runtime` como evidencia
-      verificable. Se actualizaron los smokes de runtime/local/MCP/subagentes
-      para fijar `dispatch.owner`, `dispatchTarget`, `trace` y familias MCP
-      nativas. Verificado con `freejt7_agent_runtime_smoke`,
-      `local_agent_runtime_smoke`, `mcp_documents_tools_smoke` y
-      `session_engine_subagent_tools_smoke`.
-  - id: "20260428-phase3-formal-close-session-continuity"
-    fecha: "2026-04-28"
-    titulo: "Fase 3 formal: cierre de continuidad real de sesion"
-    descripcion: >
-      Cerrar formalmente la Fase 3 del plan maestro dentro del ownership de
-      `session-engine` y sus smokes: reforzar reconstruccion/persistencia de
-      `agentState`, reanudacion de sesion, continuidad tras reinicio y pruebas
-      dirigidas que demuestren restauracion operativa real.
-    estado: "en_progreso"
-    riesgo: "high"
-    skills_usados: ["verification-before-completion"]
-    resultado: >
-      Completado: `session-engine` ahora reconstruye `agentState` desde la
-      ultima tarea persistida, refresca snapshots de continuidad al reencolar
-      tareas y deja el estado correcto al recuperar tareas interrumpidas por
-      reinicio. Se ampliaron `session_engine_context_smoke`,
-      `session_engine_controls_smoke`, `session_engine_states_smoke` y
-      `own_ide_continuity_e2e_smoke` para cubrir reconstruccion de estado,
-      `yield/resume` y continuidad post-restart. Verificado con esas cuatro
-      smoke.
-  - id: "20260428-phase256-parallel-integration"
-    fecha: "2026-04-28"
-    titulo: "Fases 2-6 formales en paralelo con integracion central own-ide"
-    descripcion: >
-      Ejecutar formalmente las Fases 2, 3, 4, 5 y 6 del plan maestro
-      agent-first usando workers paralelos por ownership: Fase 2 para el
-      cierre UI/flujo del panel own-ide, Fase 3 para continuidad real de
-      sesion, Fase 4 para skills/MCP/tools nativos bajo el runtime propio,
-      Fase 5 para providers/OpenClaw como backends subordinados y Fase 6 para
-      aislar la compatibilidad heredada Copilot como ruta secundaria. La
-      integracion final, verificacion y reinstalacion del perfil `own-ide` se
-      cierran en el hilo principal.
-    estado: "en_progreso"
-    riesgo: "high"
-    skills_usados: ["agent-orchestration", "verification-before-completion"]
-    resultado: >
-      En progreso: run formal abierto para cerrar Fases 2-6 sin mezclar
-      hotfixes laterales. Pendiente integrar cambios, verificar y cerrar la
-      trazabilidad con VSIX reinstalada en `own-ide`.
-  - id: "20260428-traceability-phase-alignment"
-    fecha: "2026-04-28"
-    titulo: "Alineacion de trazabilidad con el plan maestro agent-first"
-    descripcion: >
-      Corregir la desviacion entre el plan maestro y la trazabilidad operativa:
-      dejar explicito que los runs ejecutados hasta ahora cubren Fases 1-3 y
-      que Fases 4-6 siguen pendientes de ejecucion formal, evitando mezclar
-      hotfixes con avance de fase no ganado.
-    estado: "completado"
-    riesgo: "medium"
-    skills_usados: ["verification-before-completion"]
-    resultado: >
-      Completado: `docs/21-PLAN-MAESTRO-OWN-IDE-AGENT-FIRST.md`,
-      `docs/TASKS.md` y `copilot-agent/RESUME.md` ahora incluyen mapa explicito
-      fase -> runs cerrados, y dejan marcado que Fases 4-6 siguen pendientes.
-  - id: "20260428-phase3-session-agent-state-continuity"
-    fecha: "2026-04-28"
-    titulo: "Fase 3 inicial: continuidad de sesion persistida en agent state"
-    descripcion: >
-      Primer corte de continuidad real: persistir un `agentState` por sesion y
-      usarlo para enriquecer prompts breves como `continua`, de modo que
-      Free JT7 retome con contexto operativo propio y no solo con historial
-      crudo de mensajes.
+      Cerrar el bloque pendiente del roadmap agent-first de Free JT7
+      automatizando la cancelacion del panel sin enqueue real, verificando el
+      panel instalado en own-ide mediante smoke/E2E headless y endureciendo el
+      bootstrap/empaquetado standalone con controles verificables sobre el
+      runtime portable.
     estado: "completado"
     riesgo: "high"
-    skills_usados: ["agent-orchestration", "verification-before-completion"]
+    skills_usados: ["verification-before-completion", "agent-orchestration", "free-jt7-global-runtime-audit"]
     resultado: >
-      Completado: `session-engine` ahora persiste `agentState` con ultimo
-      objetivo, ultimo resumen visible, ultima routePlan y `continuationHint`;
-      ese estado se pasa al runtime propio, y `freejt7-agent-runtime`
-      enriquece prompts breves de continuidad con ese contexto. Verificado con
-      `freejt7_agent_runtime_smoke`, `session_engine_context_smoke`,
-      `build:bundle`, `package:local`, `app:own-ide:setup` e
-      `installed_extension_smoke`.
-  - id: "20260428-phase2-runtime-local-dispatch"
-    fecha: "2026-04-28"
-    titulo: "Fase 2 siguiente: despacho real de acciones locales desde el runtime propio"
+      Completado: la regresión aislada del cancel-path quedó validada con
+      `tests/control_panel_enqueue_cancel_smoke.js`; el E2E headless del panel
+      instalado en `own-ide` quedó validado con
+      `tests/own_ide_panel_headless_e2e_smoke.js`; el bootstrap portable usa un
+      pin JSON con `sha256` verificable (`scripts/freejt7-vscodium-linux-x64.json`)
+      y la smoke `tests/freejt7_own_ide_bootstrap_smoke.js` quedó en verde. El
+      cierre incluyó build real de `.deb` y `.rpm`, corrigiendo además el
+      warning locale-dependent de `%changelog` en el builder RPM.
+  - id: "20260430-phase1-phase2-remediation-patch"
+    fecha: "2026-04-30"
+    titulo: "Aplicar remediación Fase 1-2 y documentar matriz/own-ide transition"
     descripcion: >
-      Siguiente corte de la Fase 2 agent-first: hacer que el runtime propio
-      prepare y despache `actions` locales explicitas hacia el fallback local,
-      en vez de limitarse a publicar un plan de capacidades pasivo.
+      Aplicar el parche exacto de Fase 1 y Fase 2 derivado de la auditoría de
+      autonomía de Free JT7, endureciendo intake, criterios de cierre,
+      persistencia de continuidad y contexto de prompt. Complementar con una
+      matriz archivo por archivo y un diseño de transición de UI hacia own-ide
+      reutilizando solo las piezas aprovechables del repo externo.
     estado: "completado"
     riesgo: "high"
-    skills_usados: ["agent-orchestration", "verification-before-completion"]
+    skills_usados: ["verification-before-completion", "agent-orchestration", "free-jt7-global-runtime-audit"]
     resultado: >
-      Completado: `local-agent-runtime` ahora expone derivacion reusable de
-      acciones, y `freejt7-agent-runtime` prepara `actions` locales explicitas
-      y las pasa a `runLocalAgentTask`. El `capabilityPlan` ya refleja que el
-      despacho pertenece al runtime propio. Verificado con
-      `freejt7_agent_runtime_smoke`, `session_engine_context_smoke`,
-      `provider_router_failover_smoke`, `control_panel_ui_smoke`,
-      `build:bundle`, `package:local`, `app:own-ide:setup` e
-      `installed_extension_smoke`.
-  - id: "20260428-local-agent-incomplete-create-dir-hotfix"
-    fecha: "2026-04-28"
-    titulo: "Hotfix respuesta operativa para create-directory incompleto"
+      Completado: Fase 1 endureció el intake del panel, bloqueó el bypass de
+      `task.enqueue` tras cancelación y evitó cierres prematuros del planner;
+      Fase 2 descontaminó continuidad y contexto local en `session-engine`,
+      `freejt7-agent-runtime` y `chat-context`. Se añadió la regresión
+      `tests/freejt7_agent_core_v2_evidence_gate_smoke.js` para el guard de
+      evidencia del core-v2 y se documentó la matriz exacta + transición UI en
+      `docs/22-REMEDIACION-FASE1-2-MATRIZ-Y-TRANSICION-OWN-IDE.md`.
+  - id: "20260430-auditoria-standalone-packaging-claim"
+    fecha: "2026-04-30"
+    titulo: "Auditar claim fuerte de app propia/standalone en own-ide, launchers y paquetes Linux"
     descripcion: >
-      Corregir el caso donde el fallback local recibia una orden incompleta
-      como `crea la carpeta` y devolvia una auditoria generica en vez de pedir
-      la ruta o el nombre faltante con una respuesta corta y operativa.
-    estado: "completado"
-    riesgo: "medium"
-    skills_usados: ["verification-before-completion"]
-    resultado: >
-      Completado: `local-agent-runtime` ahora detecta intents incompletos de
-      creacion de carpetas y responde pidiendo la ruta completa o la ruta base
-      con nombre. Se añadió regresion en `local_agent_runtime_smoke`.
-      Verificado con `local_agent_runtime_smoke`, `build:bundle`,
-      `package:local`, `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260428-phase2-capability-plan-runtime"
-    fecha: "2026-04-28"
-    titulo: "Fase 2 inicial: plan de capacidades y MCP dentro del runtime propio"
-    descripcion: >
-      Primer corte de la Fase 2 agent-first: hacer que el runtime propio de
-      Free JT7 decida y exponga no solo la ruta operativa, sino tambien el
-      plan de capacidades por tarea (tool mode, operaciones locales, skills
-      seleccionadas y snapshot MCP) para que el panel y el engine no vuelvan
-      a inferir eso por separado.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: ["agent-orchestration", "verification-before-completion"]
-    resultado: >
-      Completado: `freejt7-agent-runtime` ahora adjunta `capabilityPlan`
-      al `executionPlan`, con `toolMode`, operaciones locales inferidas,
-      skills seleccionadas y MCP disponible. `session-engine` persiste ese
-      plan dentro de `routePlan`, y `control-panel` muestra un resumen corto
-      del plan en cada tarjeta de tarea. Verificado con
-      `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`,
-      `session_engine_context_smoke`, `control_panel_ui_smoke`,
-      `build:bundle`, `package:local`, `app:own-ide:setup` e
-      `installed_extension_smoke`.
-  - id: "20260428-phase1c-agent-runtime-route-planning"
-    fecha: "2026-04-28"
-    titulo: "Fase 1C: planificacion operativa por tarea dentro del runtime propio"
-    descripcion: >
-      Tercer corte del plan maestro agent-first: hacer que `freejt7-agent-runtime`
-      sea dueño de la ruta operativa por tarea, priorizando local seguro para
-      objetivos deterministas y persistiendo un plan de ejecucion visible para
-      el panel antes de que la tarea termine.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: ["agent-orchestration", "verification-before-completion"]
-    resultado: >
-      Completado: `freejt7-agent-runtime` ahora expone `planTaskExecution()`,
-      ejecuta local-first cuando la tarea es resoluble localmente y adjunta
-      `executionPlan` a `routeMeta`. `provider-router` preserva ese plan y
-      `session-engine` persiste `routePlan` al encolar. `control-panel` usa
-      `routePlan` como pista visual si aun no existen intentos exitosos.
-      Verificado con `freejt7_agent_runtime_smoke`,
-      `provider_router_failover_smoke`, `session_engine_context_smoke`,
-      `build:bundle`, `package:local`, `app:own-ide:setup` e
-      `installed_extension_smoke`.
-  - id: "20260428-phase1b-agent-runtime-continuity"
-    fecha: "2026-04-28"
-    titulo: "Fase 1B: continuidad y contexto dentro del runtime propio"
-    descripcion: >
-      Segundo corte del plan maestro agent-first: mover el armado del contexto
-      conversacional y la continuidad de sesión del modo agente hacia
-      `freejt7-agent-runtime`, para que `provider-router` y el panel deleguen
-      en una capa central que representa a Free JT7 y no reserialicen el
-      historial por su cuenta.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: ["agent-orchestration", "verification-before-completion"]
-    resultado: >
-      Completado: `src-js/core/freejt7-agent-runtime.js` ahora construye el
-      `conversationRequest` y expone `executeTask()` como entrada principal
-      agent-first; `provider-router` delega la ruta agente a ese runtime y
-      `extension.runtime` reutiliza la serialización conversacional también en
-      la compatibilidad Copilot. Se amplió `tests/freejt7_agent_runtime_smoke.js`
-      para fijar la continuidad del historial. Verificado con
-      `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`,
-      `session_engine_context_smoke`, `build:bundle`, `package:local`,
-      `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260428-phase1a-freejt7-agent-runtime"
-    fecha: "2026-04-28"
-    titulo: "Fase 1A: runtime propio del agente Free JT7"
-    descripcion: >
-      Primer corte ejecutable del plan maestro agent-first: extraer un runtime
-      propio de Free JT7 para que el control del modo agente no siga repartido
-      entre callbacks de `extension.runtime`, y conectar esa capa al panel y
-      al router.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: ["agent-orchestration", "verification-before-completion"]
-    resultado: >
-      Completado: se creó `src-js/core/freejt7-agent-runtime.js`, se integró
-      con `extension.runtime`, `control-panel` y `provider-router`, y se
-      añadió `tests/freejt7_agent_runtime_smoke.js`. El plan maestro quedó
-      guardado en `docs/21-PLAN-MAESTRO-OWN-IDE-AGENT-FIRST.md`. Verificado
-      con `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`,
-      `control_panel_ui_smoke`, `build:bundle`, `package:local`,
-      `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260428-own-ide-agent-first-master-plan"
-    fecha: "2026-04-28"
-    titulo: "Auditoria de rumbo y plan maestro own-ide agent-first"
-    descripcion: >
-      Reencauzar el proyecto para que Free JT7 sea el agente protagonista en
-      su propio IDE y panel, usando providers externos como backends y
-      OpenClaw como harness opcional en vez de control-plane principal.
-      Esta fase produce auditoria fresca, backlog por frentes y plan maestro
-      de arquitectura/ejecucion con criterios de aceptacion claros.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: ["agent-orchestration", "free-jt7-global-runtime-audit", "verification-before-completion"]
-    resultado: >
-      Completado: se ejecuto la auditoria base fresca del runtime
-      (`policy-validate`, `doctor --strict`, `rollout-mode`, `host-mode status`,
-      `ide-detect --json`, `task-run runtime-audit`, `task-list`, `task-checklist`)
-      y se definio un plan maestro para reencauzar el producto hacia un flujo
-      own-ide agent-first. El plan separa control-plane agente, UI panel-first,
-      session/memory, tools/MCP, providers/harness y compatibilidad Copilot
-      heredada, con criterios de aceptacion alineados al usuario.
-  - id: "20260428-local-agent-operational-actions-hotfix"
-    fecha: "2026-04-28"
-    titulo: "Hotfix ejecucion local real para acciones operativas del agente"
-    descripcion: >
-      Corregir el caso donde, tras fallar OpenClaw, Free JT7 pasaba por
-      provider directo y devolvía respuestas plausibles pero no ejecutadas.
-      El objetivo es que acciones locales deterministas como crear carpetas,
-      inspeccionar rutas o resolver Git se ejecuten realmente y se respondan
-      con verificación, no con alucinación del modelo.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: []
-    resultado: >
-      Completado: `local-agent-runtime` ahora soporta `mkdir` e inspección de
-      rutas/directorios explícitos, incluso absolutos; `extension.runtime`
-      prioriza fallback local para objetivos claramente ejecutables de forma
-      local antes de usar provider directo. También se redujo la verbosidad
-      visible para resultados como carpeta creada o Git ya instalado.
-      Verificado con `local_agent_runtime_smoke`,
-      `extension_runtime_fallback_policy_smoke`, `chat_context_smoke`,
-      `openclaw_runtime_smoke`, `control_panel_ui_smoke`, `build:bundle`,
-      `package:local`, `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260428-openclaw-null-byte-cli-hotfix"
-    fecha: "2026-04-28"
-    titulo: "Hotfix bytes nulos en argumentos CLI del agente OpenClaw"
-    descripcion: >
-      Corregir el fallo donde el panel en modo agente rompía antes de ejecutar
-      `openclaw agent` porque el argumento `--message` contenía bytes nulos
-      heredados de la serialización conversacional o del contexto local.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: []
-    resultado: >
-      Completado: `chat-context.js` elimina `\0` de system prompt, historial
-      y solicitud actual; `openclaw-agent-runtime.js` sanea `sessionId`,
-      `thinking`, `message` y el array final de args del CLI. Se añadieron
-      regresiones en `chat_context_smoke` y `openclaw_runtime_smoke`.
-      Verificado con `chat_context_smoke`, `openclaw_runtime_smoke`,
-      `extension_runtime_fallback_policy_smoke`, `local_agent_runtime_smoke`,
-      `control_panel_ui_smoke`, `build:bundle`, `package:local`,
-      `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260428-agent-provider-local-fallback-policy"
-    fecha: "2026-04-28"
-    titulo: "Hotfix politica de fallback agente -> provider directo -> local"
-    descripcion: >
-      Corregir la politica del modo agente para que Free JT7 no degrade al
-      runtime local cuando falla OpenClaw si la solicitud no es resoluble
-      localmente. La ruta correcta debe intentar primero provider directo y
-      reservar el fallback local para tareas deterministas como lecturas,
-      verificaciones o acciones seguras soportadas.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: []
-    resultado: >
-      Completado: `extension.runtime.js` ahora usa `canResolveLocalGoal`
-      para permitir fallback local solo en objetivos resolubles; además amplía
-      `shouldUseProviderDirectFallback()` para fallos de gateway, red,
-      timeout y respuestas genericas del agente. Se añadió
-      `tests/extension_runtime_fallback_policy_smoke.js`. Verificado con
-      `extension_runtime_fallback_policy_smoke`, `local_agent_runtime_smoke`,
-      `openclaw_runtime_smoke`, `control_panel_ui_smoke`, `build:bundle`,
-      `package:local`, `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260428-openclaw-stale-provider-fix"
-    fecha: "2026-04-28"
-    titulo: "Hotfix provider stale de OpenClaw y foco en ultima solicitud"
-    descripcion: >
-      Corregir el fallo operativo donde el gateway OpenClaw del runtime real no
-      arrancaba por un provider custom stale (`clod`) en `openclaw.json`, y
-      además asegurar que el fallback local use la ultima `Solicitud actual`
-      del prompt auditado en lugar de una solicitud vieja del historial.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: []
-    resultado: >
-      Completado: `openclaw-agent-runtime` elimina `models.providers.clod`
-      cuando el provider activo no es `clod`, evitando que el gateway exija
-      `CLOD_API_KEY` en sesiones `openrouter`. `local-agent-runtime`
-      ahora toma la ultima coincidencia de `Solicitud actual` / `Objetivo solicitado`.
-      Verificado con `openclaw_runtime_smoke`, `local_agent_runtime_smoke`,
-      arranque manual del gateway con config saneada, `build:bundle`,
-      `package:local`, `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260428-opencode-shell-panel-refactor"
-    fecha: "2026-04-28"
-    titulo: "Refactor del shell del panel inspirado en OpenCode"
-    descripcion: >
-      Adoptar el patron de interfaz de OpenCode que si es reutilizable dentro
-      de Free JT7: rail de sesiones, timeline central y panel lateral de
-      contexto/estado, sin intentar incrustar el stack completo Solid/TUI de
-      OpenCode dentro del webview actual de VS Code.
+      Auditar con evidencia verificable qué falta para sostener un claim más
+      fuerte de producto propio/standalone en Free JT7, revisando bootstrap
+      `own-ide`/`standalone`, empaquetado `.deb`/`.rpm`, launchers y pruebas,
+      sin implementar cambios de producto.
     estado: "completado"
     riesgo: "medium"
     skills_usados: []
     resultado: >
-      Completado: `control-panel.js` ahora usa un shell de tres columnas
-      inspirado en OpenCode, con barras y superficies mas sobrias y el
-      compositor fijado abajo del timeline. En paralelo,
-      `local-agent-runtime.js` dejo de inferir acciones desde el historial
-      completo y ahora prioriza `Solicitud actual`, evitando respuestas
-      absurdas como `system_install` cuando el usuario pregunta por el agente.
-      Verificado con `control_panel_ui_smoke`,
-      `control_panel_script_syntax_smoke`, `local_agent_runtime_smoke`,
-      `build:bundle`, `package:local`, `app:own-ide:setup` e
-      `installed_extension_smoke`.
-  - id: "20260428-openclaw-gateway-autostart-hotfix"
-    fecha: "2026-04-28"
-    titulo: "Hotfix autostart del gateway OpenClaw para modo agente Free JT7"
-    descripcion: >
-      Corregir el caso donde Free JT7 en `own-ide` entra a fallback local
-      porque el gateway OpenClaw no esta levantado o el runtime no valida bien
-      su disponibilidad antes de ejecutar `openclaw agent`.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: []
-    resultado: >
-      Completado: `extension.runtime.js` ahora asegura el gateway OpenClaw
-      antes de invocar `openclaw agent`, con autostart detacheado, log
-      dedicado, polling sobre `gateway status` y readiness por `RPC probe: ok`.
-      `openclaw-agent-runtime` expone helpers de bind/port/url/readiness para
-      cubrir el contrato con smoke. Verificado con `openclaw_runtime_smoke`,
-      `local_agent_runtime_smoke`, smokes del panel, `build:bundle`,
-      `package:local`, `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260427-local-runtime-system-actions-hotfix"
-    fecha: "2026-04-27"
-    titulo: "Hotfix acciones de sistema del runtime local Free JT7"
-    descripcion: >
-      Corregir la degradacion del fallback local para que solicitudes concretas
-      del sistema como `instala git` no se respondan como auditoria generica,
-      sino como acciones operativas verificables o bloqueos reales del entorno.
-    estado: "completado"
-    riesgo: "medium"
-    skills_usados: []
-    resultado: >
-      Completado: `local-agent-runtime` detecta `instala git`, verifica si Git
-      ya existe, intenta instalacion por gestor soportado cuando haga falta y
-      reporta el resultado con evidencia breve y trazabilidad tecnica. Verificado
-      con `local_agent_runtime_smoke`, smokes del panel, `build:bundle`,
-      `package:local`, `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260427-agent-autonomy-openclaw-policy-hotfix"
-    fecha: "2026-04-27"
-    titulo: "Hotfix autonomia real del modo agente Free JT7 en own-ide"
-    descripcion: >
-      Corregir la ruta donde el panel en modo agente cae a proveedor directo o
-      runtime local por locks/gateway de OpenClaw, y asegurar que el perfil
-      `own-ide` opere con politica autonoma cuando el usuario espera control
-      completo de permisos y atribuciones.
-    estado: "completado"
-    riesgo: "high"
-    skills_usados: []
-    resultado: >
-      Completado: `openclaw-agent-runtime` limpia locks stale y genera session-id
-      por tarea (`runId/taskId`) para evitar bloqueos entre solicitudes; el
-      runtime reintenta OpenClaw con sesion aislada cuando detecta lock. En
-      standalone/own-ide `control-panel` fuerza `PolicyEngine` en modo
-      `autonomous` y el bootstrap escribe `freejt7.panel.policy.mode=autonomous`.
-      Verificado con smokes OpenClaw/panel/policy/bootstrap/provider, bundle,
-      `package:local`, `app:own-ide:setup` e `installed_extension_smoke`.
-  - id: "20260427-chat-first-inspector-ui-refactor"
-    fecha: "2026-04-27"
-    titulo: "Refactor chat principal e inspector lateral del panel Free JT7"
-    descripcion: >
-      Corregir la experiencia del panel para que el chat sea la vista principal
-      de trabajo y las tareas, eventos, estado y configuracion queden como
-      inspector lateral. El foco es eliminar respuestas visibles tipo log crudo
-      del runtime local/fallback y mejorar la claridad profesional del flujo.
-    estado: "completado"
-    riesgo: "medium"
-    skills_usados: []
-    resultado: >
-      Completado: se auditaron `docs/TASKS.md`, `docs/MEMORY.md`,
-      `docs/STRATEGY_LOG.md` y el panel. `runLocalAgentTask` ahora devuelve
-      un resumen visible conversacional y preserva el inventario tecnico en
-      `local.technicalSummary`; `control-panel.js` renderiza respuestas del
-      asistente como parrafos/listas de chat y deja resultados/verificacion en
-      el inspector. Verificado con `local_agent_runtime_smoke`,
-      `control_panel_script_syntax_smoke`, `control_panel_ui_smoke`,
-      `panel_execution_mode_smoke` y `build:bundle`.
+      Completado: auditoría estática y verificación ligera ejecutadas sobre
+      `package.json`, scripts `freejt7-app-bootstrap` / `freejt7-own-ide-bootstrap`,
+      builders e instaladores `.deb`/`.rpm`, launchers y smokes. Hallazgos
+      principales: el paquete sigue siendo un launcher de VSIX y no una app
+      autocontenida; `own-ide` descarga VSCodium latest Linux x64 sin pin/checksum;
+      el RPM se publica como `noarch` aunque el runtime efectivo es x64; los
+      artefactos actuales `dist-deb/` y `dist-rpm/` embedden una VSIX distinta
+      de la VSIX raíz; y las smokes de paquete sólo validan existencia/tamaño,
+      no alineación del payload ni arranque real.
   - id: "20260427-deep-audit-ui-runtime-autonomy-plan"
     fecha: "2026-04-27"
     titulo: "Auditoria integral de interfaz, runtime, providers y autonomia de Free JT7"
@@ -2304,13 +1921,134 @@ tareas:
     skills_usados: ["free-jt7-global-runtime-audit", "agent-orchestration", "systematic-debugging", "verification-before-completion"]
     resultado: >
       Ejecucion inicial plan20 completada: 5 subagentes en paralelo (auditoria repo, comparativas OpenClaw/OpenCode/Claurst, fix OpenClaw path y smoke continuidad own-ide), acople final aplicado, verificacion integral en verde y reinstalacion own-ide via package:local + app:own-ide:setup.
-  - id: "20260428T131508Z-81891140"
-    fecha: "2026-04-28"
-    titulo: "runtime-audit"
+  - id: "20260429-freejt7-owned-backend-primary"
+    fecha: "2026-04-29"
+    titulo: "Crear backend propio de Free JT7 como ruta principal en own-ide"
     descripcion: >
-      runtime-audit
+      Reducir la dependencia recurrente de OpenClaw convirtiendo `freejt7` en backend primario del modo agente en own-ide, con OpenClaw subordinado y runtime local mas ejecutor.
+    estado: "completado"
+    riesgo: "high"
+    skills_usados: []
+    resultado: >
+      Completado: `runtimeBackend=freejt7` ya existe de extremo a extremo en router/session/panel/bootstrap, `own-ide` arranca con backend propio, OpenClaw queda como fallback subordinado y el runtime local gano `delete` y `exec` seguros para evitar degradacion a respuestas basicas.
+  - id: "20260429-auditoria-doc-vs-estado-real"
+    fecha: "2026-04-29"
+    titulo: "Contrastar auditoria de correccion con estado real del runtime propio"
+    descripcion: >
+      Revisar el documento AUDITORIA-PLAN-CORRECCION-FREEJT7 y verificar qué fallas siguen vigentes, cuáles quedaron desactualizadas y cuáles explican que Free JT7 todavía se sienta como chat básico.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: []
+    resultado: >
+      Completado: el diagnóstico confirma que varias observaciones del documento siguen vigentes (bypass legacy a `_callProvider`, heurísticas regex para local-first y backend propio implementado sobre provider directo), mientras que otras ya fueron corregidas (`capabilityPlan.dispatch.trace`, detección de OpenClaw y soporte de `runtimeBackend=freejt7`).
+  - id: "20260429-freejt7-owned-agentic-runtime"
+    fecha: "2026-04-29"
+    titulo: "Construir backend agentic propio reutilizando repos opcionales"
+    descripcion: >
+      Sustituir el backend propio actual basado en provider directo por un loop agentic profesional con planificación, tools, verificación y reintento, reutilizando patrones de repos opcionales ya probados.
+    estado: "completado"
+    riesgo: "high"
+    skills_usados: []
+    resultado: >
+      Completado: se creó `freejt7-owned-runtime` con loop real de planificación, tool-use, verificación y reintento; `runFreeJt7OwnedAgentTask()` dejó de envolverse sobre `provider-direct`, el runtime local expone primitivas reutilizables y la VSIX final quedó reinstalada en own-ide con smokes verdes.
+  - id: "20260430-autonomy-trace-verification"
+    fecha: "2026-04-30"
+    titulo: "Verificar ultimas tareas y memoria del plan de accion"
+    descripcion: >
+      Verificar la trazabilidad reciente de la tarea de ejecutar el plan de accion, el estado de memoria y donde quedo creada la solucion para evitar que Free JT7 siga actuando como chat basico.
     estado: "completado"
     riesgo: "low"
-    skills_usados: ["free-jt7-global-runtime-audit", "production-code-audit", "seo-audit"]
+    skills_usados: []
     resultado: >
-      Run finalizado con 2 steps
+      Completado: la ultima tarea cerrada es `20260429-freejt7-owned-agentic-runtime`; la solucion vive principalmente en `src-js/core/freejt7-owned-runtime.js`, `src-js/core/freejt7-agent-runtime.js` y `src-js/core/extension.runtime.js`; el perfil own-ide mantiene `freejt7.panel.runtimeBackend=freejt7`, el dry-run de arranque resuelve VSCodium/VSIX correctamente y los smokes focalizados siguen en verde.
+  - id: "20260430-freejt7-agent-core-v2"
+    fecha: "2026-04-30"
+    titulo: "Crear backend profesional paralelo freejt7-agent-core-v2"
+    descripcion: >
+      Crear un backend propio paralelo, profesional y probado para Free JT7, reutilizando patrones/codigo de opencode, open claw y claurst, y migrar own-ide/panel solo cuando demuestre ejecucion real de tools sin degradar a chat basico.
+    estado: "completado"
+    riesgo: "high"
+    skills_usados: []
+    resultado: >
+      Completado: se creó `src-js/core/freejt7-agent-core-v2.js` como backend paralelo con registry de tools, executor, verifier, rechazo de completed sin evidencia operacional, `config_patch` y trazas JSONL. `freejt7-agent-runtime`, `provider-router`, panel, session-engine, package y bootstrap own-ide aceptan `freejt7-v2`; own-ide quedó instalado con `freejt7.panel.runtimeBackend=freejt7-v2`. Validado con smokes, build, package, installed extension y prueba live creando/modificando/verificando `copilot-agent/runs/core-v2-live/validation.txt`.
+  - id: "20260430-freejt7-agent-core-v2-capabilities"
+    fecha: "2026-04-30"
+    titulo: "Integrar snapshot operativo de skills y MCP en core-v2"
+    descripcion: >
+      Continuar el backend propio profesional para que skills y MCP no queden solo en runtime/panel, sino tambien dentro del prompt, la traza y el resultado operativo del core-v2.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: []
+    resultado: >
+      Completado: `freejt7-agent-core-v2` ahora consume `capabilityPlan` y `selectedSkills`, incluye snapshot de skills/MCP/nativeMcpTools/dispatch en el prompt de planificacion, lo persiste en JSONL y lo expone en `result.coreV2.capabilities`, con smoke y regresiones de runtime/panel en verde.
+  - id: "20260430-freejt7-agent-core-v2-native-capabilities"
+    fecha: "2026-04-30"
+    titulo: "Ejecutar skills y MCP local nativamente dentro de core-v2"
+    descripcion: >
+      Extender `freejt7-agent-core-v2` para que el mismo loop pueda resolver/inspeccionar skills y llamar herramientas reales del MCP local `free-jt7-local`, en lugar de dejar esas capacidades solo como snapshot o trazabilidad.
+    estado: "completado"
+    riesgo: "high"
+    skills_usados: []
+    resultado: >
+      Completado: `freejt7-agent-core-v2` ahora soporta `skill_resolve`, `skill_inspect`, `mcp_list_tools` y `mcp_call`; reutiliza `skills_manager.py`, ejecuta tools reales del MCP local `free-jt7-local` dentro del mismo loop, persiste evidencia en la traza JSONL y mantiene en verde las smokes de core-v2, runtime y panel.
+  - id: "20260430-auditoria-extension-vs-own-ide"
+    fecha: "2026-04-30"
+    titulo: "Auditar si Free JT7 hoy actua como extension clasica o como IDE/agente integral en own-ide"
+    descripcion: >
+      Inspeccionar el repo con evidencia verificable para determinar si Free JT7
+      hoy sigue operando principalmente como extension clasica o si ya sostiene
+      un flujo de IDE/agente integral dentro de `own-ide`, detallando rutas de
+      bootstrap, persistencia, runtime backend, gaps para una afirmacion fuerte
+      y pruebas locales automatizables sin GUI manual.
+    estado: "completado"
+    riesgo: "medium"
+    skills_usados: []
+    resultado: >
+      Completado: la evidencia de despliegue sigue siendo una extension VS Code
+      (`package.json` con `main=dist/extension.cjs`, `activationEvents` y
+      `contributes`), mientras `own-ide` descarga VSCodium stock y le instala la
+      misma VSIX en un perfil aislado (`~/.freejt7-app/profiles/own-ide`). A la
+      vez, el backend ya no es solo chat basico: `freejt7-agent-core-v2`
+      ejecuta tools locales, MCP, skills, config patch, subagentes y persiste
+      trazas JSONL. Conclusion operativa: hoy Free JT7 es una extension con modo
+      own-ide/agent-first bastante avanzado, no un IDE integral independiente en
+      sentido fuerte. Verificado con smokes de bootstrap, autoridad,
+      core-v2, continuidad own-ide, dry-run de bootstrap e inspeccion del
+      perfil/extensión instalada.
+  - id: "20260430-freejt7-agent-core-v2-subagents-own-ide"
+    fecha: "2026-04-30"
+    titulo: "Subagentes nativos en core-v2 y verificacion de own-ide"
+    descripcion: >
+      Completar el siguiente bloque real del backend propio profesional:
+      delegacion nativa de subtareas dentro de `freejt7-agent-core-v2` y
+      verificacion del ownership real de Free JT7 sobre `own-ide`, incluyendo
+      corregir la reinstalacion stale de la misma VSIX.
+    estado: "completado"
+    riesgo: "high"
+    skills_usados: []
+    resultado: >
+      Completado: `freejt7-agent-core-v2` ahora soporta `subagent_run` con
+      recursion acotada, trazas hijas y agregacion de evidencia/cambios al
+      padre; la smoke de core-v2 cubre padre->hijo con artefacto real.
+      Ademas `scripts/freejt7-app-bootstrap.js` purga instalaciones previas y
+      aplica fallback manual de VSIX cuando VSCodium bloquea reinstalar la misma
+      version, y `tests/own_ide_installed_extension_smoke.js` valida el bundle
+      real instalado en `own-ide`. Veredicto de arquitectura: Free JT7 ya es
+      agent-first integral sobre `own-ide`, pero sigue siendo una VSIX sobre
+      VSCodium, no un binario/app independiente en sentido fuerte.
+  - id: "20260430-own-ide-headless-e2e-standalone-claim"
+    fecha: "2026-04-30"
+    titulo: "Cerrar gap de E2E headless y claim de app propia en own-ide"
+    descripcion: >
+      Eliminar el gap restante para sostener que Free JT7 gobierna `own-ide`
+      de forma integral: construir una prueba headless del panel/webview
+      instalado sin GUI manual y endurecer launcher/empaquetado standalone para
+      que el arranque y la verificacion se comporten como producto propio.
+    estado: "en_progreso"
+    riesgo: "high"
+    skills_usados: []
+    resultado: >
+      En progreso: abierta la iteracion para implementar un E2E headless real
+      del panel instalado en `own-ide`, revisar el seam de activacion del
+      webview/proveedor de vista y endurecer el modo standalone con
+      verificaciones de launcher/empaquetado de app propia.

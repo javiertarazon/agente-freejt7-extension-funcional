@@ -43,6 +43,16 @@ function main() {
       verification: 'Smoke local',
     },
     selectedSkills: [{ id: 'free-jt7-global-runtime-audit' }, { id: 'systematic-debugging' }],
+    capabilities: {
+      selectedSkills: ['free-jt7-global-runtime-audit', 'systematic-debugging'],
+      mcpServers: ['free-jt7-local', 'browser'],
+      localOperations: ['filesystem.read', 'shell.verify'],
+      plannedActions: ['read:README.md', 'verify:npm run build'],
+      dispatchTarget: 'openclaw-agent-runtime',
+      runtimeBackend: 'auto',
+      provider: 'openrouter',
+      model: 'openai/gpt-oss-20b:free',
+    },
     sessionTitle: 'Sesion demo',
     workspacePath: projectRoot,
     channel: 'control-panel',
@@ -56,6 +66,11 @@ function main() {
   assert.ok(request.systemPrompt.includes('Contexto local inspeccionado automaticamente'), 'debe incluir contexto local');
   assert.ok(request.systemPrompt.includes(projectRoot), 'debe mencionar la ruta detectada');
   assert.ok(request.systemPrompt.includes('README.md'), 'debe resumir archivos visibles');
+  assert.ok(request.systemPrompt.includes('Capacidades operativas visibles en esta sesion'), 'debe incluir inventario operativo visible');
+  assert.ok(request.systemPrompt.includes('MCP disponibles: free-jt7-local, browser'), 'debe incluir snapshot MCP');
+  assert.ok(request.systemPrompt.includes('Tools/operaciones locales: filesystem.read, shell.verify'), 'debe incluir operaciones locales');
+  assert.ok(request.systemPrompt.includes('Acciones candidatas del runtime: read:README.md, verify:npm run build'), 'debe incluir acciones planeadas');
+  assert.ok(request.systemPrompt.includes('Destino operativo preferido: openclaw-agent-runtime'), 'debe incluir destino operativo');
 
   const serialized = serializeConversationRequest(request);
   assert.ok(serialized.includes('Historial conversacional previo'), 'debe serializar el historial');

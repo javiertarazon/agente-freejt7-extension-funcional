@@ -45,6 +45,16 @@ const FREE_PROVIDER_MODELS = Object.freeze({
     { label: "GLM-4.5-Flash (gratuito)", value: "glm-4.5-flash" },
     { label: "GLM-4.7-Flash (gratuito)", value: "glm-4.7-flash" },
   ],
+  nvidia: [
+    { label: "DeepSeek V4 Pro", value: "deepseek-ai/deepseek-v4-pro" },
+    { label: "GLM 5.1", value: "z-ai/glm-5.1" },
+    { label: "Qwen3 Coder 480B", value: "qwen/qwen3-coder-480b-a35b-instruct" },
+    { label: "Mistral Large 675B", value: "mistralai/mistral-large-3-675b-instruct-2512" },
+  ],
+  ddeksee: [
+    { label: "DeepSeek Chat", value: "deepseek-chat" },
+    { label: "DeepSeek Reasoner", value: "deepseek-reasoner" },
+  ],
   clod: [
     { label: "GPT OSS 20B (OpenAI)", value: "OpenAI/gpt-oss-20B" },
     { label: "Gemma 4 31B IT (Google)", value: "google/gemma-4-31B-it" },
@@ -62,6 +72,8 @@ const FREE_PROVIDER_DEFAULT_MODELS = Object.freeze({
   openrouter: "openai/gpt-oss-20b:free",
   hf: "Qwen/Qwen2.5-7B-Instruct-Turbo",
   zai: "glm-4.5-flash",
+  nvidia: "deepseek-ai/deepseek-v4-pro",
+  ddeksee: "deepseek-chat",
   clod: "OpenAI/gpt-oss-20B",
   copilot: "",
 });
@@ -94,18 +106,64 @@ const PROVIDER_OUTPUT_TOKENS = {
   openrouter: 1500,
   hf:         1200,
   zai:        1500,
+  nvidia:     4096,
+  ddeksee:    1500,
   clod:       1500,
 };
+
+const NVIDIA_MODEL_PRESETS = Object.freeze({
+  'deepseek-ai/deepseek-v4-pro': Object.freeze({
+    maxTokens: 16384,
+    temperature: 1,
+    topP: 0.95,
+    extraBody: Object.freeze({
+      chat_template_kwargs: Object.freeze({
+        thinking: false,
+      }),
+    }),
+  }),
+  'z-ai/glm-5.1': Object.freeze({
+    maxTokens: 16384,
+    temperature: 1,
+    topP: 1,
+    extraBody: Object.freeze({
+      chat_template_kwargs: Object.freeze({
+        enable_thinking: true,
+        clear_thinking: false,
+      }),
+    }),
+  }),
+  'qwen/qwen3-coder-480b-a35b-instruct': Object.freeze({
+    maxTokens: 4096,
+    temperature: 0.7,
+    topP: 0.8,
+  }),
+  'mistralai/mistral-large-3-675b-instruct-2512': Object.freeze({
+    maxTokens: 2048,
+    temperature: 0.15,
+    topP: 1,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+  }),
+});
 
 // ---------------------------------------------------------------------------
 // Clave de API — primero SecretStorage, luego variables de entorno, luego archivo local ignorado
 // ---------------------------------------------------------------------------
 
 async function getApiKey(provider, secretStorage, options = {}) {
+  const authProfile = String(options.authProfile || "").trim();
+  const modelKey = normalizeModelKey(options.model);
+
   // 1. VS Code SecretStorage (guardada por el comando freejt7.setApiKey)
   if (secretStorage) {
     try {
-      const authProfile = String(options.authProfile || "").trim();
+      if (provider === "nvidia" && modelKey) {
+        for (const candidateKey of buildModelScopedSecretKeys(provider, modelKey, authProfile)) {
+          const scoped = await secretStorage.get(candidateKey);
+          if (scoped) return scoped;
+        }
+      }
       if (authProfile && authProfile !== "default") {
         const profiled = await secretStorage.get(`freejt7.apiKey.${provider}.${authProfile}`)
           || await secretStorage.get(`freejt7.apiKey.${authProfile}.${provider}`);
@@ -117,7 +175,7 @@ async function getApiKey(provider, secretStorage, options = {}) {
   }
 
   // 2. Variables de entorno del proceso
-  const fromEnv = readProcessEnv(provider);
+  const fromEnv = readProcessEnv(provider, options);
   if (fromEnv) return fromEnv;
 
   // 3. Archivo local ignorado "env api" o ".env" en la raíz de la extensión
@@ -127,14 +185,25 @@ async function getApiKey(provider, secretStorage, options = {}) {
   return null;
 }
 
-function readProcessEnv(provider) {
+function readProcessEnv(provider, options = {}) {
   const keyMap = {
-    openrouter: "OPENROUTER_API_KEY",
-    hf: "HUGGINGFACE_API_KEY",
-    zai: "ZAI_API_KEY",
-    clod: "CLOD_API_KEY",
+    openrouter: ["OPENROUTER_API_KEY"],
+    hf: ["HUGGINGFACE_API_KEY"],
+    zai: ["ZAI_API_KEY"],
+    nvidia: ["NVIDIA_API_KEY"],
+    ddeksee: ["DDEKSEE_API_KEY", "DEEPSEEK_API_KEY"],
+    clod: ["CLOD_API_KEY"],
   };
-  return process.env[keyMap[provider]] || null;
+  if (provider === "nvidia") {
+    const scoped = readNvidiaModelKeyFromEnv(process.env, options);
+    if (scoped) return scoped;
+  }
+  const names = keyMap[provider] || [];
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return null;
 }
 
 function getEnvApiCandidateRoots(options = {}) {
@@ -154,6 +223,46 @@ function getEnvApiCandidateRoots(options = {}) {
   return Array.from(new Set(roots.filter(Boolean)));
 }
 
+function normalizeModelKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "");
+}
+
+function normalizeModelEnvSegment(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function buildModelScopedSecretKeys(provider, modelKey, authProfile = "") {
+  const normalizedProvider = String(provider || "").trim();
+  const normalizedModel = normalizeModelKey(modelKey);
+  const normalizedProfile = String(authProfile || "").trim();
+  if (!normalizedProvider || !normalizedModel) return [];
+  const keys = [];
+  if (normalizedProfile && normalizedProfile !== "default") {
+    keys.push(`freejt7.apiKey.${normalizedProvider}.${normalizedModel}.${normalizedProfile}`);
+    keys.push(`freejt7.apiKey.${normalizedProvider}.${normalizedProfile}.${normalizedModel}`);
+  }
+  keys.push(`freejt7.apiKey.${normalizedProvider}.${normalizedModel}`);
+  return keys;
+}
+
+function readNvidiaModelKeyFromEnv(envLike, options = {}) {
+  const env = envLike && typeof envLike === "object" ? envLike : {};
+  const modelSegment = normalizeModelEnvSegment(options.model);
+  if (modelSegment) {
+    const exact = env[`NVIDIA_API_KEY__${modelSegment}`] || env[`NVIDIA_API_KEY_${modelSegment}`];
+    if (exact) return exact;
+  }
+  return null;
+}
+
 function readEnvApiFile(provider, options = {}) {
   const candidates = [];
   for (const base of getEnvApiCandidateRoots(options)) {
@@ -162,10 +271,12 @@ function readEnvApiFile(provider, options = {}) {
     candidates.push(path.join(base, ".env"));
   }
   const keyMap = {
-    openrouter: "OPENROUTER_API_KEY",
-    hf: "HUGGINGFACE_API_KEY",
-    zai: "ZAI_API_KEY",
-    clod: "CLOD_API_KEY",
+    openrouter: ["OPENROUTER_API_KEY"],
+    hf: ["HUGGINGFACE_API_KEY"],
+    zai: ["ZAI_API_KEY"],
+    nvidia: ["NVIDIA_API_KEY"],
+    ddeksee: ["DDEKSEE_API_KEY", "DEEPSEEK_API_KEY"],
+    clod: ["CLOD_API_KEY"],
   };
   // Patrones alternativos para formato legible: "email provider: key" o "provider:key"
   // Cada patrón es específico para evitar falsos positivos (ej: modelos como openrouter:anthropic/claude)
@@ -173,6 +284,8 @@ function readEnvApiFile(provider, options = {}) {
     openrouter: /\bopenrouter:(sk-or-v1-\S+)/i,
     hf:         /\bhf:(hf_\S+)/i,
     zai:        /\bzai:\s*([a-f0-9]{32}\.\S+)/i,
+    nvidia:     /\bnvidia:\s*(\S+)/i,
+    ddeksee:    /\b(?:ddeksee|deepseek):\s*(\S+)/i,
     clod:       /\bclod:\s*(\S+)/i,
   };
   for (const filePath of candidates) {
@@ -184,7 +297,21 @@ function readEnvApiFile(provider, options = {}) {
       const eqIdx = line.indexOf("=");
       if (eqIdx !== -1) {
         const k = line.slice(0, eqIdx).trim();
-        if (k === keyMap[provider]) return line.slice(eqIdx + 1).trim();
+        if (provider === "nvidia") {
+          const modelSegment = normalizeModelEnvSegment(options.model);
+          if (modelSegment && (k === `NVIDIA_API_KEY__${modelSegment}` || k === `NVIDIA_API_KEY_${modelSegment}`)) {
+            return line.slice(eqIdx + 1).trim();
+          }
+        }
+        if ((keyMap[provider] || []).includes(k)) return line.slice(eqIdx + 1).trim();
+      }
+      if (provider === "nvidia") {
+        const modelName = String(options.model || "").trim();
+        if (modelName) {
+          const escapedModel = modelName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const scoped = line.match(new RegExp(`\\bnvidia\\s+${escapedModel}\\s*:\\s*(\\S+)`, "i"));
+          if (scoped && scoped[1]) return scoped[1].trim();
+        }
       }
       // Formato 2: formato legible "email provider: key" o "provider:key"
       const pat = altPatterns[provider];
@@ -585,6 +712,61 @@ async function callZai(goalInfo, model, apiKey) {
   return responseText || JSON.stringify(resp.body);
 }
 
+async function callNvidia(goalInfo, model, apiKey) {
+  const m = model || "deepseek-ai/deepseek-v4-pro";
+  const limits = getModelLimits(m);
+  const preset = NVIDIA_MODEL_PRESETS[m] || {};
+  const body = {
+    model: m,
+    max_tokens: Number(preset.maxTokens || limits.outputTokens || PROVIDER_OUTPUT_TOKENS.nvidia || 4096),
+    messages: goalInfo.messages,
+  };
+  if (typeof preset.temperature === "number") {
+    body.temperature = preset.temperature;
+  }
+  if (typeof preset.topP === "number") {
+    body.top_p = preset.topP;
+  }
+  if (typeof preset.frequencyPenalty === "number") {
+    body.frequency_penalty = preset.frequencyPenalty;
+  }
+  if (typeof preset.presencePenalty === "number") {
+    body.presence_penalty = preset.presencePenalty;
+  }
+  if (preset.extraBody) {
+    body.extra_body = JSON.parse(JSON.stringify(preset.extraBody));
+  }
+  const resp = await httpsPost(
+    "https://integrate.api.nvidia.com/v1/chat/completions",
+    { "Authorization": `Bearer ${apiKey}` },
+    body,
+  );
+  const responseText = extractChatCompletionText(resp.body);
+  if ((resp.statusCode || 0) >= 400 || (hasMeaningfulProviderErrorPayload(resp.body) && !responseText)) {
+    throw normalizeProviderError("nvidia", resp.statusCode, resp.body, goalInfo);
+  }
+  return responseText || JSON.stringify(resp.body);
+}
+
+async function callDdeksee(goalInfo, model, apiKey) {
+  const m = model || "deepseek-chat";
+  const limits = getModelLimits(m);
+  const resp = await httpsPost(
+    "https://api.deepseek.com/v1/chat/completions",
+    { "Authorization": `Bearer ${apiKey}` },
+    {
+      model: m,
+      max_tokens: limits.outputTokens,
+      messages: goalInfo.messages,
+    }
+  );
+  const responseText = extractChatCompletionText(resp.body);
+  if ((resp.statusCode || 0) >= 400 || (hasMeaningfulProviderErrorPayload(resp.body) && !responseText)) {
+    throw normalizeProviderError("ddeksee", resp.statusCode, resp.body, goalInfo);
+  }
+  return responseText || JSON.stringify(resp.body);
+}
+
 async function callClod(goalInfo, model, apiKey) {
   const m = model || "OpenAI/gpt-oss-20B";
   const limits = getModelLimits(m);
@@ -613,6 +795,8 @@ async function callProviderWithRetry(provider, goalInfo, model, apiKey) {
   if (provider === "openrouter") callFn = callOpenRouter;
   else if (provider === "hf") callFn = callHuggingFace;
   else if (provider === "zai") callFn = callZai;
+  else if (provider === "nvidia") callFn = callNvidia;
+  else if (provider === "ddeksee") callFn = callDdeksee;
   else if (provider === "clod") callFn = callClod;
   else throw createTaggedError(`Free JT7: Proveedor desconocido: \"${provider}\"`, { isRetryable: false });
 
@@ -678,7 +862,11 @@ async function fetchProviderModels(provider, secretStorage, options = {}) {
 
 async function callProvider(goal, config, secretStorage, options = {}) {
   const { provider, model, authProfile } = config;
-  const apiKey = normalizeApiKey(await getApiKey(provider, secretStorage, { ...options, authProfile: authProfile || options.authProfile }));
+  const apiKey = normalizeApiKey(await getApiKey(provider, secretStorage, {
+    ...options,
+    model,
+    authProfile: authProfile || options.authProfile,
+  }));
   if (!apiKey) {
     throw createTaggedError(
       `Free JT7: No hay API Key para \"${provider}\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\".`,

@@ -29,6 +29,25 @@ const PROVIDERS = Object.freeze({
     directSupport: true,
     streamSupport: true,
     defaultModel: 'glm-4.5-flash',
+    apiKeyMode: 'provider',
+  }),
+  nvidia: Object.freeze({
+    id: 'nvidia',
+    label: 'NVIDIA',
+    kind: 'openai-compatible',
+    directSupport: true,
+    streamSupport: true,
+    defaultModel: 'deepseek-ai/deepseek-v4-pro',
+    apiKeyMode: 'per-model',
+  }),
+  ddeksee: Object.freeze({
+    id: 'ddeksee',
+    label: 'DeepSeek',
+    kind: 'openai-compatible',
+    directSupport: true,
+    streamSupport: true,
+    defaultModel: 'deepseek-chat',
+    apiKeyMode: 'provider',
   }),
   clod: Object.freeze({
     id: 'clod',
@@ -37,6 +56,7 @@ const PROVIDERS = Object.freeze({
     directSupport: true,
     streamSupport: true,
     defaultModel: 'OpenAI/gpt-oss-20B',
+    apiKeyMode: 'provider',
   }),
   copilot: Object.freeze({
     id: 'copilot',
@@ -45,6 +65,7 @@ const PROVIDERS = Object.freeze({
     directSupport: false,
     streamSupport: false,
     defaultModel: '',
+    apiKeyMode: 'provider',
   }),
 });
 
@@ -59,6 +80,7 @@ function normalizeProviderId(value) {
   const providerId = String(value || '').trim().toLowerCase();
   if (providerId === 'huggingface' || providerId === 'hugging-face') return 'hf';
   if (providerId === 'zhipu' || providerId === 'zhipuai') return 'zai';
+  if (providerId === 'deepseek') return 'ddeksee';
   return providerId || 'openrouter';
 }
 

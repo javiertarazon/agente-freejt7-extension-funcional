@@ -57,6 +57,16 @@ async function main() {
     false,
     'preguntas conversacionales no deben priorizar local execution',
   );
+  assert.equal(
+    shouldPreferLocalExecution('quiero que me digas porque no aparece el proveedor deepseek en la lista de proveedores'),
+    true,
+    'diagnosticos del catalogo de providers deben priorizar la ruta local del agente',
+  );
+  assert.equal(
+    shouldPreferLocalExecution('quiero que me digas poque el modo agente no funciona como un verdadero agenteautonomo'),
+    true,
+    'autodiagnósticos sobre autonomía del agente deben priorizar la ruta local del runtime propio',
+  );
 
   console.log('extension_runtime_fallback_policy_smoke: OK');
 }

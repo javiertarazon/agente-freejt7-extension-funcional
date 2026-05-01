@@ -1,7 +1,7 @@
 'use strict';
 
 const https = require('https');
-const { callProvider, getApiKey } = require('../providers/api-provider-adapter');
+const { getApiKey } = require('../providers/api-provider-adapter');
 const {
   buildConversationRequest,
   serializeConversationRequest,
@@ -22,7 +22,7 @@ function normalizeText(value) {
 function normalizeBackend(value) {
   const backend = normalizeText(value).toLowerCase();
   if (!backend) return 'auto';
-  if (backend === 'auto' || backend === 'openclaw' || backend === 'local') {
+  if (backend === 'auto' || backend === 'freejt7' || backend === 'freejt7-v2' || backend === 'openclaw' || backend === 'local') {
     return backend;
   }
   if (backend.startsWith('acp:')) {
@@ -117,6 +117,7 @@ async function streamCompletion(input = {}, runtime = {}) {
   const { modelId } = resolveProviderModel(provider.id, input.modelId || input.model || runtime.defaultModel);
   const apiKeyReader = typeof input.getApiKey === 'function' ? input.getApiKey : getApiKey;
   const apiKey = normalizeText(await apiKeyReader(provider.id, input.secretStorage || runtime.secretStorage, {
+    model: modelId,
     workspacePath: input.workspacePath || runtime.workspacePath,
     authProfile: input.authProfile || runtime.authProfile,
   }));
@@ -357,11 +358,14 @@ class ProviderRouter {
   }
 
   _getExecutionRoute(backend, executionMode) {
-    if (executionMode === 'direct') {
-      return 'provider-direct';
-    }
     if (backend === 'local') {
       return 'local-agent';
+    }
+    if (backend === 'freejt7-v2') {
+      return 'freejt7-agent-core-v2';
+    }
+    if (backend === 'freejt7') {
+      return 'freejt7-agent';
     }
     if (backend.startsWith('acp:')) {
       return backend;
@@ -399,20 +403,9 @@ class ProviderRouter {
   }
 
   getRoutePlan(task = {}, runtime = {}) {
-    const executionMode = normalizeText(task.executionMode || runtime.executionMode || 'agent') || 'agent';
+    // Forzar siempre modo agente: nunca devolver provider-direct como ruta principal
+    const executionMode = 'agent';
     const backend = normalizeBackend(task.runtimeBackend || runtime.runtimeBackend || this.defaultRuntimeBackend);
-    if (executionMode === 'direct') {
-      return {
-        primaryRoute: 'provider-direct',
-        runtimeBackend: backend,
-        provider: normalizeText(task.provider || runtime.defaultProvider || 'openrouter') || 'openrouter',
-        model: normalizeText(task.model || runtime.defaultModel || ''),
-        localCapable: false,
-        deterministicLocal: false,
-        fallbackOrder: [],
-        reason: 'executionMode=direct',
-      };
-    }
     if (this.agentRuntime && typeof this.agentRuntime.planTaskExecution === 'function') {
       return this.agentRuntime.planTaskExecution(
         String(task.goal || task.prompt || '').trim(),
@@ -556,24 +549,6 @@ class ProviderRouter {
     };
   }
 
-  async _executeDirectRoute(conversationRequest, runtime, candidate) {
-    const result = await callProvider(
-      conversationRequest,
-      { provider: candidate.provider, model: candidate.model, authProfile: candidate.authProfile },
-      this.context?.secrets,
-      { workspacePath: runtime.workspacePath || this.workspacePath, authProfile: candidate.authProfile },
-    );
-    return {
-      provider: candidate.provider,
-      model: candidate.model || 'default',
-      summary: this._buildSummaryFromResult(result, 'ok'),
-      raw: {
-        ...result,
-        executionRoute: 'provider-direct',
-      },
-    };
-  }
-
   async streamCompletion(input = {}, runtime = {}) {
     return streamCompletion({
       ...input,
@@ -608,12 +583,8 @@ class ProviderRouter {
   async execute(task = {}, runtime = {}) {
     const provider = normalizeText(task.provider || runtime.defaultProvider || 'openrouter') || 'openrouter';
     const model = normalizeText(task.model || runtime.defaultModel || '');
-    const requestedExecutionMode = normalizeText(task.executionMode || runtime.defaultExecutionMode || 'agent').toLowerCase();
-    const executionMode = provider === 'copilot'
-      ? 'agent'
-      : requestedExecutionMode === 'direct'
-        ? 'direct'
-        : 'agent';
+    // Forzar siempre executionMode a 'agent', nunca 'direct'
+    const executionMode = 'agent';
     const goal = normalizeText(task.goal || task.prompt || '');
     const conversationRequest = task.conversationRequest || buildConversationRequest({
       prompt: goal,
@@ -650,9 +621,7 @@ class ProviderRouter {
       }
 
       try {
-        const result = executionMode === 'direct'
-          ? await this._executeDirectRoute(conversationRequest, runtime, candidate)
-          : await this._executeAgentRoute(task, runtime, conversationRequest, candidate, executionMode);
+        const result = await this._executeAgentRoute(task, runtime, conversationRequest, candidate, executionMode);
         attempts.push({
           attempt: index + 1,
           provider: result.provider,

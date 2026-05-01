@@ -5,6 +5,7 @@ module.exports = {
   activate: extension.activate,
   deactivate: extension.deactivate,
   runOpenClaw: extension.runOpenClaw,
+  __testing: extension.__testing,
   runCopilotRouter: router.runCopilotRouter,
   resolveCopilotCliPath: router.resolveCopilotCliPath,
   resolveCopilotCliCommand: router.resolveCopilotCliCommand,

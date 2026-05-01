@@ -27,6 +27,48 @@ async function main() {
       error.isRetryable = true;
       throw error;
     },
+    runOwnedAgentTask: async (_context, _output, options) => {
+      calls.push({ type: 'owned', goal: options.goal, provider: options.provider, runtimeBackend: options.runtimeBackend });
+      return {
+        provider: options.provider,
+        model: options.model,
+        executionRoute: 'freejt7-owned-agent',
+        routeMeta: {
+          runtimeBackend: 'freejt7',
+          backend: {
+            kind: 'provider-direct',
+            provider: options.provider,
+            model: options.model,
+            runtimeBackend: 'freejt7',
+            authProfile: options.authProfile || 'default',
+            fallbackSelected: 'provider-direct',
+          },
+        },
+        run: { summary: 'owned ok' },
+        final: { summary: 'owned ok' },
+      };
+    },
+    runCoreV2Task: async (_context, _output, options) => {
+      calls.push({ type: 'core-v2', goal: options.goal, provider: options.provider, runtimeBackend: options.runtimeBackend });
+      return {
+        provider: options.provider,
+        model: options.model,
+        executionRoute: 'freejt7-agent-core-v2',
+        coreV2: { runId: 'run-core-v2', tracePath: '/tmp/workspace/copilot-agent/core-v2-runs.jsonl' },
+        routeMeta: {
+          runtimeBackend: 'freejt7-v2',
+          backend: {
+            kind: 'freejt7-core-v2',
+            provider: options.provider,
+            model: options.model,
+            runtimeBackend: 'freejt7-v2',
+            authProfile: options.authProfile || 'default',
+          },
+        },
+        run: { summary: 'core v2 ok' },
+        final: { summary: 'core v2 ok', verification: ['CoreV2 ok'] },
+      };
+    },
     runProviderDirectFallbackTask: async (_context, _output, options) => {
       calls.push({ type: 'direct', goal: options.goal, provider: options.provider });
       return {
@@ -52,8 +94,8 @@ async function main() {
       ? [{ type: 'mkdir', path: '/tmp/demo', allowAbsolute: true }]
       : [],
     getMcpServers: () => [{ id: 'free-jt7-local', transport: 'stdio', enabled: true }],
-    canResolveLocalGoal: (goal) => /crear carpeta|instala git/i.test(String(goal || '')),
-    shouldPreferLocalExecution: (goal) => /crear carpeta/i.test(String(goal || '')),
+    canResolveLocalGoal: (goal) => /crear carpeta|instala git|historial conversacional previo|contexto del workspace/i.test(String(goal || '')),
+    shouldPreferLocalExecution: (goal) => /crear carpeta|historial conversacional previo|contexto del workspace/i.test(String(goal || '')),
     shouldUseProviderDirectFallback: (error) => /network connection error/i.test(String(error?.message || error)),
     shouldUseLocalAgentFallback: (goal) => /instala git/i.test(String(goal || '')),
   });
@@ -93,6 +135,26 @@ async function main() {
   assert.ok(mcpPlan.capabilityPlan.dispatch.trace.includes('mcp-tool:documents->openclaw-agent-runtime'));
   assert.ok(mcpPlan.capabilityPlan.dispatch.trace.includes('skill:document-triage->conversation-context'));
 
+  const ownedPlan = runtime.planTaskExecution('analiza el cambio y responde como agente', {
+    provider: 'openrouter',
+    model: 'qwen/qwen3-coder:free',
+    runtimeBackend: 'freejt7',
+  });
+  assert.equal(ownedPlan.primaryRoute, 'freejt7-agent');
+  assert.equal(ownedPlan.runtimeBackend, 'freejt7');
+  assert.equal(ownedPlan.capabilityPlan.toolMode, 'agent-owned');
+  assert.equal(ownedPlan.capabilityPlan.dispatch.dispatchTarget, 'freejt7-owned-runtime');
+
+  const coreV2Plan = runtime.planTaskExecution('crea y verifica un archivo como agente autonomo', {
+    provider: 'openrouter',
+    model: 'qwen/qwen3-coder:free',
+    runtimeBackend: 'freejt7-v2',
+  });
+  assert.equal(coreV2Plan.primaryRoute, 'freejt7-agent-core-v2');
+  assert.equal(coreV2Plan.runtimeBackend, 'freejt7-v2');
+  assert.equal(coreV2Plan.capabilityPlan.toolMode, 'agent-owned');
+  assert.equal(coreV2Plan.capabilityPlan.dispatch.dispatchTarget, 'freejt7-agent-core-v2');
+
   const localResult = await runtime.executeAgentTask('crear carpeta en /tmp/demo', {
     provider: 'openrouter',
     model: 'qwen/qwen3-coder:free',
@@ -120,6 +182,28 @@ async function main() {
   assert.equal(directResult.raw.routeMeta.backend.provider, 'openrouter');
   assert.equal(directResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.owner, 'freejt7-agent-runtime');
   assert.equal(directResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.dispatchTarget, 'openclaw-agent-runtime');
+
+  calls.length = 0;
+  const ownedResult = await runtime.executeAgentTask('analiza el cambio y responde como agente', {
+    provider: 'openrouter',
+    model: 'qwen/qwen3-coder:free',
+    runtimeBackend: 'freejt7',
+  });
+  assert.equal(ownedResult.final.summary, 'owned ok');
+  assert.equal(ownedResult.raw.routeMeta.executionPlan.primaryRoute, 'freejt7-agent');
+  assert.equal(calls.some((item) => item.type === 'owned'), true, 'debe usar backend propio cuando runtimeBackend=freejt7');
+  assert.equal(calls.some((item) => item.type === 'openclaw'), false, 'freejt7 propio no debe depender de OpenClaw en la ruta principal');
+
+  calls.length = 0;
+  const coreV2Result = await runtime.executeAgentTask('crea y verifica un archivo como agente autonomo', {
+    provider: 'openrouter',
+    model: 'qwen/qwen3-coder:free',
+    runtimeBackend: 'freejt7-v2',
+  });
+  assert.equal(coreV2Result.final.summary, 'core v2 ok');
+  assert.equal(coreV2Result.raw.routeMeta.executionPlan.primaryRoute, 'freejt7-agent-core-v2');
+  assert.equal(calls.some((item) => item.type === 'core-v2'), true, 'debe usar core-v2 cuando runtimeBackend=freejt7-v2');
+  assert.equal(calls.some((item) => item.type === 'openclaw'), false, 'core-v2 no debe depender de OpenClaw en la ruta principal');
 
   calls.length = 0;
   const continuityResult = await runtime.executeTask({
@@ -158,6 +242,37 @@ async function main() {
     continuityResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.trace.includes('mcp:free-jt7-local->openclaw-agent-runtime'),
     'debe trazar el snapshot MCP sin depender del provider',
   );
+  assert.equal(
+    continuityResult.raw.routeMeta.executionPlan.primaryRoute,
+    'openclaw-agent',
+    'debe planificar con el objetivo real del usuario aunque el prompt serializado contenga pistas que parezcan local-first',
+  );
+
+  calls.length = 0;
+  const vagueContinuationResult = await runtime.executeTask({
+    goal: 'realiza las modificaciones necesarias',
+    provider: 'openrouter',
+    model: 'qwen/qwen3-coder:free',
+    sessionTitle: 'Sesion demo',
+    chatHistorySnapshot: [
+      { role: 'user', text: 'corrige el bug del runtime agente' },
+      { role: 'assistant', text: 'Diagnostico listo: el routing cae a local por usar el prompt serializado.' },
+    ],
+  }, {
+    workspacePath: '/tmp/workspace',
+    sessionAgentState: {
+      lastTaskId: 'task-bug-runtime',
+      lastUserGoal: 'corrige el bug del runtime agente',
+      lastAssistantSummary: 'Diagnostico listo: el routing cae a local por usar el prompt serializado.',
+      continuationHint: 'Aplica el fix en el runtime propio y verifica con smokes.',
+    },
+  });
+  const vagueOpenclawCall = calls.find((item) => item.type === 'openclaw');
+  assert.ok(vagueOpenclawCall, 'las continuaciones vagas deben seguir yendo por la ruta agente cuando existe contexto previo');
+  assert.match(vagueOpenclawCall.goal, /Contexto de continuidad recuperado por Free JT7:/);
+  assert.match(vagueOpenclawCall.goal, /corrige el bug del runtime agente/);
+  assert.equal(vagueContinuationResult.raw.routeMeta.executionPlan.primaryRoute, 'openclaw-agent');
+  assert.equal(calls.some((item) => item.type === 'local'), false, 'no debe degradar a local por confundir continuidad con auditoria serializada');
 
   const health = runtime.getHealthStatus();
   assert.equal(health.ok, true);

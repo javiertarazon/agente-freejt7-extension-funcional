@@ -80,6 +80,8 @@ function createFreeJt7AgentRuntime(options = {}) {
     ? options.getProviderConfig
     : (() => ({ provider: '', model: '' }));
   const runLocalAgentTask = options.runLocalAgentTask;
+  const runOwnedAgentTask = options.runOwnedAgentTask;
+  const runCoreV2Task = options.runCoreV2Task;
   const runOpenClawAgentTask = options.runOpenClawAgentTask;
   const runProviderDirectFallbackTask = options.runProviderDirectFallbackTask;
   const runAcpTask = options.runAcpTask;
@@ -107,6 +109,7 @@ function createFreeJt7AgentRuntime(options = {}) {
     const text = String(goal || '').trim().toLowerCase();
     if (!text) return false;
     return /^(continua|continuar|continúe|continua con|sigue|seguir|sigue con|retoma|retomar|debes continuar)\b/.test(text)
+      || /^(hazlo|haz eso|solucionalo|soluciónalo|soluciona|arreglalo|arréglalo|arregla|corrigelo|corrígelo|corrige|aplicalo|aplícalo|aplica los cambios|realiza las modificaciones necesarias|ejecútalo|ejecutalo)\b/.test(text)
       || (/^(funciona|y ahora|siguiente paso)\b/.test(text) && text.split(/\s+/).length <= 4);
   }
 
@@ -122,9 +125,12 @@ function createFreeJt7AgentRuntime(options = {}) {
       String(goal || '').trim(),
       'Contexto de continuidad recuperado por Free JT7:',
       lastGoal ? `- Ultimo objetivo: ${lastGoal}` : '',
-      lastSummary ? `- Ultimo resultado visible: ${lastSummary}` : '',
+      state.continuationEligible && lastSummary ? `- Ultimo resultado visible: ${lastSummary}` : '',
       taskId ? `- Ultima tarea: ${taskId}` : '',
-      state.continuationHint ? `- Continuation hint: ${String(state.continuationHint).trim()}` : '',
+      state.continuationEligible && state.continuationHint ? `- Continuation hint: ${String(state.continuationHint).trim()}` : '',
+      !state.continuationEligible && lastGoal
+        ? '- La ultima corrida no produjo un resultado reutilizable verificado; retoma el objetivo anterior y replanifica desde cero antes de responder.'
+        : '',
     ].filter(Boolean);
     return pieces.join('\n');
   }
@@ -133,6 +139,26 @@ function createFreeJt7AgentRuntime(options = {}) {
     const originalGoal = String(task.goal || task.prompt || '').trim();
     const goal = buildContinuationPrompt(originalGoal, task.sessionAgentState || runtime.sessionAgentState || null);
     const reuseIncomingConversation = task.conversationRequest && goal === originalGoal;
+    const capabilityHints = {
+      selectedSkills: uniqueStrings((Array.isArray(task.selectedSkills || runtime.selectedSkills)
+        ? (task.selectedSkills || runtime.selectedSkills)
+        : []).map(normalizeSkillId)),
+      mcpServers: normalizeMcpServers(getMcpServers(task, runtime)).map((item) => item.id),
+      localOperations: inferLocalOperations(goal),
+      plannedActions: summarizePlannedActions(buildLocalDispatchPlan(goal, task, runtime)),
+      runtimeBackend: String(task.runtimeBackend || runtime.runtimeBackend || 'auto').trim().toLowerCase() || 'auto',
+      provider: String(task.provider || runtime.defaultProvider || '').trim(),
+      model: String(task.model || runtime.defaultModel || '').trim(),
+      dispatchTarget: String(task.runtimeBackend || runtime.runtimeBackend || '').trim().toLowerCase().startsWith('acp:')
+        ? 'acp-harness-request'
+        : shouldPreferLocalExecution(goal)
+          ? 'local-agent-runtime'
+          : String(task.runtimeBackend || runtime.runtimeBackend || '').trim().toLowerCase() === 'freejt7-v2'
+            ? 'freejt7-agent-core-v2'
+          : String(task.runtimeBackend || runtime.runtimeBackend || '').trim().toLowerCase() === 'freejt7'
+            ? 'freejt7-owned-runtime'
+          : 'openclaw-agent-runtime',
+    };
     const conversationRequest = reuseIncomingConversation ? task.conversationRequest : buildConversationRequest({
       prompt: goal,
       history: task.chatHistorySnapshot || task.historySnapshot || task.history || [],
@@ -141,6 +167,7 @@ function createFreeJt7AgentRuntime(options = {}) {
       channel: 'control-panel',
       intake: task.intake || runtime.intake || null,
       selectedSkills: task.selectedSkills || runtime.selectedSkills || [],
+      capabilities: capabilityHints,
     });
     return {
       goal,
@@ -161,6 +188,7 @@ function createFreeJt7AgentRuntime(options = {}) {
     const effectiveProvider = getProviderConfig();
     return {
       goal,
+      serializedConversationGoal: String(taskContext?.serializedConversationGoal || '').trim(),
       workspacePath: requireWorkspace('el modo agente'),
       runtimeRoot: String(taskContext?.runtimeRoot || options.runtimeRoot || '').trim(),
       provider: String(taskContext?.provider || effectiveProvider.provider || '').trim(),
@@ -200,7 +228,9 @@ function createFreeJt7AgentRuntime(options = {}) {
       if (type === 'read') return `read:${String(action.path || '').trim()}`;
       if (type === 'write') return `write:${String(action.path || '').trim()}`;
       if (type === 'mkdir') return `mkdir:${String(action.path || '').trim()}`;
+      if (type === 'delete') return `delete:${String(action.path || '').trim()}`;
       if (type === 'inspect_path') return `inspect:${String(action.path || '').trim()}`;
+      if (type === 'exec') return `exec:${String(action.commandLine || action.command || '').trim()}`;
       if (type === 'verify') return `verify:${[action.command, ...(Array.isArray(action.args) ? action.args : [])].filter(Boolean).join(' ')}`;
       if (type === 'system_install') return `system_install:${String(action.package || '').trim()}`;
       return type;
@@ -211,8 +241,10 @@ function createFreeJt7AgentRuntime(options = {}) {
     const text = String(goal || '').toLowerCase();
     return uniqueStrings([
       /\b(crea|crear|mkdir|carpeta|directorio)\b/.test(text) ? 'filesystem.mkdir' : '',
+      /\b(borra|borrar|elimina|eliminar|delete|remove|rm)\b/.test(text) ? 'filesystem.delete' : '',
       /\b(lee|read|revisa|inspecciona|lista|ls|archivo|ruta|directorio)\b/.test(text) ? 'filesystem.read' : '',
       /\b(edita|edit|escribe|write|patch|parche)\b/.test(text) ? 'filesystem.write' : '',
+      /\b(ejecuta|corre|run|bash|shell|comando)\b/.test(text) ? 'shell.exec' : '',
       /\b(build|test|prueba|verifica|lint|doctor|diagnost)\b/.test(text) ? 'shell.verify' : '',
       /\b(instala|install)\b/.test(text) ? 'system.install' : '',
       /\bgit\b/.test(text) ? 'git' : '',
@@ -230,6 +262,8 @@ function createFreeJt7AgentRuntime(options = {}) {
       toolMode = 'local-tools';
     } else if (String(routePlan.primaryRoute || '').startsWith('acp:')) {
       toolMode = 'acp-harness';
+    } else if (routePlan.primaryRoute === 'freejt7-agent' || routePlan.primaryRoute === 'freejt7-agent-core-v2') {
+      toolMode = 'agent-owned';
     } else if (routePlan.primaryRoute === 'openclaw-agent') {
       toolMode = 'agent-backends';
     } else if (routePlan.primaryRoute === 'copilot-agent') {
@@ -239,6 +273,10 @@ function createFreeJt7AgentRuntime(options = {}) {
       ? 'local-agent-runtime'
       : String(routePlan.primaryRoute || '').startsWith('acp:')
         ? 'acp-harness-request'
+        : routePlan.primaryRoute === 'freejt7-agent-core-v2'
+          ? 'freejt7-agent-core-v2'
+        : routePlan.primaryRoute === 'freejt7-agent'
+          ? 'freejt7-owned-runtime'
         : routePlan.primaryRoute === 'openclaw-agent'
           ? 'openclaw-agent-runtime'
           : routePlan.primaryRoute === 'copilot-agent'
@@ -284,7 +322,11 @@ function createFreeJt7AgentRuntime(options = {}) {
       nativeMcpTools: nativeToolDispatch,
       intakeDefined: Boolean(taskContext?.intake),
       dispatchOwnedByRuntime: plannedActions.length > 0,
-      backendHarness: routePlan.primaryRoute === 'openclaw-agent' ? 'openclaw' : '',
+      backendHarness: routePlan.primaryRoute === 'openclaw-agent'
+        ? 'openclaw'
+        : routePlan.primaryRoute === 'freejt7-agent'
+          ? 'freejt7-owned'
+          : '',
       backendProvider: String(routePlan.provider || taskContext?.provider || '').trim(),
       backendModel: String(routePlan.model || taskContext?.model || '').trim(),
       backendFallbacks: Array.isArray(routePlan.fallbackOrder) ? routePlan.fallbackOrder.slice() : [],
@@ -339,6 +381,38 @@ function createFreeJt7AgentRuntime(options = {}) {
       }, goal, taskContext);
     }
 
+    if (runtimeBackend === 'freejt7' || runtimeBackend === 'freejt7-v2') {
+      if (deterministicLocal) {
+        return finalizePlan({
+          primaryRoute: runtimeBackend === 'freejt7-v2' ? 'freejt7-agent-core-v2' : 'local-agent',
+          runtimeBackend: runtimeBackend === 'freejt7-v2' ? 'freejt7-v2' : 'local',
+          provider: runtimeBackend === 'freejt7-v2' ? provider : 'local',
+          model: runtimeBackend === 'freejt7-v2' ? model : 'freejt7-local-tools',
+          localCapable: true,
+          deterministicLocal: true,
+          fallbackOrder: runtimeBackend === 'freejt7-v2' ? ['local-agent'] : [],
+          reason: runtimeBackend === 'freejt7-v2' ? 'runtimeBackend=freejt7-v2' : 'goal-resoluble-localmente',
+        }, goal, taskContext);
+      }
+      const fallbackOrder = [];
+      if (typeof runOpenClawAgentTask === 'function') {
+        fallbackOrder.push('openclaw-agent');
+      }
+      if (localCapable) {
+        fallbackOrder.push('local-agent');
+      }
+      return finalizePlan({
+        primaryRoute: runtimeBackend === 'freejt7-v2' ? 'freejt7-agent-core-v2' : 'freejt7-agent',
+        runtimeBackend,
+        provider,
+        model,
+        localCapable,
+        deterministicLocal: false,
+        fallbackOrder,
+        reason: `runtimeBackend=${runtimeBackend}`,
+      }, goal, taskContext);
+    }
+
     if (provider && provider !== 'copilot') {
       if (deterministicLocal) {
         return finalizePlan({
@@ -353,11 +427,11 @@ function createFreeJt7AgentRuntime(options = {}) {
         }, goal, taskContext);
       }
       const fallbackOrder = [];
-      if (typeof runProviderDirectFallbackTask === 'function') {
-        fallbackOrder.push('provider-direct');
-      }
       if (localCapable) {
         fallbackOrder.push('local-agent');
+      }
+      if (typeof runProviderDirectFallbackTask === 'function') {
+        fallbackOrder.push('provider-direct');
       }
       return finalizePlan({
         primaryRoute: 'openclaw-agent',
@@ -469,15 +543,92 @@ function createFreeJt7AgentRuntime(options = {}) {
       return withExecutionPlan(acpResult, plan, {}, taskContext);
     }
 
+    if (plan.primaryRoute === 'freejt7-agent' || plan.primaryRoute === 'freejt7-agent-core-v2') {
+      const useCoreV2 = plan.primaryRoute === 'freejt7-agent-core-v2';
+      const runner = useCoreV2 ? runCoreV2Task : runOwnedAgentTask;
+      if (typeof runner !== 'function') {
+        throw new Error(`Free JT7 Agent Runtime no tiene backend propio configurado: ${plan.primaryRoute}.`);
+      }
+      try {
+        const ownResult = await runner(context, output, {
+          ...agentOptions,
+          goal: agentOptions.serializedConversationGoal || goal,
+          runtimeBackend: plan.runtimeBackend,
+          actions: runtimePlannedActions,
+          capabilityPlan: plan.capabilityPlan,
+        });
+        return withExecutionPlan(ownResult, plan, {}, taskContext);
+      } catch (error) {
+        if (plan.fallbackOrder.includes('openclaw-agent') && shouldUseProviderDirectFallback(error)) {
+          try {
+            const openclawResult = await runOpenClawAgentTask(context, output, {
+              ...agentOptions,
+              goal: agentOptions.serializedConversationGoal || goal,
+              runtimeBackend: 'openclaw',
+            });
+            return withExecutionPlan(openclawResult, plan, {
+              fallbackSelected: 'openclaw-agent',
+              fallbackReason: String(error?.message || error),
+            }, taskContext);
+          } catch (openclawError) {
+            output.appendLine(`[freejt7-agent-runtime] fallback OpenClaw desde backend propio falló: ${String(openclawError?.message || openclawError)}`);
+            if (plan.fallbackOrder.includes('local-agent') && shouldUseLocalAgentFallback(goal, openclawError, { forceForDeterministicGoal: true })) {
+              const localResult = await runLocalAgentTask(context, output, {
+                ...agentOptions,
+                fallbackReason: String(openclawError?.message || openclawError),
+                actions: runtimePlannedActions,
+                capabilityPlan: plan.capabilityPlan,
+              });
+              return withExecutionPlan(localResult, plan, {
+                fallbackSelected: 'local-agent',
+                fallbackReason: String(openclawError?.message || openclawError),
+              }, taskContext);
+            }
+            throw openclawError;
+          }
+        }
+        if (!plan.fallbackOrder.includes('local-agent') || !shouldUseLocalAgentFallback(goal, error)) {
+          throw error;
+        }
+        const localResult = await runLocalAgentTask(context, output, {
+          ...agentOptions,
+          fallbackReason: String(error?.message || error),
+          actions: runtimePlannedActions,
+          capabilityPlan: plan.capabilityPlan,
+        });
+        return withExecutionPlan(localResult, plan, {
+          fallbackSelected: 'local-agent',
+          fallbackReason: String(error?.message || error),
+        }, taskContext);
+      }
+    }
+
     if (plan.primaryRoute === 'openclaw-agent') {
       try {
-        const openclawResult = await runOpenClawAgentTask(context, output, agentOptions);
+        const openclawResult = await runOpenClawAgentTask(context, output, {
+          ...agentOptions,
+          goal: agentOptions.serializedConversationGoal || goal,
+        });
         return withExecutionPlan(openclawResult, plan, {}, taskContext);
       } catch (error) {
+        if (plan.fallbackOrder.includes('local-agent') && shouldUseLocalAgentFallback(goal, error, { forceForDeterministicGoal: true })) {
+          output.appendLine(`[freejt7-agent-runtime] fallback local prioritario por OpenClaw no disponible: ${String(error?.message || error)}`);
+          const localResult = await runLocalAgentTask(context, output, {
+            ...agentOptions,
+            fallbackReason: String(error?.message || error),
+            actions: runtimePlannedActions,
+            capabilityPlan: plan.capabilityPlan,
+          });
+          return withExecutionPlan(localResult, plan, {
+            fallbackSelected: 'local-agent',
+            fallbackReason: String(error?.message || error),
+          }, taskContext);
+        }
         if (plan.fallbackOrder.includes('provider-direct') && shouldUseProviderDirectFallback(error) && typeof runProviderDirectFallbackTask === 'function') {
           try {
             const directResult = await runProviderDirectFallbackTask(context, output, {
               ...agentOptions,
+              goal: agentOptions.serializedConversationGoal || goal,
               fallbackReason: String(error?.message || error),
               conversationRequest: taskContext?.conversationRequest || null,
             });
@@ -547,11 +698,12 @@ function createFreeJt7AgentRuntime(options = {}) {
 
   async function executeTask(task = {}, runtime = {}) {
     const envelope = buildConversationEnvelope(task, runtime);
-    return executeAgentTask(envelope.serializedGoal, {
+    return executeAgentTask(envelope.goal, {
       ...task,
       ...runtime,
       workspacePath: runtime.workspacePath || getWorkspacePath(),
       conversationRequest: envelope.conversationRequest,
+      serializedConversationGoal: envelope.serializedGoal,
     });
   }
 

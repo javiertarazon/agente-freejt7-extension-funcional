@@ -38,11 +38,18 @@ mkdir -p "$LOCAL_ROOT"
 "$FREEJT7_RPM2CPIO_BIN" "$LATEST_RPM" | (cd "$LOCAL_ROOT" && cpio -idm --quiet)
 
 mkdir -p "$HOME/.local/bin"
-cat > "$HOME/.local/bin/freejt7-desktop-rpm" <<EOF
+cat > "$HOME/.local/bin/freejt7-desktop" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 exec "$LOCAL_ROOT/opt/freejt7-desktop/scripts/freejt7-desktop-launcher.sh" "\$@"
 EOF
+chmod 0755 "$HOME/.local/bin/freejt7-desktop"
+
+cat > "$HOME/.local/bin/freejt7-desktop-rpm" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec "$HOME/.local/bin/freejt7-desktop" "\$@"
+EOF
 chmod 0755 "$HOME/.local/bin/freejt7-desktop-rpm"
 
-echo "[freejt7-rpm-install] instalado localmente. Asegura ~/.local/bin en PATH y ejecuta: freejt7-desktop-rpm"
+echo "[freejt7-rpm-install] instalado localmente. Asegura ~/.local/bin en PATH y ejecuta: freejt7-desktop"

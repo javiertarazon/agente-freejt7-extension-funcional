@@ -112,6 +112,60 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
+function purgeExistingExtensionInstall(extensionsDir, packageId) {
+  const root = path.resolve(String(extensionsDir || '').trim() || '.');
+  if (!fs.existsSync(root)) return [];
+  const prefix = String(packageId || '').trim().toLowerCase();
+  if (!prefix) return [];
+  const removed = [];
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    if (!entry.name.toLowerCase().startsWith(prefix)) continue;
+    const target = path.join(root, entry.name);
+    fs.rmSync(target, { recursive: true, force: true });
+    removed.push(target);
+  }
+  return removed;
+}
+
+function extractVsix(vsixPath, destinationDir) {
+  ensureDir(destinationDir);
+  const unzipBin = resolveCommand('unzip');
+  if (unzipBin) {
+    runCommandOrThrow(unzipBin, ['-oq', vsixPath, '-d', destinationDir]);
+    return;
+  }
+  const pythonBin = resolveCommand('python3') || resolveCommand('python');
+  if (pythonBin) {
+    runCommandOrThrow(pythonBin, ['-m', 'zipfile', '-e', vsixPath, destinationDir]);
+    return;
+  }
+  throw new Error('No se encontro unzip ni Python para extraer la VSIX manualmente.');
+}
+
+function installVsixManually(vsixPath, extensionsDir, packageInfo) {
+  const publisher = String(packageInfo.publisher || '').trim();
+  const name = String(packageInfo.name || '').trim();
+  const version = String(packageInfo.version || '').trim();
+  if (!publisher || !name || !version) {
+    throw new Error('No se pudo derivar publisher/name/version para instalar VSIX manualmente.');
+  }
+  const targetDir = path.join(extensionsDir, `${publisher}.${name}-${version}`);
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'freejt7-vsix-'));
+  try {
+    extractVsix(vsixPath, tempDir);
+    const extractedRoot = path.join(tempDir, 'extension');
+    if (!fs.existsSync(extractedRoot)) {
+      throw new Error('La VSIX no contiene carpeta extension/ esperada.');
+    }
+    fs.rmSync(targetDir, { recursive: true, force: true });
+    fs.cpSync(extractedRoot, targetDir, { recursive: true });
+    return targetDir;
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
 function resolveCommand(command) {
   if (!command) return '';
   const looksLikePath = command.includes('/') || command.includes('\\');
@@ -207,13 +261,18 @@ function mergeStandaloneSettings(base) {
   const settings = base && typeof base === 'object' && !Array.isArray(base) ? { ...base } : {};
   settings['freejt7.panel.enabled'] = true;
   settings['freejt7.panel.chatParticipant.enabled'] = false;
+  settings['freejt7.panel.openOnStartup'] = true;
   settings['freejt7.panel.policy.mode'] = 'autonomous';
+  settings['freejt7.panel.runtimeBackend'] = 'freejt7-v2';
   settings['freejt7.autoRepairGlobalSettings'] = false;
   settings['freejt7.autoInstallWorkspaceBridge'] = false;
   settings['freejt7.install.updateUserSettings'] = false;
+  settings['freejt7.ide.ownerMode'] = 'agent';
+  settings['freejt7.ide.hostVisibility'] = 'minimal';
   if (!settings['freejt7.apiProvider'] || String(settings['freejt7.apiProvider']).trim() === 'copilot') {
     settings['freejt7.apiProvider'] = 'openrouter';
   }
+  settings['workbench.startupEditor'] = 'none';
   settings['github.copilot.enable'] = {
     '*': false,
   };
@@ -243,6 +302,15 @@ function runCommandOrThrow(bin, args, options = {}) {
   if (result.status !== 0) {
     throw new Error(`Comando fallido (${result.status}): ${bin} ${args.join(' ')}`);
   }
+}
+
+function runCommandWithResult(bin, args, options = {}) {
+  return cp.spawnSync(bin, args, {
+    cwd: options.cwd || process.cwd(),
+    stdio: options.stdio || 'pipe',
+    env: options.env || process.env,
+    encoding: options.encoding || 'utf8',
+  });
 }
 
 function runBootstrap(inputOptions = {}) {
@@ -311,7 +379,28 @@ function runBootstrap(inputOptions = {}) {
     if (options.dryRun) {
       process.stdout.write(`[freejt7-app] DRY-RUN install -> ${ideBin} ${installArgs.join(' ')}\n`);
     } else {
-      runCommandOrThrow(ideBin, installArgs, { cwd: options.repoRoot });
+      const pkg = readJsonSafe(path.join(options.repoRoot, 'package.json'), {});
+      const packageId = `${String(pkg.publisher || '').trim()}.${String(pkg.name || '').trim()}-`;
+      const removed = purgeExistingExtensionInstall(paths.extensionsDir, packageId);
+      if (removed.length > 0) {
+        process.stdout.write(`[freejt7-app] purged existing install(s): ${removed.join(', ')}\n`);
+      }
+      const installResult = runCommandWithResult(ideBin, installArgs, { cwd: options.repoRoot });
+      const installOutput = [
+        String(installResult.stdout || '').trim(),
+        String(installResult.stderr || '').trim(),
+      ].filter(Boolean).join('\n');
+      if (installOutput) {
+        process.stdout.write(`${installOutput}\n`);
+      }
+      if (installResult.status !== 0) {
+        if (/Please restart VSCodium before reinstalling|Failed Installing Extensions/i.test(installOutput)) {
+          const installedDir = installVsixManually(vsixPath, paths.extensionsDir, pkg);
+          process.stdout.write(`[freejt7-app] fallback manual install -> ${installedDir}\n`);
+        } else {
+          throw new Error(`Comando fallido (${installResult.status}): ${ideBin} ${installArgs.join(' ')}`);
+        }
+      }
     }
   }
 

@@ -40,6 +40,19 @@ function main() {
   assert.equal(minimal.deniedTools.includes('browser'), true, 'minimal debe denegar browser');
   assert.equal(minimal.deniedTools.includes('network'), true, 'minimal debe denegar network');
 
+  const autonomous = new PolicyEngine({ mode: 'autonomous', defaultProfile: 'coding' });
+  const autonomousCoding = autonomous.evaluate({
+    goal: 'ejecuta bash, instala dependencias y editar config settings del proyecto',
+    executionMode: 'agent',
+    policyProfile: 'coding',
+  });
+  assert.equal(autonomousCoding.askTools.includes('exec'), false, 'autonomous/coding no debe seguir pidiendo exec en own-ide');
+  assert.equal(autonomousCoding.askTools.includes('install'), false, 'autonomous/coding no debe seguir pidiendo install en own-ide');
+  assert.equal(autonomousCoding.allowTools.includes('exec'), true, 'autonomous/coding debe permitir exec');
+  assert.equal(autonomousCoding.allowTools.includes('install'), true, 'autonomous/coding debe permitir install');
+  assert.equal(autonomousCoding.requiresApproval, false, 'autonomous/coding no debe dejar la tarea esperando aprobacion');
+  assert.equal(autonomousCoding.requiresExecApproval, false, 'autonomous/coding no debe marcar aprobacion extra de exec');
+
   console.log('policy_engine_profiles_smoke: OK');
 }
 

@@ -1,0 +1,485 @@
+# Auditoría Técnica y Plan de Corrección — Free JT7
+**Autonomía Total en Own-IDE con Interfaz Propia**
+
+> Autor: Análisis consolidado de documentos internos del proyecto
+> Fecha: 2026-04-29
+> Versión: 1.0
+> Clasificación: Documento técnico operativo
+
+---
+
+## Índice
+
+1. [Resumen Ejecutivo](#1-resumen-ejecutivo)
+2. [Estado Actual del Proyecto](#2-estado-actual-del-proyecto)
+3. [Auditoría de Fallos Críticos](#3-auditoría-de-fallos-críticos)
+4. [Análisis de Arquitectura](#4-análisis-de-arquitectura)
+5. [Comparativa con Estándares del Sector](#5-comparativa-con-estándares-del-sector)
+6. [Plan de Corrección por Fases](#6-plan-de-corrección-por-fases)
+7. [Reglas Operativas Inmediatas](#7-reglas-operativas-inmediatas)
+8. [Matriz de Verificación Final](#8-matriz-de-verificación-final)
+9. [Criterios de Éxito](#9-criterios-de-éxito)
+10. [Riesgos y Mitigaciones](#10-riesgos-y-mitigaciones)
+
+---
+
+## 1. Resumen Ejecutivo
+
+Free JT7 dispone de una infraestructura técnica sólida: SessionEngine, OpenClaw, skills nativos, MCP, provider router y fallback local. Sin embargo, el agente se comporta como un chat básico porque el stack está diseñado con demasiadas puertas de salida hacia el modo texto directo.
+
+El problema no es ausencia de piezas. Es que el sistema prefiere dar una respuesta de texto rápida antes que arriesgarse a un fallo del agente. Cada componente funciona por separado, pero el flujo integrado en own-ide permite escapar al modo chat antes de que el agente tenga oportunidad de usar sus herramientas.
+
+**Diagnóstico central:** Free JT7 está auto-limitado por políticas de diseño conservadoras. Para alcanzar autonomía real debe eliminar todas las rutas de escape al chat y comprometerse al 100% con el bucle de ejecución del agente.
+
+**Estimación de corrección:** 8 semanas de trabajo estructurado en 5 fases.
+
+---
+
+## 2. Estado Actual del Proyecto
+
+### 2.1 Fases del Plan Maestro (21-PLAN-MAESTRO)
+
+| Fase | Descripción | Estado |
+| :--- | :--- | :--- |
+| Fase 1 | Runtime propio del agente | Ejecutada |
+| Fase 2 | Panel own-ide agent-first | Ejecutada |
+| Fase 3 | Continuidad real | Ejecutada |
+| Fase 4 | Skills, MCP y tools nativos | Ejecutada |
+| Fase 5 | Providers y OpenClaw subordinados | Ejecutada |
+| Fase 6 | Compatibilidad heredada Copilot | Ejecutada |
+
+### 2.2 Evidencia de Smokes en Verde
+
+Los siguientes smokes pasan de forma aislada:
+
+- `python skills_manager.py policy-validate` → OK
+- `python skills_manager.py doctor --strict` → OK
+- `python skills_manager.py rollout-mode` → `autonomous`
+- `node tests/control_panel_ui_smoke.js` → OK
+- `node tests/panel_execution_mode_smoke.js` → OK
+- `node tests/openclaw_runtime_smoke.js` → OK
+- `node tests/provider_router_failover_smoke.js` → OK
+- `node tests/installed_extension_smoke.js` → OK
+
+### 2.3 Brecha Real
+
+Los smokes en verde no garantizan experiencia real consistente. Cada pieza pasa sus pruebas de forma aislada, pero falta una smoke E2E única que atraviese panel instalado + own-ide + proveedor + backend + continuidad en una sesión interactiva real.
+
+---
+
+## 3. Auditoría de Fallos Críticos
+
+### FALLO CRÍTICO #1 — Bifurcación "chat directo" en ProviderRouter
+
+**Archivos afectados:** `src-js/core/extension.runtime.js`, `src-js/core/provider-router.js`
+**Función concreta:** `routeTaskWithGoal`, `_callProvider`
+
+**Descripción del fallo:**
+Si el provider efectivo no es Copilot, el router llama a `_callProvider()` directamente, evitando completamente `runCopilotRouter()` y el runtime del agente. Esto significa que el usuario recibe una respuesta de texto puro del modelo (OpenRouter, Claude, HuggingFace) sin que el agente tenga acceso a herramientas, workspace ni capacidad de ejecución.
+
+**Síntoma visible:** El panel parece funcionar pero el agente describe acciones en vez de ejecutarlas. Crear una carpeta produce un texto explicando cómo crear una carpeta.
+
+**Causa raíz:** El modo `direct` es una opción de la UI y en muchas configuraciones es el modo por defecto o el fallback automático ante cualquier error.
+
+**Impacto:** Alto. Cualquier configuración que no use Copilot como provider primario termina en modo chat básico, lo que incluye la mayoría de casos de uso con OpenRouter, Anthropic directamente, HuggingFace u otros.
+
+---
+
+### FALLO CRÍTICO #2 — Heurísticas frágiles en canResolveLocalGoal
+
+**Archivo afectado:** `src-js/core/local-agent-runtime.js`
+**Función concreta:** `canResolveLocalGoal()`, `shouldPreferLocalExecution()`
+
+**Descripción del fallo:**
+La función usa expresiones regulares básicas para decidir si una tarea merece ser tratada por el agente. Bloquea explícitamente palabras clave como "continua", "hola" o "gracias". Si el usuario dice "continúa con la tarea de instalar dependencias", el sistema decide que no es una meta resoluble localmente y degrada la solicitud a respuesta conversacional, rompiendo el bucle de autonomía.
+
+**Síntomas visibles documentados en MEMORY.md:**
+- "continúa" caía en chat básico aunque hubiera tarea activa pendiente
+- "por qué no aparece DeepSeek en la lista" se trataba como chat de proveedor en vez de diagnóstico del agente
+- `canResolveLocalGoal()` evaluaba el prompt completo con historial conversacional en vez del objetivo real del turno actual
+
+**Causa raíz:** La decisión de routing se basa en coincidencia de texto en vez de análisis semántico de intención. Además, el historial conversacional completo contaminaba la clasificación de nuevas solicitudes.
+
+**Impacto:** Alto. Rompe la continuidad del agente en cualquier sesión de trabajo multi-turno, que es exactamente el caso de uso principal del IDE.
+
+---
+
+### FALLO CRÍTICO #3 — Política de fallback agresiva hacia texto
+
+**Archivos afectados:** `src-js/core/extension.runtime.js`, `src-js/core/openclaw-agent-runtime.js`
+
+**Descripción del fallo:**
+Ante cualquier error del gateway OpenClaw o falta de configuración, el sistema está programado para caer silenciosamente a `provider-direct-fallback`. En vez de intentar auto-reparar el entorno (reiniciar proceso, verificar puerto, diagnosticar auth), el agente se rinde y se convierte en chat de texto. El usuario no recibe información del error técnico real.
+
+**Síntomas visibles documentados en MEMORY.md:**
+- `openclaw.json` retenía providers custom stale de corridas anteriores que causaban fallo al arrancar con otro provider
+- El fallback local seguía comportándose como auditoría genérica ante solicitudes concretas de sistema
+- `executeTask()` pasaba el prompt serializado completo a `planTaskExecution()` causando que el runtime clasificara tareas reales como `local-first` por texto incidental del historial
+
+**Causa raíz:** No existe lógica de auto-diagnóstico ni auto-reparación. El diseño prioriza no fallar visiblemente sobre mantener la capacidad de acción del agente.
+
+**Impacto:** Alto. Convierte cualquier error transitorio de OpenClaw en pérdida permanente de autonomía para esa sesión.
+
+---
+
+### FALLO IMPORTANTE #4 — Detección de binario OpenClaw apunta a ruta muerta
+
+**Archivo afectado:** `src-js/core/extension.runtime.js`
+**Función concreta:** `findOpenClawBinary()`
+
+**Descripción del fallo:**
+La función busca el binario en `OPEN CLAW/node_modules/.bin/openclaw`, pero el repositorio real del usuario está en `open claw` (con espacio). No rompe hoy porque cae a `openclaw` en PATH, pero es una ruta muerta o engañosa que puede causar fallos silenciosos en entornos donde OpenClaw no esté en PATH.
+
+**Impacto:** Medio. No falla actualmente, pero es una bomba de tiempo ante cambios de entorno o instalaciones limpias.
+
+---
+
+### FALLO IMPORTANTE #5 — Panel-orquestador de un solo archivo
+
+**Archivo afectado:** `src-js/core/control-panel.js`
+
+**Descripción del fallo:**
+El mismo archivo contiene normalización de estado, HTML, lógica cliente, persistencia, sesiones, runtime backend y feedback de tareas. Cada hotfix mezcla UI, estado persistido y wiring con el runtime en el mismo archivo, generando regresiones cruzadas imposibles de aislar.
+
+**Síntoma documentado en MEMORY.md:** Durante un fix del webview reapareció el riesgo de regex `\n` sin escape en script embebido por la mezcla de código en el mismo archivo.
+
+**Impacto:** Medio-alto. Alta probabilidad de regresión cruzada. Imposible garantizar que un bug es de UI, de estado o de backend sin separación de responsabilidades.
+
+---
+
+### FALLO IMPORTANTE #6 — Skills, MCP y Tools son contexto lateral, no plan operativo
+
+**Archivo afectado:** `src-js/core/freejt7-agent-runtime.js`
+
+**Descripción del fallo:**
+El runtime conoce `selectedSkills` y puede listar capacidades, pero no publica un `capabilityPlan` verificable por tarea. El agente anuncia que usará herramientas, pero no hay trazabilidad de qué herramienta ejecutó, con qué parámetros y con qué resultado. La interfaz no puede mostrar la autonomía en acción porque no hay evidencia real de ella.
+
+**Síntoma documentado en MEMORY.md:** "Skills, MCP y tools nativos seguían visibles en `capabilityPlan`, pero sin un dispatch trace verificable."
+
+**Impacto:** Medio. El agente puede estar ejecutando acciones reales pero el usuario no lo percibe porque la UI no tiene la evidencia para mostrarlo.
+
+---
+
+### FALLO IMPORTANTE #7 — Ownership difuso del flujo en extension.runtime.js
+
+**Archivo afectado:** `src-js/core/extension.runtime.js`
+
+**Descripción del fallo:**
+El mismo archivo mezcla participante de chat, panel, routing Copilot, OpenClaw, fallback local, bootstrap, settings globales y hooks operativos. La decisión de qué ruta ejecutar está dispersa entre heurísticas del runtime y metadatos reconstruidos en router y UI.
+
+**Impacto:** Alto. Hace imposible garantizar que own-ide use siempre el backend correcto. Cada nueva feature o hotfix puede romper el routing de otra ruta de forma silenciosa.
+
+---
+
+## 4. Análisis de Arquitectura
+
+### 4.1 Arquitectura Actual (Problemática)
+
+```
+Usuario
+  │
+  ▼
+control-panel.js ──────────────────────────────────┐
+  │ (UI + estado + lógica + sesiones + backend)    │
+  ▼                                                 │
+extension.runtime.js ──────────────────────────────┤
+  │ (chat + panel + routing + Copilot +            │
+  │  OpenClaw + fallback + bootstrap + settings)   │
+  ├──► routeTaskWithGoal()                          │
+  │      ├── Si provider = Copilot → runCopilotRouter() → AGENTE REAL
+  │      └── Si provider ≠ Copilot → _callProvider() → CHAT DIRECTO ◄── BUG #1
+  │
+  ├──► local-agent-runtime.js
+  │      └── canResolveLocalGoal() con regex ──────► BLOQUEO DE CONTINUIDAD ◄── BUG #2
+  │
+  └──► openclaw-agent-runtime.js
+         └── Si falla → provider-direct-fallback ──► CHAT BÁSICO ◄── BUG #3
+```
+
+### 4.2 Arquitectura Objetivo (Correcta)
+
+```
+Usuario
+  │
+  ▼
+Panel UI (solo presentación y dispatch)
+  │ panel-store | panel-ui | panel-actions | panel-renderer
+  ▼
+FreeJT7 Agent Runtime (dueño del flujo)
+  │ capabilityPlan | executionPlan | agentState | conversationRequest
+  ├──► ProviderCore (catálogo + fallbacks + auth profiles)
+  ├──► SessionEngine (sesiones + tareas + continuidad)
+  ├──► Skills nativos (docx, xlsx, pptx, data-analysis...)
+  ├──► MCP servers (Gmail, Drive, Canva, Slack...)
+  ├──► Tools locales (fs, exec, git, npm...)
+  ├──► OpenClaw (harness opcional, subordinado)
+  └──► Provider directo (solo texto/razonamiento cuando el agente lo decide)
+```
+
+### 4.3 Separación de Responsabilidades Requerida
+
+| Capa | Responsabilidad | No debe hacer |
+| :--- | :--- | :--- |
+| Panel UI | Renderizar estado, dispatch de acciones, mostrar capabilityPlan | Decidir estrategia de runtime |
+| FreeJT7 Agent Runtime | Owner de conversationRequest, capabilityPlan, executionPlan, agentState | Depender de Copilot para existir |
+| ProviderCore | Catálogo dinámico, fallbacks, cooldown, auth profiles | Decidir qué acciones ejecutar |
+| SessionEngine | Sesiones, tareas, continuidad, verificación por run | Tomar decisiones de routing |
+| OpenClaw | Harness de ejecución opcional | Ser el dueño del control-plane |
+
+---
+
+## 5. Comparativa con Estándares del Sector
+
+| Característica | Free JT7 (Estado Actual) | Estándar Agent-First (Trae / Codex / Manus) |
+| :--- | :--- | :--- |
+| Iniciativa | Reactiva (espera prompt) | Proactiva (propone cambios al ver el contexto) |
+| Uso de herramientas | Condicional y frágil (regex) | Nativo y constante (Tool-use por defecto) |
+| Manejo de errores | Degradación silenciosa a texto | Reintento con herramientas de diagnóstico |
+| Control del IDE | Webview aislado con rutas de escape | Integración profunda en filesystem y comandos |
+| Continuidad | Frágil ante reinicio y palabras clave | Estado persistido y restaurable |
+| Visibilidad del agente | Opaca (no muestra qué herramienta usa) | Chain of Thought visible en tiempo real |
+| Skills y MCP | Contexto lateral sin trazabilidad | Parte del plan de ejecución verificable |
+
+---
+
+## 6. Plan de Corrección por Fases
+
+### Fase 1 — Eliminar el modo directo como ruta de escape
+**Duración estimada:** 1 semana
+**Prioridad:** Crítica — desbloquea todo lo demás
+
+**Archivos a modificar:**
+
+`control-panel.js`
+- Eliminar la opción `executionMode: 'direct'` de la UI del panel
+- El selector de modo de ejecución debe forzar siempre `agent`
+- `normalizePanelExecutionModeValue` siempre devuelve `'agent'`
+
+`provider-router.js`
+- `getRoutePlan` nunca devuelve `primaryRoute: 'provider-direct'` como ruta principal
+- Toda solicitud se delega al agentRuntime para planificación
+- Revisar y desactivar `_executeDirectRoute` en el flujo principal
+
+`extension.runtime.js`
+- Eliminar `provider-direct-fallback` como primera opción ante errores
+- El fallback debe intentar primero auto-reparación, luego tools locales, nunca texto directo como primera opción
+
+**Actualización de tests:**
+- `panel_execution_mode_smoke.js`: rechazar modo directo activo
+- `provider_direct_mode_smoke.js`: confirmar que la ruta directa no es activable desde flujo principal
+
+**Criterio de aceptación:** Ninguna solicitud al panel puede producir una respuesta de texto sin que el agente haya intentado al menos una herramienta o acción local.
+
+---
+
+### Fase 2 — Reemplazar heurísticas por clasificación semántica
+**Duración estimada:** 1 semana
+**Prioridad:** Crítica — restaura la continuidad del agente
+
+**Archivos a modificar:**
+
+`local-agent-runtime.js`
+- Eliminar `canResolveLocalGoal()` con regex o refactorizarla para que no descarte tareas por palabras clave
+- La decisión de qué herramientas usar debe tomarla el LLM del agente
+- Agregar variantes naturales en español a todos los patrones: `instala`, `continúa`, `crea`, `edita`, `muestra`
+
+`freejt7-agent-runtime.js`
+- Separar siempre la **meta de planificación** (`goal`) del **payload conversacional** (`serializedPrompt`)
+- `planTaskExecution()` recibe solo el objetivo real del turno actual, no el historial completo
+- El historial va solo a OpenClaw y provider directo como contexto, no como input de clasificación
+
+`chat-context.js`
+- Enriquecer `buildFreeJt7SystemPrompt` con descripciones detalladas de todos los Skills, MCP servers y Tools disponibles
+- Incluir en el prompt la instrucción explícita de generar un `capabilityPlan` con `owner`, `dispatchTarget` y `trace` por tarea
+
+**Criterio de aceptación:** "continúa", "sigue con la instalación", "por qué no funciona X" y variantes similares deben entrar al bucle del agente y producir una acción o diagnóstico verificable, no texto conversacional.
+
+---
+
+### Fase 3 — Auto-reparación del gateway y subsistema local sin OpenClaw
+**Duración estimada:** 2 semanas
+**Prioridad:** Alta — elimina el principal punto de fallo silencioso
+
+**Archivos a modificar:**
+
+`openclaw-agent-runtime.js`
+- Implementar auto-diagnóstico: detectar puerto ocupado, proceso caído, auth fallida
+- Ante fallo, ejecutar acciones correctivas automáticas: reiniciar proceso, verificar puertos, limpiar config stale
+- Límite configurable de reintentos antes de reportar fallo al agente (no al usuario como chat básico)
+- Al regenerar `openclaw.json`: eliminar providers custom stale que no correspondan al provider activo
+
+`extension.runtime.js`
+- Corregir `findOpenClawBinary()` para explorar candidatos normalizados: `open-claw`, `open claw`, `open_claw`
+- Explorar múltiples rutas: `node_modules/.bin`, `.bin`, `bin`, raíz del repo
+- Mantener fallback a PATH con smoke dedicado que valide la ruta efectiva
+
+**Nuevo módulo: `local-tool-subsystem.js`**
+- Subsistema Node.js/Python ligero que replica operaciones críticas de OpenClaw sin proceso externo
+- Operaciones mínimas: `read_file`, `write_file`, `create_dir`, `exec_safe`, `list_files`, `git_status`
+- Integrarse en `local-agent-runtime.js` como fallback robusto ante OpenClaw no disponible
+
+**Criterio de aceptación:** Si OpenClaw falla, el agente reporta el error técnico, intenta auto-reparación y continúa con tools locales. Nunca cae silenciosamente a chat básico.
+
+---
+
+### Fase 4 — Runtime propio como dueño del flujo y capabilityPlan por tarea
+**Duración estimada:** 2 semanas
+**Prioridad:** Alta — consolida la identidad del agente
+
+**Archivos a modificar:**
+
+`freejt7-agent-runtime.js` (módulo central)
+- Owner exclusivo de `conversationRequest`, `capabilityPlan`, `executionPlan` y `agentState`
+- Generar por cada tarea: `{ goal, routePlan, capabilities: [{skill, mcp, tool, owner, dispatchTarget, trace}], status }`
+- Persistir `agentState` por sesión: `{ lastGoal, lastResult, lastRoutePlan, taskId, sessionId }`
+- Al cargar SessionEngine: reconstruir `agentState` desde la última tarea persistida
+
+`extension.runtime.js` → convertir en composition root
+- Eliminar toda lógica de decisión de flujo
+- Solo instanciar módulos y delegar al FreeJT7 Agent Runtime
+- No debe decidir rutas complejas directamente
+
+`session-engine.js`
+- Al reencolar o recuperar tareas: actualizar `agentState` con el estado real de la tarea
+- Exponer `agentState` al panel para que pueda mostrar continuidad real
+
+**Criterio de aceptación:** `extension.runtime.js` no contiene lógica de routing. El panel puede mostrar `executionPlan` y `capabilityPlan` por tarea con evidencia verificable.
+
+---
+
+### Fase 5 — UI agent-first y smoke E2E de own-ide real
+**Duración estimada:** 2 semanas
+**Prioridad:** Alta — cierra la brecha entre smokes y uso real
+
+**Refactor de control-panel.js en 4 módulos:**
+
+`panel-store.js`
+- Estado persistido: sesión activa, agentState, configuración
+- Versionado de snapshot y reset por mismatch
+
+`panel-ui.js`
+- Solo renderizado HTML del webview
+- Sin lógica de negocio ni decisiones de routing
+
+`panel-actions.js`
+- Comandos del panel: iniciar sesión, dispatch de tarea, cancelar, continuar
+- Solo delega al FreeJT7 Agent Runtime, no decide
+
+`panel-renderer.js`
+- Sincronización sesión/task/provider con la UI
+- Visualización de Chain of Thought y capabilityPlan en tiempo real
+- Aprobación en un clic para acciones de alto impacto (write_file, exec, install)
+
+**Configuración en VS Code Settings:**
+- Mover selectores de provider, modelo, runtimeBackend y policyProfile a `settings.json`
+- La vista principal del panel solo muestra entrada de texto y área de actividad del agente
+
+**Nueva smoke E2E canónica:**
+```
+own-ide instalado
+  → abrir panel
+  → iniciar sesión
+  → ejecutar tarea multi-turno con herramientas reales
+  → cambiar proveedor a mitad de sesión
+  → decir "continúa"
+  → reiniciar own-ide
+  → verificar que agentState se restaura
+  → verificar que la tarea retoma sin perder contexto
+```
+
+**Criterio de aceptación:** La smoke E2E pasa en own-ide instalado con perfil aislado. Los smokes aislados existentes siguen en verde.
+
+---
+
+## 7. Reglas Operativas Inmediatas
+
+Estas reglas provienen del análisis del MEMORY.md y deben aplicarse desde ya, antes de completar las fases:
+
+**Regla de routing de intención:**
+Cualquier pregunta sobre visibilidad de providers, modelos o panel debe tratarse como diagnóstico local del agente con evidencia del repo/perfil, nunca como chat del provider.
+
+**Regla de separación de goal vs prompt:**
+La meta de planificación (`goal`) debe separarse siempre del payload enriquecido para backend. El runtime decide ruta con el objetivo real del usuario, no con el prompt serializado completo que incluye historial.
+
+**Regla de continuidad:**
+Al abrir el panel en standalone/own-ide: sanear estado persistido stale (backend/modelo/proveedor) y sembrar sesión inicial. Versionar snapshot del panel y resetear por mismatch de versión antes de concluir que "no se instaló".
+
+**Regla de binarios externos:**
+La resolución de binarios externos debe explorar candidatos normalizados (`open-claw`, `open claw`, `open_claw`) y varias rutas (`node_modules/.bin`, `.bin`, `bin`, raíz), manteniendo fallback a PATH y smoke dedicado que valide la ruta efectiva real.
+
+**Regla de acciones locales:**
+Si una acción local es identificable pero faltan parámetros mínimos, responder con la aclaración exacta que falta en vez de una sugerencia genérica. Si la acción es determinista y segura, ejecutarla con herramientas locales antes que con provider-direct.
+
+**Regla de spans de OpenClaw:**
+Al ejecutar `openclaw agent`, usar session-id por tarea (`runId/taskId`), nunca el sessionId del panel reutilizado. Limpiar locks stale antes de ejecutar. Forzar `policy.mode=autonomous` en perfiles standalone/own-ide.
+
+**Regla de auth por modelo:**
+Si un provider requiere autenticación por modelo (no solo por proveedor), el registro del provider debe declararlo. `setApiKey` y `getApiKey` deben propagar `model` y priorizar secretos `freejt7.apiKey.<provider>.<modelo-normalizado>` antes del fallback global.
+
+**Regla de capabilityPlan:**
+Cuando Free JT7 anuncie capacidades nativas, el `capabilityPlan` debe incluir un dispatch verificable: `{ owner, dispatchTarget, trace }`. Los runtimes ejecutores deben preservarlo en evidencia y verificación, no solo en anuncios.
+
+---
+
+## 8. Matriz de Verificación Final
+
+| Smoke | Actual | Tras Fase 1 | Tras Fase 3 | Tras Fase 5 |
+| :--- | :--- | :--- | :--- | :--- |
+| `policy-validate` | OK | OK | OK | OK |
+| `doctor --strict` | OK | OK | OK | OK |
+| `control_panel_ui_smoke` | OK | OK | OK | OK |
+| `panel_execution_mode_smoke` | OK | OK (modo directo bloqueado) | OK | OK |
+| `provider_router_failover_smoke` | OK | OK | OK (auto-repair) | OK |
+| `openclaw_runtime_smoke` | OK | OK | OK | OK |
+| `installed_extension_smoke` | OK | OK | OK | OK |
+| **E2E own-ide interactivo** | **FALTA** | Parcial | Parcial | **OK** |
+| **E2E continuidad tras reinicio** | **FALTA** | Parcial | Parcial | **OK** |
+| **E2E cambio de provider mid-session** | **FALTA** | Parcial | OK | **OK** |
+
+---
+
+## 9. Criterios de Éxito
+
+El producto se considera corregido cuando own-ide puede hacer todo lo siguiente sin intervención manual y sin producir respuestas de texto en lugar de acciones:
+
+- Crear carpetas y editar archivos con herramientas reales (no describiendo cómo hacerlo)
+- Instalar dependencias ejecutando el comando real y reportando el resultado verificado
+- Recordar el contexto entre turnos de la misma sesión
+- Usar modelos externos sin depender de GitHub Copilot
+- Reiniciar sesión sin perder continuidad de tarea
+- Responder con estilo de agente real: evidencia de ejecución, no texto descriptivo
+- Usar skills, MCP y tools ya existentes en `.github/` y `copilot-agent/`
+- Retomar trabajo tras reinicio de own-ide con `continúa` y evidencia real de la última tarea
+- Mostrar qué skill, MCP o tool usó para cada paso en la UI del panel
+
+---
+
+## 10. Riesgos y Mitigaciones
+
+| Riesgo | Probabilidad | Impacto | Mitigación |
+| :--- | :--- | :--- | :--- |
+| Regresiones al cerrar modo directo | Alta | Alto | Feature flag por fase + smokes dirigidos antes de merge |
+| Complejidad del subsistema local sin OpenClaw | Media | Medio | Empezar solo con operaciones mínimas verificables (`read_file`, `write_file`, `create_dir`) |
+| Estado stale del panel tras actualización | Alta | Medio | Versionar snapshot del panel y resetear por mismatch automáticamente |
+| Costo/token por subagentes sin control | Media | Alto | Límites por depth, timeout y modelo de subagente configurables |
+| Superficies peligrosas en `exec` | Baja | Muy Alto | Perfiles de policy, aprobaciones en un clic y denylist por defecto |
+| Regresiones del panel al dividir en módulos | Media | Medio | Snapshot/smoke del panel por módulo antes de integrar |
+| Loops de error por fallback mal configurado | Media | Alto | Límite de reintentos configurable y reporte de error explícito al agente, nunca silencioso |
+
+---
+
+## Appendix: Historial de Lecciones del MEMORY.md Aplicadas a Este Plan
+
+Las siguientes entradas del MEMORY.md informaron directamente las decisiones de este plan:
+
+- `2026-04-28`: El modo agente podía caer a fallback local aunque OpenClaw estuviera instalado → **Fase 3, auto-reparación del gateway**
+- `2026-04-28`: `executeTask()` pasaba prompt serializado completo a `planTaskExecution()` → **Fase 2, separación goal vs prompt**
+- `2026-04-28`: Skills, MCP y tools seguían siendo contexto lateral sin dispatch trace → **Fase 4, capabilityPlan verificable**
+- `2026-04-27`: La detección de OpenClaw apuntaba a ruta rígida con nombre incorrecto → **Fase 3, findOpenClawBinary**
+- `2026-04-27`: Estado stale del perfil hacía que reinstalar pareciera no funcionar → **Fase 5, versionado de snapshot**
+- `2026-04-29`: `canResolveLocalGoal()` no cubría variantes en español → **Fase 2, patrones de intención**
+- `2026-04-29`: El modo autónomo seguía sintiéndose como chat básico por desalineación integral → **Regla de corrección en conjunto, no por hotfixes aislados**
+
+---
+
+*Documento generado a partir del análisis de: 18-PLAN-INTEGRAL-OPENCODE-OPENCLAW-FREEJT7.md, 20-AUDITORIA-INTEGRAL-UI-RUNTIME-AUTONOMIA.md, 21-PLAN-MAESTRO-OWN-IDE-AGENT-FIRST.md, Auditoría Técnica Manus AI, Plan de Acción Manus AI, MEMORY.md*

@@ -6,266 +6,100 @@
 - Cada item debe cambiar de `[ ]` a `[x]` al completarse.
 - Si una tarea falla, agregar sub-item de remediacion y reintento.
 
-## Publicacion remota own-ide agent-first (2026-04-28)
-- [x] Objetivo principal: publicar en el remoto nuevo el estado actual de Free JT7 con runtime own-ide agent-first, incluyendo codigo, documentacion y artefactos generados
-  - [x] Intake obligatorio resuelto con el usuario: entregable = commits logicos; alcance = incluir artefactos generados; validacion = remoto actualizado + documentacion final resumida
-  - [x] Resolver skills aplicables: `using-superpowers`, `make-repo-contribution`, `verification-before-completion`
-  - [x] Revisar guias de contribucion y estado Git actual
-  - [x] Resumir documentacion final de las ultimas modificaciones en README/CHANGELOG
-  - [x] Agrupar cambios en commits logicos y preparar remoto destino
-  - [x] Empujar rama publicada al repositorio remoto indicado
-  - [x] Cerrar trazabilidad y actualizar `copilot-agent/RESUME.md`
-  - [x] Excluir solo binarios bloqueados por GitHub (>100 MB) y dejar constancia operativa
+## Reinstalacion limpia own-ide + verificacion live providers + rama remota (2026-05-01)
+- [x] Objetivo principal: desmontar la instalacion actual de `own-ide`, verificar en vivo los providers con credencial detectable y reinstalar limpio antes de publicar una rama correlativa remota
+  - [x] Intake derivado de la solicitud: entregable = uninstall limpio + verificacion previa de providers/modelos + reinstall limpio + push a rama correlativa; restricciones = respuestas cortas, tecnicas y ahorro de contexto; validacion = auditoria runtime fresca + smokes/providers live + arranque limpio own-ide
+  - [x] Resolver skills aplicables: `verification-before-completion`, `free-jt7-global-runtime-audit`
+  - [x] Decision de delegacion: no delegada; el trabajo cruza el mismo slice operativo entre bootstrap own-ide, credenciales de providers, instalacion limpia y publicacion Git
+  - [x] Ejecutar auditoria runtime minima (`policy-validate`, `doctor --strict`, `rollout-mode`, `host-mode status`, `ide-detect --json`)
+  - [x] Detectar providers con credencial disponible y probar en vivo provider/modelo por ruta real de API
+  - [x] Eliminar perfil/runtime aislado de `own-ide` y reinstalar VSIX limpia sobre perfil nuevo
+  - [x] Validar arranque/setup limpio de `own-ide` con smoke acotada
+  - [x] Crear rama correlativa desde `release/v4.2.11-panel-pro` y subir cambios al remoto
+  - [x] Generar informe `.md` final con lo ejecutado
 
-## Alineacion con el plan maestro
-- [x] Fase 1 - Runtime propio del agente
-  - [x] `20260428-phase1a-freejt7-agent-runtime`
-  - [x] `20260428-phase1b-agent-runtime-continuity`
-  - [x] `20260428-phase1c-agent-runtime-route-planning`
-- [x] Fase 2 - Panel own-ide agent-first
-  - [x] `20260428-phase2-capability-plan-runtime`
-  - [x] `20260428-phase2-runtime-local-dispatch`
-  - [x] Hotfixes de soporte UI/local: chat-first, fallback local, create-directory incompleto
-  - [x] `20260428-phase2-formal-close-control-panel`
-- [x] Fase 3 - Continuidad real
-  - [x] `20260428-phase3-session-agent-state-continuity`
-  - [x] `20260428-phase3-formal-close-session-continuity`
-- [x] Cierre formal integrado en `20260428-phase256-parallel-integration`
-- [x] Fase 4 - Skills, MCP y tools nativos
-  - [x] `20260428-phase256-parallel-integration`
-  - [x] `20260428-phase4-native-capabilities-runtime`
-- [x] Fase 5 - Providers y OpenClaw subordinados
-  - [x] `20260428-phase256-parallel-integration`
-  - [x] `20260428-phase5-provider-backends-subordinated`
-- [x] Fase 6 - Compatibilidad heredada Copilot
-  - [x] `20260428-phase6-copilot-legacy-isolation`
-  - [x] Coordinacion paralela mantenida desde `20260428-phase256-parallel-integration` sin bloquear el cierre dedicado
+## Cierre de packaging RPM y regla de validacion de arbol (2026-04-30)
+- [x] Objetivo principal: dejar justificado formalmente el warning `Missing build-id` del RPM y fijar una regla operativa para no inspeccionar artefactos `dist-*` en validaciones de arbol
+  - [x] Intake derivado de la solicitud: entregable = cierre corto con justificacion/hardening minimo, checklist cerrada y trazabilidad actualizada; restricciones = no reabrir el frente funcional own-ide; validacion = `package:rpm` fresco + evidencia del origen de los warnings
+  - [x] Resolver skills aplicables: `verification-before-completion`, `free-jt7-global-runtime-audit`
+  - [x] Confirmar con build fresco que los `Missing build-id` salen solo de modulos nativos precompilados bajo `runtime/vscodium/current/resources/app/node_modules/**`
+  - [x] Formalizar en el spec generado que la ausencia de build-id en payload vendor no debe bloquear `rpmbuild`
+  - [x] Registrar regla preventiva para excluir `dist-deb/**` y `dist-rpm/**` en validaciones de arbol salvo auditoria explicita de packaging
+  - [x] Cerrar checklist y reconciliar `tasks.yaml`, `RESUME.md` y `audit-log.jsonl`
 
-## Regla de lectura
-- Las entradas siguientes pueden incluir subfases y hotfixes.
-- La referencia oficial de avance por fase es la seccion "Alineacion con el plan maestro".
+## Ejecucion cierre gap own-ide: cancel-path + E2E headless + hardening standalone (2026-05-01)
+- [x] Objetivo principal: cerrar el bloque pendiente de own-ide con regresion automatizada del panel, validacion headless de la instalacion real y hardening verificable del standalone
+  - [x] Intake derivado de la solicitud: entregable = cancel-path automatizado + E2E headless own-ide + endurecimiento bootstrap/package; restricciones = cambios minimos y compatibles sobre panel/core-v2/bootstrap; validacion = smokes directas, setup own-ide y package/build reales
+  - [x] Resolver skills aplicables: `verification-before-completion`, `agent-orchestration`, `free-jt7-global-runtime-audit`
+  - [x] Decision de delegacion: no delegada; el trabajo cruza el mismo contrato entre handler del panel, harness headless instalado y bootstrap/empaquetado standalone
+  - [x] Extraer y cubrir con smoke el branch `task.enqueue.cancelled` sin `enqueueTask`
+  - [x] Ejecutar y dejar trazado el E2E headless del panel instalado en `own-ide`
+  - [x] Endurecer bootstrap/runtime portable para evitar descarga latest no verificada y dejar evidencia de pin/checksum
+  - [x] Ejecutar build/setup/smokes finales y reconciliar `RESUME.md` + audit log
 
-## Fases 2-6 cierre formal paralelo e integracion central (2026-04-28)
-- [x] Objetivo principal: cerrar formalmente las Fases 2, 3, 4, 5 y 6 del plan maestro con workers paralelos por ownership y una integracion central en `own-ide`
-  - [x] Abrir run trazable `20260428-phase256-parallel-integration`
-  - [x] Fase 2: cerrar panel own-ide agent-first y flujo operativo principal
-  - [x] Fase 3: cerrar continuidad real y reanudacion de sesiones
-  - [x] Fase 4: runtime propio despacha skills, MCP y tools nativos con ownership explicito
-  - [x] Fase 5: providers externos y OpenClaw quedan subordinados al runtime propio como backends
-  - [x] Fase 6: compatibilidad Copilot queda aislada como ruta heredada secundaria
-  - [x] Integrar cambios en `extension.runtime`, `session-engine` y `control-panel`
-  - [x] Verificar smokes runtime/panel/proveedor, build, package, `app:own-ide:setup` e `installed_extension_smoke`
+## Parche de remediacion Fase 1-2 + matriz + transicion own-ide (2026-04-30)
+- [x] Objetivo principal: aplicar ya el parche exacto de Fase 1 y Fase 2 sobre el runtime/autonomia de Free JT7 y acompañarlo con matriz de cambios y diseno de transicion own-ide
+  - [x] Intake derivado de la solicitud: entregable = parche Fase 1-2 + matriz archivo/razon/riesgo/smoke + transicion UI own-ide; restricciones = cambios minimos y compatibles hacia atras; validacion = smokes del runtime y evidencia tecnica
+  - [x] Resolver skills aplicables: `verification-before-completion`, `agent-orchestration`, `free-jt7-global-runtime-audit`
+  - [x] Decision de delegacion: no delegada; el cambio toca el mismo contrato entre intake, planner core-v2, persistencia de sesion y continuidad del runtime
+  - [x] Aplicar el parche exacto de Fase 1 sobre intake real del panel y cierre sin evidencia
+  - [x] Aplicar el parche exacto de Fase 2 sobre persistencia/continuidad y contexto local
+  - [x] Ejecutar smokes del runtime y validar que ya no existan cierres falsos triviales
+  - [x] Generar matriz archivo por archivo con cambio propuesto, motivo, riesgo y smoke test
+  - [x] Diseñar la transicion UI hacia own-ide usando solo piezas reaprovechables del repo externo
+  - [x] Cerrar trazabilidad en `copilot-agent/RESUME.md` y `copilot-agent/audit-log.jsonl`
 
-## Fase 6 formal aislamiento Copilot legacy (2026-04-28)
-- [x] Objetivo principal: cerrar formalmente la Fase 6 aislando `Copilot` como compatibilidad heredada secundaria dentro de `src-js/core/copilot_router.runtime.js`, sin contaminar el flujo principal own-ide agent-first
-  - [x] Intake obligatorio resuelto por contexto del usuario: entregable = cierre tecnico + pruebas dedicadas + trazabilidad; restricciones = ownership exclusivo del router legacy y sin invadir archivos de otros workers; validacion esperada = smokes del router y verificacion ligera del bundle si no rompe ownership
-  - [x] Resolver skills aplicables: sin skill local especializada obligatoria para este frente puntual
-  - [x] Decision de delegacion: no delegar porque el usuario acoto ownership a `copilot_router.runtime.js` y hay ediciones concurrentes fuera de esa frontera
-  - [x] Separar configuracion/flags de compatibilidad Copilot del `apiProvider` principal
-  - [x] Hacer explicita la ruta legacy secundaria en metadata y flujo del router
-  - [x] Agregar pruebas dedicadas para fijar el aislamiento legacy
-  - [x] Verificar `router_core_concurrency_smoke`, `router_review_stage_smoke`, nuevo smoke dedicado y `build:bundle`
+## Auditoria claim app propia/standalone mas fuerte (2026-04-30)
+- [x] Objetivo principal: auditar con evidencia verificable qué falta para sostener mejor el claim de app propia/standalone de Free JT7 sin implementar cambios
+  - [x] Intake asumido de la solicitud: entregable = auditoría priorizada con recomendaciones concretas y mínimas, archivos y riesgos; restricciones = no implementar cambios de producto, enfocar en own-ide/standalone, deb/rpm, launchers y pruebas; validación = lectura de código + smokes ligeras + contenido real de artefactos
+  - [x] Resolver skills aplicables: ninguna skill listada aplica de forma obligatoria a esta auditoría puntual de empaquetado/arranque
+  - [x] Decisión de delegación: no delegada; inspección concentrada en scripts, builders, launchers, artefactos y smokes existentes
+  - [x] Auditar bootstrap `freejt7-app` / `freejt7-own-ide` y restricciones reales del runtime
+  - [x] Auditar builders e instaladores `.deb` / `.rpm`, launchers y metadata de producto
+  - [x] Contrastar smokes actuales con contenido real de artefactos `.deb` / `.rpm`
+  - [x] Cerrar auditoría con backlog mínimo priorizado y riesgos concretos
 
-## Fase 4 cierre formal runtime propio para skills, MCP y tools nativos (2026-04-28)
-- [x] Objetivo principal: cerrar formalmente la Fase 4 dentro del ownership del runtime propio para que Free JT7 deje trazado y bajo su control el activation path y dispatch de skills, snapshot MCP y tools nativos del panel own-ide
-  - [x] Intake obligatorio resuelto por continuidad: entregable = runtime propio duenio de seleccion/despacho de skills/MCP/tools nativos para tareas del panel; restricciones = cambios minimos compatibles sin tocar ownership de providers/OpenClaw/Copilot fuera del scope; validacion = smokes runtime/local/MCP/tools tocados + evidencia de `capabilityPlan`/`dispatch`
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este frente puntual de runtime/tests
-  - [x] Decision de delegacion: no delegar por ownership explicito concentrado en `freejt7-agent-runtime`, `local-agent-runtime` y sus smokes asociados
-  - [x] Auditar estado actual de `capabilityPlan`, selected skills, snapshot MCP y despacho local bajo el runtime propio
-  - [x] Implementar trazabilidad nativa del runtime para activation path y dispatch independiente del provider
-  - [x] Ajustar smokes de runtime/local/MCP/subagentes para fijar evidencia del cierre de Fase 4
-  - [x] Ejecutar verificacion focalizada y cerrar trazabilidad/documentacion de fase
+## Cierre del gap own-ide integral: E2E headless + modo app propio (2026-04-30)
+- [ ] Objetivo principal: eliminar el gap restante para sostener que Free JT7 gobierna `own-ide` de forma integral con verificacion sin GUI manual y arranque/empaquetado de app propia verificable
+  - [x] Intake derivado del usuario: entregable = E2E headless real del panel/webview instalado + endurecimiento del modo app/standalone; restricciones = mantener compatibilidad con runtime/panel/core-v2 ya migrados; validacion = pruebas sobre perfil instalado `own-ide`, build/package/setup y launcher standalone
+  - [x] Resolver skills aplicables: no hay skill local especializada obligatoria para este frente; se reutilizan contratos reales de panel, bootstrap, empaquetado y pruebas del repo
+  - [x] Delegar en paralelo 2 auditorias de lectura: seam del E2E headless del panel y gap restante del modo app propia/standalone
+  - [ ] Implementar smoke/E2E headless del panel/webview contra la instalacion real de `own-ide`
+  - [ ] Endurecer launcher/empaquetado standalone para sostener claim de app propia verificable
+  - [ ] Ejecutar build, setup y smokes finales sobre `own-ide`/standalone
 
-## Fase 5 formal providers y OpenClaw subordinados (2026-04-28)
-- [x] Objetivo principal: subordinar providers externos y OpenClaw al runtime propio de Free JT7, reduciendo filtraciones de control-plane y dejando trazabilidad de backend subordinado
-  - [x] Intake obligatorio asumido: entregable = cierre exacto de Fase 5 + cobertura smoke de backend subordinado; restricciones/no-goals = cambios minimos y compatibles dentro del ownership asignado, sin revertir trabajo concurrente ni mezclar Fase 6; validacion = smokes de router/runtime/provider-registry bajo ownership
-  - [x] Resolver skills aplicables: sin skill local especializada aplicable a este frente runtime/router puntual
-  - [x] Decision de delegacion: no delegar por ownership concentrado en `provider-router`, `freejt7-agent-runtime`, `openclaw-agent-runtime`, `provider-registry` y sus smokes
-  - [x] Registrar run `20260428-phase5-provider-backends-subordinated` en trazabilidad local
-  - [x] Hacer que el runtime propio publique ownership explicito del control-plane y trate OpenClaw/provider directo como backends subordinados
-  - [x] Reducir exposicion visible del proveedor/backend en `provider-router` conservando metadata tecnica para diagnostico
-  - [x] Cubrir ruta agente con smokes de provider/OpenClaw subordinados
-  - [x] Ejecutar verificacion focalizada y cerrar formalmente la Fase 5
-  - [x] Ejecutar verificacion focalizada y cerrar trazabilidad/documentacion de fase
+## Continuacion core-v2: subagentes nativos y verificacion own-ide (2026-04-30)
+- [x] Objetivo principal: ejecutar subagentes nativos dentro de `freejt7-agent-core-v2` y verificar el ownership integral del IDE propio por Free JT7
+  - [x] Intake asumido de la solicitud: entregable = subagentes nativos en core-v2 + verificacion own-ide; restricciones = no romper runtime/panel/backends ya migrados; validacion = smokes core-v2/runtime/own-ide + bundle real instalado
+  - [x] Resolver skills aplicables: `skills_manager skill-resolve` sin skill especializada util para este frente; reutilizar contratos reales del repo
+  - [x] Delegar en paralelo 2 auditorias de lectura: diseno de subagentes y claim de own-ide integral
+  - [x] Implementar `subagent_run` dentro del loop de `core-v2` con recursion acotada, traza hija y agregacion de evidencia/cambios al padre
+  - [x] Ampliar la smoke de `core-v2` para cubrir delegacion padre->hijo con artefacto real y verificacion del hijo
+  - [x] Corregir la reinstalacion stale de la misma VSIX en `own-ide` con purge + fallback manual de instalacion
+  - [x] Añadir smoke de contenido instalado en `own-ide` para validar `freejt7-v2`, `subagent_run` y markers del bundle real
 
-## Fase 3 inicial continuidad de sesion persistida en agent state (2026-04-28)
-- [x] Objetivo principal: reforzar `continua` y la reanudacion del trabajo con un estado de sesion persistido del agente, en vez de depender solo del historial crudo
-  - [x] Persistir `agentState` por sesion en `session-engine`
-  - [x] Pasar `sessionAgentState` al runtime propio al ejecutar tareas
-  - [x] Enriquecer prompts breves de continuidad (`continua`, `retoma`, etc.) con contexto persistido del agente
-  - [x] Verificar `freejt7_agent_runtime_smoke`, `session_engine_context_smoke`, `build:bundle`, `package:local`, `app:own-ide:setup`, `installed_extension_smoke`
+## Auditoria verificable extension clasica vs own-ide integral (2026-04-30)
+- [x] Objetivo principal: inspeccionar el repo con evidencia verificable para decidir si Free JT7 hoy opera como extension clasica o como IDE/agente integral en `own-ide`
+  - [x] Intake derivado de la solicitud: entregable = respuesta con 4 bloques (bootstrap/own-ide, estado persistente/runtime backend, gaps para afirmacion fuerte Manus/Trae/Codex, pruebas locales sin GUI manual); restricciones = solo evidencia verificable del repo; validacion = lectura de codigo + smokes locales relevantes
+  - [x] Resolver skills aplicables: ninguna skill listada aplica de forma obligatoria a esta auditoria de repo
+  - [x] Decision de delegacion: no delegada; inspeccion puntual con ownership concentrado en bootstrap/runtime/tests locales
+  - [x] Levantar evidencia de rutas reales de bootstrap y `own-ide`
+  - [x] Levantar evidencia de persistencia y ownership real del backend/runtime
+  - [x] Contrastar evidencia contra una afirmacion fuerte tipo Manus/Trae/Codex
+  - [x] Ejecutar pruebas locales sin GUI manual y cerrar trazabilidad
 
-## Fase 2 cierre formal panel own-ide agent-first (2026-04-28)
-- [x] Objetivo principal: declarar cerrada la Fase 2 dejando el panel como superficie principal chat-first de Free JT7, con tareas/eventos/configuracion en inspector lateral y menor tono de dashboard/router
-  - [x] Intake obligatorio asumido por continuidad: entregable = cierre de Fase 2 por codigo + smokes + trazabilidad local; restricciones/no-goals = cambios minimos compatibles dentro de `control-panel.js` y smokes bajo ownership sin reescribir workers ajenos; validacion = smokes del panel + sintaxis webview + `build:bundle`
-  - [x] Resolver skills aplicables: sin skill local especializada obligatoria para este frente puntual de webview/panel
-  - [x] Decision de delegacion: no delegar porque el usuario acoto ownership a `control-panel.js` y tres smokes, y habia ediciones concurrentes fuera de esa frontera
-  - [x] Auditar el shell actual para detectar restos visibles de lenguaje/control-plane tipo dashboard
-  - [x] Ajustar `src-js/core/control-panel.js` para priorizar chat principal, pestaña lateral de tareas por defecto y copy agent-first
-  - [x] Reducir la carga de telemetria cruda en las tarjetas de tarea, manteniendo trazabilidad y ruta efectiva en el inspector
-  - [x] Actualizar `tests/control_panel_ui_smoke.js` para fijar el contrato de Fase 2 cerrada
-  - [x] Verificar `control_panel_ui_smoke`, `control_panel_state_regression_smoke`, `panel_execution_mode_smoke`, `control_panel_script_syntax_smoke` y `build:bundle`
-  - [x] Cerrar trazabilidad local y marcar oficialmente la Fase 2 como completada
+## Continuacion core-v2: ejecucion nativa de skills/MCP (2026-04-30)
+- [x] Objetivo principal: hacer que `freejt7-agent-core-v2` ejecute skills y MCP local desde el mismo loop, no solo los trace
+  - [x] Registrar la continuacion y actualizar trazabilidad operativa
+  - [x] Añadir tools nativas del core-v2 para skills (`skill_resolve`, `skill_inspect`) y MCP (`mcp_list_tools`, `mcp_call`)
+  - [x] Reutilizar `skills_manager.py` y el MCP local `free-jt7-local` sin romper el loop actual de tools locales
+  - [x] Cubrir la ejecucion real con smoke del core-v2 y regresiones relacionadas
 
-## Fase 3 cierre formal continuidad real de sesion (2026-04-28)
-- [x] Objetivo principal: cerrar la Fase 3 demostrando continuidad real aunque el estado previo no este perfecto y aunque haya reinicio con tareas interrumpidas
-  - [x] Reconstruir `agentState` desde tareas persistidas cuando falte o quede legado/incompleto
-  - [x] Actualizar `agentState` al recuperar tareas interrumpidas por reinicio para que `continua` retome el estado correcto
-  - [x] Verificar reanudacion de sesion (`yield/resume`) y continuidad tras reinicio con smokes bajo ownership
-  - [x] Cerrar trazabilidad y marcar Fase 3 como completada si la evidencia queda verde
-
-## Fase 2 siguiente despacho real de acciones locales desde el runtime propio (2026-04-28)
-- [x] Objetivo principal: mover la preparacion real de acciones locales al `FreeJT7 Agent Runtime`, para que el runtime no solo planifique sino que despache `actions` explicitas hacia el fallback local
-  - [x] Exponer derivacion reusable de acciones locales desde `local-agent-runtime`
-  - [x] Hacer que `freejt7-agent-runtime` prepare `actions` explicitas y las pase a `runLocalAgentTask`
-  - [x] Reflejar el ownership del despacho dentro de `capabilityPlan`
-  - [x] Verificar `freejt7_agent_runtime_smoke`, `session_engine_context_smoke`, `provider_router_failover_smoke`, `control_panel_ui_smoke`, `build:bundle`, `package:local`, `app:own-ide:setup`, `installed_extension_smoke`
-
-## Hotfix aclaracion operativa para "crea la carpeta" incompleto (2026-04-28)
-- [x] Objetivo principal: evitar que el fallback local responda con auditoria generica cuando el usuario pide crear una carpeta sin dar ruta o nombre suficientes
-  - [x] Detectar intent incompleto de create-directory en `local-agent-runtime`
-  - [x] Responder con peticion concreta del dato faltante en estilo agente, no con "auditoria basica"
-  - [x] Agregar smoke de regresion para `crea la carpeta`
-  - [x] Verificar `local_agent_runtime_smoke`, `build:bundle`, `package:local`, `app:own-ide:setup`, `installed_extension_smoke`
-  - [x] Vinculacion al plan maestro: soporte operativo de la Fase 2, no sustituto de Fase 4/5/6
-
-## Fase 2 inicial plan de capacidades y MCP dentro del runtime propio (2026-04-28)
-- [x] Objetivo principal: mover la seleccion de capacidades al `FreeJT7 Agent Runtime`, para que skills, tools locales y disponibilidad MCP formen parte del plan operativo de cada tarea y no de inferencias dispersas del panel/router
-  - [x] Hacer que el runtime propio construya `capabilityPlan` dentro de `planTaskExecution()`
-  - [x] Incluir `toolMode`, operaciones locales inferidas, skills seleccionadas y snapshot MCP en el plan
-  - [x] Persistir `capabilityPlan` dentro de `routePlan/executionPlan`
-  - [x] Hacer visible el plan de capacidades en las tarjetas de tarea del panel
-  - [x] Verificar `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`, `session_engine_context_smoke`, `control_panel_ui_smoke`, `build:bundle`, `package:local`, `app:own-ide:setup`, `installed_extension_smoke`
-
-## Fase 1C planificacion operativa por tarea dentro del runtime propio (2026-04-28)
-- [x] Objetivo principal: mover la decision operativa por tarea al `FreeJT7 Agent Runtime`, para que el agente elija de forma centralizada local/OpenClaw/ACP/provider directo y deje un plan persistido por tarea en el panel
-  - [x] Hacer que el runtime propio exponga `planTaskExecution()` con ownership de la ruta primaria y fallbacks
-  - [x] Priorizar ejecucion local inmediata para objetivos deterministas resolubles sin pasar por OpenClaw
-  - [x] Hacer que `provider-router` preserve `executionPlan` al envolver respuestas del runtime agente
-  - [x] Persistir `routePlan` en `session-engine` al encolar tareas para que el panel pueda reflejar la ruta prevista antes del resultado final
-  - [x] Hacer que el panel use `routePlan` como fallback de visualizacion cuando aun no hay intentos exitosos
-  - [x] Verificar `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`, `session_engine_context_smoke`, `build:bundle`, `package:local`, `app:own-ide:setup`, `installed_extension_smoke`
-
-## Fase 1B continuidad y contexto dentro del runtime propio (2026-04-28)
-- [x] Objetivo principal: mover continuidad conversacional y armado de contexto al `FreeJT7 Agent Runtime`, reduciendo la dependencia del router general para la ruta agente del panel
-  - [x] Hacer que el runtime propio construya `conversationRequest` y `serializedGoal`
-  - [x] Hacer que `provider-router` delegue agent routes al runtime propio cuando exista
-  - [x] Reusar el contexto serializado también para la rama Copilot heredada cuando aplique
-  - [x] Añadir cobertura de smoke para continuidad del runtime propio
-  - [x] Verificar `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`, `session_engine_context_smoke`, `build:bundle`, `package:local`, `app:own-ide:setup`, `installed_extension_smoke`
-
-## Fase 1A runtime propio del agente Free JT7 (2026-04-28)
-- [x] Objetivo principal: extraer un `FreeJT7 Agent Runtime` propio y conectarlo al panel para que la orquestacion del modo agente deje de vivir dispersa entre callbacks de `extension.runtime`
-  - [x] Crear modulo `freejt7-agent-runtime.js` con ownership explicito del flujo agente
-  - [x] Integrarlo con `extension.runtime`, `control-panel` y `provider-router`
-  - [x] Agregar smoke dedicada del runtime propio
-  - [x] Guardar plan maestro en MD dedicado para continuidad de la refactorizacion
-  - [x] Verificar `freejt7_agent_runtime_smoke`, `provider_router_failover_smoke`, `control_panel_ui_smoke`, `build:bundle`, `package:local`, `app:own-ide:setup`, `installed_extension_smoke`
-
-## Auditoria de rumbo y plan maestro own-ide agent-first (2026-04-28)
-- [x] Objetivo principal: reencauzar Free JT7 para que `own-ide` y el panel propio sean la experiencia principal agent-first, con OpenClaw como harness opcional y providers externos como backends, no como dueños del flujo
-  - [x] Intake resuelto con el usuario: entregable = plan maestro de correccion de arquitectura y producto; restricciones = compatibilidad heredada con Copilot solo como modo secundario; validacion = crear carpetas, editar archivos, instalar dependencias, continuidad entre turnos, modelos externos sin Copilot, reinicio con memoria y respuesta estilo agente real
-  - [x] Resolver skills aplicables: `agent-orchestration`, `free-jt7-global-runtime-audit`, `verification-before-completion`
-  - [x] Decision de delegacion: no delegar en esta fase porque primero necesito fijar arquitectura objetivo, backlog y criterios de aceptacion sobre evidencia fresca del runtime
-  - [x] Ejecutar auditoria base fresca del runtime/panel siguiendo el checklist de Free JT7
-  - [x] Contrastar arquitectura actual contra objetivo agent-first definido por el usuario
-  - [x] Definir backlog por frentes: control-plane agente, UI own-ide, session/memory, tools/MCP, providers/harness y compatibilidad heredada Copilot
-  - [x] Entregar plan maestro por fases con criterios de aceptacion y secuencia recomendada de implementacion
-
-## Hotfix ejecucion local real para acciones operativas del agente (2026-04-28)
-- [x] Objetivo principal: hacer que el modo agente degradado ejecute de verdad acciones locales deterministas como crear carpetas e inspeccionar rutas, y que responda con resultado verificado en lugar de texto robotico o alucinaciones del provider directo
-  - [x] Intake obligatorio asumido por continuidad: entregable = fallback local mas parecido al comportamiento de un agente ejecutor; restricciones = cambios minimos compatibles, sin abrir operaciones destructivas; validacion = smokes runtime/fallback + build/package/setup own-ide
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este frente runtime
-  - [x] Decision de delegacion: no delegar porque el ownership estaba concentrado entre `local-agent-runtime.js`, `extension.runtime.js` y smokes del mismo flujo
-  - [x] Implementar acciones locales de `mkdir` e inspeccion de rutas/directorios, incluyendo rutas absolutas explicitas del usuario
-  - [x] Priorizar fallback local sobre provider directo cuando la solicitud es claramente ejecutable de forma local
-  - [x] Simplificar la respuesta visible para acciones resueltas (`carpeta creada`, `git ya estaba instalado`, etc.)
-  - [x] Agregar regresiones de smoke para crear carpeta e inspeccionar directorio
-  - [x] Recompilar, reempaquetar, reinstalar `own-ide` y cerrar trazabilidad
-
-## Hotfix bytes nulos en argumento CLI del agente OpenClaw (2026-04-28)
-- [x] Objetivo principal: corregir el fallo donde el modo agente revienta antes de ejecutar por pasar `--message` con bytes nulos al proceso `openclaw agent`
-  - [x] Intake obligatorio asumido por continuidad: entregable = saneamiento del payload conversacional/CLI para que el agente vuelva a invocarse; restricciones = cambio minimo y compatible; validacion = smokes chat-context/OpenClaw/runtime + build/package/setup own-ide
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este bug de serializacion/CLI
-  - [x] Decision de delegacion: no delegar porque el ownership estaba concentrado entre `chat-context.js`, `openclaw-agent-runtime.js` y smokes del mismo contrato
-  - [x] Reproducir la nueva causa real desde la evidencia del panel (`args[12]` con null bytes)
-  - [x] Sanear serializacion conversacional para eliminar `\0` en system prompt, historial y solicitud actual
-  - [x] Sanear `buildOpenClawAgentArgs()` para que nunca emita argumentos con bytes nulos
-  - [x] Agregar cobertura de smoke para contexto conversacional y args del CLI
-  - [x] Recompilar, reempaquetar, reinstalar `own-ide` y cerrar trazabilidad
-
-## Hotfix politica de fallback agente->provider->local (2026-04-28)
-- [x] Objetivo principal: corregir la politica operativa del modo agente para que Free JT7 no degrade a runtime local ante fallos genericos del motor principal si la solicitud no es resoluble localmente
-  - [x] Intake obligatorio asumido por continuidad: entregable = ruta de ejecucion mas parecida a OpenCode/OpenClaw (`agent -> provider direct -> local solo si aplica`); restricciones = cambios minimos compatibles y reinstalacion own-ide; validacion = smokes runtime/fallback + build/package/setup
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este contrato de runtime/fallback
-  - [x] Decision de delegacion: no delegar porque el ownership estaba concentrado en `extension.runtime.js`, `local-agent-runtime.js` y smokes del mismo flujo
-  - [x] Auditar la politica real de fallback y confirmar que cualquier error OpenClaw estaba habilitando respuestas locales indebidas
-  - [x] Reforzar `shouldUseProviderDirectFallback()` para fallos operativos/transitorios del agente/proveedor
-  - [x] Restringir `shouldUseLocalAgentFallback()` para que dependa del objetivo real y solo permita degradacion local en tareas deterministas resolubles
-  - [x] Agregar smoke dedicada de politica de fallback
-  - [x] Recompilar, reempaquetar, reinstalar `own-ide` y cerrar trazabilidad
-
-## Hotfix autostart del gateway OpenClaw en own-ide (2026-04-28)
-- [x] Objetivo principal: evitar que Free JT7 degrade a fallback local porque el gateway OpenClaw no arranca o no se sondea correctamente en el runtime aislado de `own-ide`
-  - [x] Intake obligatorio asumido por continuidad: entregable = arranque/sonda automatica del gateway en modo agente; restricciones = cambios minimos compatibles; validacion = smokes OpenClaw/panel + build/package/setup own-ide
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este hotfix runtime
-  - [x] Decision de delegacion: no delegar porque el ownership sigue concentrado entre `extension.runtime.js`, helpers OpenClaw y smokes del mismo contrato
-  - [x] Reproducir la causa real y confirmar que `gateway status` entrega mejor señal que `gateway health` para readiness en este entorno
-  - [x] Implementar autostart/polling del gateway con el config/state aislado de Free JT7 antes de invocar `openclaw agent`
-  - [x] Ajustar smokes y ejecutar verificacion ligera
-  - [x] Reempaquetar/reinstalar `own-ide` y cerrar trazabilidad/memoria
-
-## Refactor shell inspirado en OpenCode + saneamiento del fallback local (2026-04-28)
-- [x] Objetivo principal: dejar el panel menos dashboard y mas shell de sesion tipo OpenCode, y corregir que el fallback local contamine la solicitud actual con historial previo
-  - [x] Intake asumido por continuidad: entregable = shell visual mas cercano a OpenCode + fallback local mas coherente; restricciones = no portar OpenCode completo dentro del webview; validacion = smokes panel/runtime + build/package/setup own-ide
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este frente webview/runtime
-  - [x] Decision de delegacion: no delegar porque el cambio cruza `control-panel.js`, `local-agent-runtime.js` y sus smokes asociados
-  - [x] Auditar estructura de OpenCode local para identificar el shell reutilizable (sesiones a la izquierda, timeline central, inspector lateral)
-  - [x] Refactorizar el panel a un layout de tres columnas con shell visual inspirado en OpenCode
-  - [x] Corregir heuristicas del fallback local para priorizar `Solicitud actual` y no arrastrar `system_install` desde el historial
-  - [x] Mejorar explicacion operacional del fallback para errores gateway/auth/network
-  - [x] Verificar, reempaquetar e instalar en `own-ide`
-
-## Hotfix gateway OpenClaw stale provider + latest request focus (2026-04-28)
-- [x] Objetivo principal: corregir el fallo real donde el gateway no arranca por providers custom stale en `openclaw.json` y donde el fallback local sigue leyendo la solicitud equivocada dentro del prompt auditado
-  - [x] Confirmar en la instalacion real que el bundle nuevo estaba cargado y que el fallo no era solo de despliegue
-  - [x] Reproducir el arranque real del gateway con el config del workspace y capturar la causa exacta (`CLOD_API_KEY` faltante por provider stale)
-  - [x] Limpiar `models.providers.clod` cuando el provider activo ya no es `clod`
-  - [x] Hacer que `extractFocusedGoal()` tome la ultima `Solicitud actual` / `Objetivo solicitado`
-  - [x] Verificar con smokes y arranque manual del gateway saneado
-  - [x] Reempaquetar, reinstalar `own-ide` y dejar evidencia
-
-## Refactor chat principal e inspector lateral Free JT7 (2026-04-27)
-- [x] Objetivo principal: corregir la interfaz del panel para que funcione como chat principal profesional y deje tareas, eventos y configuracion como inspector lateral sin respuestas tipo log crudo
-  - [x] Intake obligatorio asumido: entregable = UI chat-first mas clara + respuesta local/fallback legible; restricciones = cambios minimos compatibles; validacion = smokes de panel/runtime + build bundle
-  - [x] Resolver skills aplicables: sin skill local especializada disponible para este frente UI/runtime puntual
-  - [x] Decision de delegacion: no delegar por ownership concentrado en `control-panel.js`/`local-agent-runtime.js` y working tree con cambios paralelos
-  - [x] Auditar ultimas tareas/memoria/documentos MD para confirmar causas recurrentes
-  - [x] Refactorizar resumen visible del runtime local/fallback para que sea respuesta conversacional y no inventario tecnico
-  - [x] Mejorar tratamiento visual del chat, manteniendo detalles tecnicos en inspector
-  - [x] Actualizar smokes y ejecutar verificacion ligera
-  - [x] Cerrar trazabilidad en `copilot-agent/` y memoria si aplica
-
-## Hotfix autonomia real modo agente own-ide (2026-04-27)
-- [x] Objetivo principal: evitar que el modo agente de Free JT7 degrade a rutas no autonomas por locks/gateway de OpenClaw y asegurar politica autonoma en perfiles propios
-  - [x] Intake obligatorio asumido: entregable = modo agente mas autonomo y con permisos completos en own-ide; restricciones = compatible con perfil normal; validacion = smokes OpenClaw/panel/policy + build bundle
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este hotfix runtime
-  - [x] Decision de delegacion: no delegar porque el cambio cruza `extension.runtime.js`, `openclaw-agent-runtime.js`, bootstrap y smokes sobre el mismo contrato
-  - [x] Sanear locks obsoletos de OpenClaw y usar id de sesion por tarea para evitar bloqueo entre solicitudes
-  - [x] Forzar `freejt7.panel.policy.mode=autonomous` en standalone/own-ide
-  - [x] Agregar/actualizar smokes y ejecutar verificacion ligera
-  - [x] Cerrar trazabilidad y memoria
-
-## Hotfix acciones de sistema en runtime local (2026-04-27)
-- [x] Objetivo principal: hacer que el fallback local del agente ejecute o resuelva correctamente solicitudes concretas de sistema como `instala git`
-  - [x] Intake obligatorio asumido: entregable = respuesta operativa a instalaciones basicas; restricciones = segura, compatible y sin comandos arbitrarios; validacion = smoke local + panel + bundle + reinstalacion own-ide
-  - [x] Resolver skills aplicables: sin skill local especializada adicional para este hotfix runtime
-  - [x] Decision de delegacion: no delegar porque el cambio es acotado al runtime local, smokes y reinstalacion del perfil propio
-  - [x] Detectar intenciones de instalacion soportadas en `local-agent-runtime`
-  - [x] Implementar accion de sistema segura para `git` con verificacion e instalacion condicionada
-  - [x] Ajustar la respuesta visible para no caer en auditoria generica cuando la accion ya fue resuelta
-  - [x] Actualizar smokes, recompilar, reempaquetar e instalar en `own-ide`
-  - [x] Cerrar trazabilidad y memoria
+## Continuacion core-v2: snapshot skills/MCP (2026-04-30)
+- [x] Objetivo principal: hacer que `freejt7-agent-core-v2` sea dueño tambien del snapshot operativo de skills y MCP, no solo del loop de tools locales
+  - [x] Inyectar `selectedSkills`, `mcpServers`, `nativeMcpTools` y `dispatch.trace` dentro del prompt de planificacion del core-v2
+  - [x] Persistir ese snapshot en la traza JSONL y exponerlo en `result.coreV2.capabilities`
+  - [x] Verificar con smoke propia y regresiones de runtime/panel
 
 ## Auditoria integral interfaz/runtime/autonomia Free JT7 (2026-04-27)
 - [ ] Objetivo principal: auditar de extremo a extremo Free JT7 para confirmar rutas reales de interfaz, runtime, proveedores externos, own-ide y autonomia, y preparar refactor guiado por evidencia si la arquitectura actual sigue divergente

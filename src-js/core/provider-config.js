@@ -21,6 +21,16 @@ const PROVIDER_CONFIGS = Object.freeze({
     apiKeyEnv: 'ZAI_API_KEY',
     defaultHeaders: Object.freeze({}),
   }),
+  nvidia: Object.freeze({
+    chatCompletionsUrl: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    apiKeyEnv: 'NVIDIA_API_KEY',
+    defaultHeaders: Object.freeze({}),
+  }),
+  ddeksee: Object.freeze({
+    chatCompletionsUrl: 'https://api.deepseek.com/v1/chat/completions',
+    apiKeyEnv: 'DDEKSEE_API_KEY',
+    defaultHeaders: Object.freeze({}),
+  }),
   clod: Object.freeze({
     chatCompletionsUrl: 'https://api.clod.io/v1/chat/completions',
     apiKeyEnv: 'CLOD_API_KEY',

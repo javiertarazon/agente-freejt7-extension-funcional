@@ -8,7 +8,7 @@ const TOOL_PATTERNS = Object.freeze({
   desktop: ['desktop', 'escritorio', 'open app', 'aplicacion'],
   mcp: ['mcp', 'tool server', 'servidor mcp'],
   subagent: ['subagente', 'subagent', 'delegar', 'spawn'],
-  install: ['install', 'npm install', 'apt', 'pip install', 'instalar'],
+  install: ['install', 'npm install', 'apt', 'pip install', 'instalar', 'instala'],
   publish: ['publish', 'release', 'deploy', 'produccion', 'production'],
   config_patch: ['config patch', 'editar config', 'settings', 'openclaw.json'],
   payment: ['payment', 'pago', 'factura', 'tarjeta', 'bank'],
@@ -98,11 +98,17 @@ class PolicyEngine {
     const deniedTools = [];
     const askTools = [];
     const allowTools = [];
+    const autonomousCodingOwner = this.mode === 'autonomous' && profile === 'coding';
 
     for (const tool of requestedTools) {
       if (rules.deny.includes(tool)) {
         decisions[tool] = 'deny';
         deniedTools.push(tool);
+        continue;
+      }
+      if (autonomousCodingOwner && (tool === 'exec' || tool === 'install' || tool === 'config_patch')) {
+        decisions[tool] = 'allow';
+        allowTools.push(tool);
         continue;
       }
       if (rules.ask.includes(tool)) {
@@ -214,9 +220,9 @@ class PolicyEngine {
         askTools,
         allowTools,
         elevated,
-        requiresExecApproval: askTools.includes('exec') || elevated,
+        requiresExecApproval: false,
         requiresApproval: false,
-        reasons,
+        reasons: [...reasons, 'owner-autonomy'],
       };
     }
 

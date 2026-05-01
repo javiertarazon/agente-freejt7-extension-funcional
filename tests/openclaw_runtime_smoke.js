@@ -36,6 +36,30 @@ function main() {
   assert.strictEqual(providerEntry.models[0].id, normalizeModelSuffix('clod', model), 'debe registrar el id del modelo esperado');
   assert.strictEqual(providerEntry.baseUrl, 'https://api.clod.io/v1', 'debe mantener baseUrl del provider custom');
 
+  const ddekseeEnsured = ensureOpenClawRuntimeConfig(rootDir, {
+    provider: 'ddeksee',
+    model: 'deepseek-reasoner',
+    workspacePath: process.cwd(),
+    mcpCommand: 'node',
+    mcpArgs: ['servidor mpc free jt7/src/index.js'],
+  });
+  const ddekseeEntry = ddekseeEnsured.config?.models?.providers?.ddeksee;
+  assert.ok(ddekseeEntry, 'debe crear provider custom ddeksee');
+  assert.strictEqual(ddekseeEntry.models[0].id, normalizeModelSuffix('ddeksee', 'deepseek-reasoner'), 'debe registrar el id del modelo esperado para ddeksee');
+  assert.strictEqual(ddekseeEntry.baseUrl, 'https://api.deepseek.com/v1', 'debe mantener baseUrl del provider custom ddeksee');
+
+  const nvidiaEnsured = ensureOpenClawRuntimeConfig(rootDir, {
+    provider: 'nvidia',
+    model: 'qwen/qwen3-coder-480b-a35b-instruct',
+    workspacePath: process.cwd(),
+    mcpCommand: 'node',
+    mcpArgs: ['servidor mpc free jt7/src/index.js'],
+  });
+  const nvidiaEntry = nvidiaEnsured.config?.models?.providers?.nvidia;
+  assert.ok(nvidiaEntry, 'debe crear provider custom nvidia');
+  assert.strictEqual(nvidiaEntry.models[0].id, normalizeModelSuffix('nvidia', 'qwen/qwen3-coder-480b-a35b-instruct'), 'debe registrar el id del modelo esperado para nvidia');
+  assert.strictEqual(nvidiaEntry.baseUrl, 'https://integrate.api.nvidia.com/v1', 'debe mantener baseUrl del provider custom nvidia');
+
   const visibleSummary = summarizeOpenClawPayload({
     payloads: [
       { text: 'Respuesta completa del agente desde payloads.' },
@@ -118,11 +142,9 @@ function main() {
     mcpCommand: 'node',
     mcpArgs: ['servidor mpc free jt7/src/index.js'],
   });
-  assert.equal(
-    Boolean(switched.config?.models?.providers?.clod),
-    false,
-    'debe limpiar providers custom stale cuando cambia del provider clod a otro provider',
-  );
+  assert.equal(Boolean(switched.config?.models?.providers?.clod), false, 'debe limpiar providers custom stale clod');
+  assert.equal(Boolean(switched.config?.models?.providers?.ddeksee), false, 'debe limpiar providers custom stale ddeksee');
+  assert.equal(Boolean(switched.config?.models?.providers?.nvidia), false, 'debe limpiar providers custom stale nvidia');
 
   const staleLockDir = path.join(rootDir, '.openclaw', 'state', 'agents', 'main', 'sessions');
   fs.mkdirSync(staleLockDir, { recursive: true });

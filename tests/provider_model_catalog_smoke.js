@@ -15,7 +15,7 @@ function main() {
 
   const enumValues = new Set(property.enum.map((value) => String(value || "").trim()).filter(Boolean));
   const staticCatalog = getFreeModelsCatalog();
-  const providers = ["openrouter", "hf", "zai", "clod"];
+  const providers = ["openrouter", "hf", "zai", "nvidia", "ddeksee", "clod"];
 
   for (const provider of providers) {
     const models = Array.isArray(staticCatalog[provider]) ? staticCatalog[provider] : [];

@@ -9,6 +9,18 @@ const MAX_PATH_SCAN_LENGTH = 260;
 const MAX_FILE_PREVIEW_CHARS = 900;
 const MAX_LOCAL_CONTEXT_CHARS = 2200;
 
+function shouldIgnoreAutoContextPath(candidate, workspacePath = '') {
+  const normalized = String(candidate || '').replace(/\\/g, '/');
+  const workspace = String(workspacePath || '').replace(/\\/g, '/');
+  if (normalized.includes('/copilot-agent/')) {
+    return true;
+  }
+  if (workspace && normalized.startsWith(workspace) && normalized.slice(workspace.length).startsWith('/copilot-agent/')) {
+    return true;
+  }
+  return false;
+}
+
 function stripNullBytes(value) {
   return String(value || '').replace(/\0/g, '');
 }
@@ -171,6 +183,7 @@ function extractExistingPaths(text, options = {}) {
   const workspacePath = options.workspacePath ? path.resolve(String(options.workspacePath)) : '';
   const unique = Array.from(new Set(candidates))
     .filter((candidate) => Boolean(candidate))
+    .filter((candidate) => !shouldIgnoreAutoContextPath(candidate, workspacePath))
     .sort((left, right) => {
       if (workspacePath) {
         const leftIsWorkspace = left.startsWith(workspacePath);
@@ -205,6 +218,7 @@ function buildFreeJt7SystemPrompt(options = {}) {
   const channel = String(options.channel || 'chat').trim();
   const sessionTitle = String(options.sessionTitle || '').trim();
   const intake = options.intake && typeof options.intake === 'object' ? options.intake : null;
+  const capabilities = options.capabilities && typeof options.capabilities === 'object' ? options.capabilities : null;
   const selectedSkills = Array.isArray(options.selectedSkills)
     ? options.selectedSkills
       .map((item) => {
@@ -214,6 +228,15 @@ function buildFreeJt7SystemPrompt(options = {}) {
       })
       .filter(Boolean)
     : [];
+  const capabilityLines = capabilities
+    ? [
+      Array.isArray(capabilities.selectedSkills) && capabilities.selectedSkills.length
+        ? `- Skills resueltos: ${capabilities.selectedSkills.join(', ')}`
+        : '',
+      capabilities.dispatchTarget ? `- Destino operativo preferido: ${String(capabilities.dispatchTarget).trim()}` : '',
+      capabilities.runtimeBackend ? `- Backend preferido: ${String(capabilities.runtimeBackend).trim()}` : '',
+    ].filter(Boolean)
+    : [];
   return [
     'Eres free jt7, un agente tecnico pragmatico dentro del runtime local de una extension.',
     'No te presentes como MiniMax, OpenRouter, OpenAI, Hugging Face, ZAI, CLod ni como un modelo base del proveedor, aunque ese proveedor procese la respuesta.',
@@ -221,7 +244,9 @@ function buildFreeJt7SystemPrompt(options = {}) {
     'Responde en espanol salvo que el usuario pida otro idioma.',
     'Mantienes continuidad conversacional real: usa el historial disponible y no trates cada turno como una solicitud aislada.',
     'Si el usuario ya dio una ruta, objetivo, restriccion o validacion, continua desde ahi sin pedir que repita el contexto.',
-    'Actuas con las capacidades habilitadas por el runtime de Free JT7 en esta sesion: historial, contexto local, skills resueltos, trazabilidad y enrutamiento por proveedor cuando aplique.',
+    'No declares capacidades, skills, MCP o herramientas como disponibles si no aparecen de forma explicita en esta solicitud o en evidencia operativa visible.',
+    'Debes priorizar el uso de tools, Skills y MCP antes que una respuesta puramente conversacional cuando el objetivo sea ejecutable o verificable.',
+    'Si una accion parece de alto impacto, primero formula un plan operativo claro usando las capacidades visibles y deja explicita la aprobacion requerida.',
     'Prioriza acciones directas, respuestas utiles y cambios compatibles hacia atras.',
     'Si aparece contexto local inspeccionado automaticamente, usalo como evidencia del entorno antes de pedir mas datos.',
     'Si el usuario dice "continua", "debes continuar" o algo similar, retoma la ultima tarea activa con el contexto previo.',
@@ -229,6 +254,7 @@ function buildFreeJt7SystemPrompt(options = {}) {
     intake?.constraints ? `Restricciones / no-goals: ${String(intake.constraints).trim()}` : '',
     intake?.verification ? `Validacion esperada: ${String(intake.verification).trim()}` : '',
     selectedSkills.length ? `Skills prioritarios resueltos para esta solicitud: ${selectedSkills.join(', ')}.` : '',
+    capabilityLines.length ? ['Capacidades operativas visibles en esta sesion:', ...capabilityLines].join('\n') : '',
     sessionTitle ? `Sesion actual: ${sessionTitle}.` : '',
     `Canal actual: ${channel}.`,
   ].filter(Boolean).join('\n');
@@ -250,6 +276,7 @@ function buildConversationRequest(options = {}) {
       sessionTitle,
       intake: options.intake,
       selectedSkills: options.selectedSkills,
+      capabilities: options.capabilities,
     }),
     localContext,
   ].filter(Boolean).join('\n\n');

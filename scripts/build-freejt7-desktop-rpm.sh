@@ -15,7 +15,13 @@ fi
 
 VERSION="$(node -e "console.log(require(process.argv[1]).version)" "$PKG_JSON")"
 RELEASE="1"
-BUILD_ARCH="noarch"
+BUILD_ARCH="x86_64"
+CHANGELOG_DATE="$(LC_ALL=C date +"%a %b %d %Y")"
+
+if [[ "$(uname -m)" != "x86_64" ]]; then
+  echo "[freejt7-rpm] ERROR: Free JT7 Desktop solo soporta x86_64 por ahora (host=$(uname -m))." >&2
+  exit 1
+fi
 
 VSIX_PATH="$ROOT_DIR/agente-freejt7-extension-funcional-${VERSION}.vsix"
 if [[ ! -f "$VSIX_PATH" ]]; then
@@ -37,6 +43,7 @@ SRPMS_DIR="$RPM_TOP/SRPMS"
 BUILD_DIR="$RPM_TOP/BUILD"
 BUILDROOT_DIR="$RPM_TOP/BUILDROOT"
 SPEC_FILE="$SPECS_DIR/freejt7-desktop.spec"
+BUNDLED_RUNTIME_SOURCE="${FREEJT7_VSCODIUM_RUNTIME_DIR:-$HOME/.freejt7-app/runtime/vscodium/current}"
 
 rm -rf "$RPM_TOP"
 mkdir -p "$SOURCES_DIR/opt/freejt7-desktop/scripts" "$SOURCES_DIR/usr/bin" "$SOURCES_DIR/usr/share/applications" "$SPECS_DIR" "$RPMS_DIR" "$SRPMS_DIR" "$BUILD_DIR" "$BUILDROOT_DIR"
@@ -68,10 +75,17 @@ if ! command -v "$NODE_BIN" >/dev/null 2>&1; then
 fi
 
 WORKSPACE="${FREEJT7_WORKSPACE:-$PWD}"
+BUNDLED_IDE="$APP_ROOT/runtime/vscodium/current/bin/codium"
+
+EXTRA_ARGS=()
+if [[ -x "$BUNDLED_IDE" ]]; then
+  EXTRA_ARGS+=("--ide-bin=$BUNDLED_IDE")
+fi
 
 exec "$NODE_BIN" "$APP_ROOT/scripts/freejt7-own-ide-bootstrap.js" \
   --repo-root="$APP_ROOT" \
   --workspace="$WORKSPACE" \
+  "${EXTRA_ARGS[@]}" \
   "$@"
 EOF
 chmod 0755 "$SOURCES_DIR/opt/freejt7-desktop/scripts/freejt7-desktop-launcher.sh"
@@ -88,6 +102,7 @@ cat > "$SOURCES_DIR/usr/share/applications/freejt7-desktop.desktop" <<'EOF'
 Name=Free JT7 Desktop
 Comment=Agente Free JT7 en perfil aislado
 Exec=freejt7-desktop
+TryExec=freejt7-desktop
 Terminal=false
 Type=Application
 Categories=Development;IDE;
@@ -100,9 +115,21 @@ cp "$ROOT_DIR/README.md" "$SOURCES_DIR/opt/freejt7-desktop/README.md"
 cp "$VSIX_PATH" "$SOURCES_DIR/opt/freejt7-desktop/"
 cp "$ROOT_DIR/scripts/freejt7-app-bootstrap.js" "$SOURCES_DIR/opt/freejt7-desktop/scripts/freejt7-app-bootstrap.js"
 cp "$ROOT_DIR/scripts/freejt7-own-ide-bootstrap.js" "$SOURCES_DIR/opt/freejt7-desktop/scripts/freejt7-own-ide-bootstrap.js"
+cp "$ROOT_DIR/scripts/freejt7-vscodium-linux-x64.json" "$SOURCES_DIR/opt/freejt7-desktop/scripts/freejt7-vscodium-linux-x64.json"
 chmod 0755 "$SOURCES_DIR/opt/freejt7-desktop/scripts/freejt7-app-bootstrap.js" "$SOURCES_DIR/opt/freejt7-desktop/scripts/freejt7-own-ide-bootstrap.js"
+if [[ -d "$BUNDLED_RUNTIME_SOURCE" ]]; then
+  mkdir -p "$SOURCES_DIR/opt/freejt7-desktop/runtime/vscodium"
+  cp -a "$BUNDLED_RUNTIME_SOURCE" "$SOURCES_DIR/opt/freejt7-desktop/runtime/vscodium/current"
+else
+  echo "[freejt7-rpm] WARN: no se encontro runtime VSCodium local en $BUNDLED_RUNTIME_SOURCE; el launcher quedara en modo descarga/cache." >&2
+fi
 
 cat > "$SPEC_FILE" <<EOF
+%global debug_package %{nil}
+%global _missing_build_ids_terminate_build 0
+# El runtime VSCodium embebido incluye modulos nativos precompilados de upstream
+# sin build-id ELF util para rpmbuild. Este spec no compila esos binarios; los
+# empaqueta como payload vendor y no debe fallar por esa ausencia.
 Name: freejt7-desktop
 Version: ${VERSION}
 Release: ${RELEASE}%{?dist}
@@ -137,12 +164,14 @@ cp -a %{_sourcedir}/freejt7-root/. %{buildroot}/
 echo "[freejt7-desktop] Instalado. Ejecuta: freejt7-desktop --no-launch"
 
 %changelog
-* $(date +"%a %b %d %Y") Free JT7 Team <noreply@freejt7.local> - ${VERSION}-${RELEASE}
+* ${CHANGELOG_DATE} Free JT7 Team <noreply@freejt7.local> - ${VERSION}-${RELEASE}
 - Initial RPM package for Free JT7 Desktop standalone launcher.
 EOF
 
 "$FREEJT7_RPMBUILD_BIN" \
   --define "_topdir $RPM_TOP" \
+  --define "__strip /bin/true" \
+  --define "__objdump /bin/true" \
   -bb "$SPEC_FILE"
 
 RPM_OUTPUT="$(ls -1 "$RPMS_DIR"/**/freejt7-desktop-"${VERSION}"-"${RELEASE}"*.rpm 2>/dev/null | head -n 1 || true)"

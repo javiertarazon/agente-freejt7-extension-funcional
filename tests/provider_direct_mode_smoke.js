@@ -39,6 +39,7 @@ async function main() {
     },
   });
 
+  // El modo direct ya no está permitido, siempre se fuerza agent
   const direct = await router.execute({
     goal: 'responde directo',
     provider: 'clod',
@@ -48,14 +49,9 @@ async function main() {
     workspacePath: process.cwd(),
   });
 
-  assert.equal(direct.executionMode, 'direct');
-  assert.equal(direct.provider, 'clod');
-  assert.equal(direct.raw.executionRoute, 'provider-direct');
-  assert.equal(direct.raw.routeMeta.fallbackUsed, false);
-  assert.equal(agentCalls, 0, 'modo direct no debe invocar agente');
-  assert.equal(directCalls.length, 1, 'modo direct debe llamar al proveedor una vez');
-  assert.equal(directCalls[0].config.provider, 'clod');
-  assert.equal(directCalls[0].config.model, 'OpenAI/gpt-oss-20B');
+  assert.equal(direct.executionMode, 'agent');
+  assert.equal(agentCalls, 1, 'modo direct ahora invoca agente');
+  assert.equal(directCalls.length, 0, 'modo direct ya no debe llamar proveedor directo');
 
   const copilot = await router.execute({
     goal: 'aunque pidan direct, copilot debe ir por agente',
@@ -65,8 +61,8 @@ async function main() {
     workspacePath: process.cwd(),
   });
   assert.equal(copilot.executionMode, 'agent');
-  assert.equal(agentCalls, 1, 'copilot debe conservar ruta agente');
-  assert.equal(directCalls.length, 1, 'copilot no debe llamar proveedor directo');
+  assert.equal(agentCalls, 2, 'copilot debe conservar ruta agente');
+  assert.equal(directCalls.length, 0, 'copilot no debe llamar proveedor directo');
 
   console.log('provider_direct_mode_smoke: OK');
 }

@@ -43,6 +43,16 @@ const COMMON_EXECUTABLE_DIRS = Object.freeze([
   '/sbin',
 ]);
 
+const BLOCKED_EXEC_PATTERNS = [
+  /\brm\s+-rf(?:\s+--no-preserve-root)?\s+\/(?:\s|$)/i,
+  /\bshutdown\b/i,
+  /\breboot\b/i,
+  /\bpoweroff\b/i,
+  /\bmkfs\b/i,
+  /\bdd\s+if=/i,
+  /:\(\)\s*\{/,
+];
+
 function truncate(text, max = 4000) {
   const value = String(text || '');
   return value.length > max ? `${value.slice(0, max)}\n...<truncated>` : value;
@@ -54,17 +64,27 @@ function extractFocusedText(goal) {
 }
 
 function canResolveLocalGoal(goal) {
+  const raw = String(goal || '');
   const focused = String(extractFocusedText(goal) || '').toLowerCase();
+  const fullText = `${focused}\n${raw.toLowerCase()}`;
   if (!focused) {
     return false;
   }
-  if (/\b(funciona|hola|gracias|continua|continuar)\b/.test(focused) && focused.split(/\s+/).length <= 4) {
+  if (isAgentAutonomyDiagnosticGoal(focused)) {
+    return true;
+  }
+  const hasContinuationIntent = /^(continua|continuar|continúe|continua con|sigue|seguir|sigue con|retoma|retomar|debes continuar)\b/.test(focused);
+  const hasOperationalContext = /solicitud actual:|ultimo objetivo:|continuation hint:|objetivo:|package\.json|readme|\.md\b|\.json\b|\.js\b|\.ts\b|\barchivo\b|\bruta\b|\bpath\b|\bworkspace\b|\brepositorio\b|\brepo\b|\bproyecto\b|\bbuild\b|\bbundle\b|\bcompil|\btest\b|\bprueba\b|\bverifica|\bverificaci|\blint\b|\binstala\b|\binstall\b|\bgit\b|\blee\b|\bread\b|\bescribe\b|\bwrite\b|\bedita\b|\bedit\b|\bparche\b|\bpatch\b|\bdiff\b|\blog\b|\bstatus\b|\bdoctor\b|\bdiagnost|\bcarpeta\b|\bdirectorio\b|\bmkdir\b|\bcrear\b|\bcrea\b|\blista\b|\bls\b|\binspecciona\b|\brevisa\b|\bskill\b|\btool\b|\bmcp\b|\bprovider\b|\bproveedor\b|\bmodel\b|\bmodelo\b|\bsettings\b|\bajustes\b|\bconfig\b|\bconfiguracion\b|\binterfaz\b|\bpanel\b|\baparece\b/i.test(fullText);
+  if (/\b(hola|gracias)\b/.test(focused) && focused.split(/\s+/).length <= 4 && !hasOperationalContext) {
     return false;
   }
   if (/\bporque\b.*\bagente\b|\bpor que\b.*\bagente\b|\bno estas usando el agente\b/.test(focused)) {
     return false;
   }
-  return /package\.json|readme|\.md\b|\.json\b|\.js\b|\.ts\b|\barchivo\b|\bruta\b|\bpath\b|\bworkspace\b|\brepositorio\b|\brepo\b|\bproyecto\b|\bbuild\b|\bbundle\b|\bcompil|\btest\b|\bprueba\b|\bverifica|\bverificaci|\blint\b|\binstala\b|\binstall\b|\bgit\b|\blee\b|\bread\b|\bescribe\b|\bwrite\b|\bedita\b|\bedit\b|\bparche\b|\bpatch\b|\bdiff\b|\blog\b|\bstatus\b|\bdoctor\b|\bdiagnost|\bcarpeta\b|\bdirectorio\b|\bmkdir\b|\bcrear\b|\bcrea\b|\blista\b|\bls\b|\binspecciona\b|\brevisa\b/i.test(focused);
+  if (hasContinuationIntent) {
+    return hasOperationalContext;
+  }
+  return hasOperationalContext;
 }
 
 function normalizeRelativePath(filePath) {
@@ -248,6 +268,33 @@ function createDirectory(workspacePath, action = {}) {
   };
 }
 
+function deletePath(workspacePath, action = {}) {
+  const target = resolveFlexiblePath(workspacePath, action.path || action.dirPath || action.filePath, {
+    allowAbsolute: action.allowAbsolute !== false,
+  });
+  if (!fs.existsSync(target.resolved)) {
+    return {
+      path: target.absolute ? target.resolved : target.relative,
+      removed: false,
+      missing: true,
+      kind: 'missing',
+    };
+  }
+  const stat = fs.statSync(target.resolved);
+  const kind = stat.isDirectory() ? 'dir' : 'file';
+  const recursive = action.recursive !== false;
+  if (kind === 'dir' && !recursive) {
+    throw new Error(`Borrado bloqueado: ${target.relative} es directorio y recursive=false.`);
+  }
+  fs.rmSync(target.resolved, { recursive, force: false });
+  return {
+    path: target.absolute ? target.resolved : target.relative,
+    removed: true,
+    missing: false,
+    kind,
+  };
+}
+
 function inspectPath(workspacePath, action = {}) {
   const target = resolveFlexiblePath(workspacePath, action.path || action.dirPath || action.filePath, {
     allowAbsolute: action.allowAbsolute !== false,
@@ -286,8 +333,10 @@ function executeLocalActions(workspacePath, options = {}) {
   const reads = [];
   const writes = [];
   const dirActions = [];
+  const deleteActions = [];
   const inspections = [];
   const verificationResults = [];
+  const execResults = [];
   const systemActions = [];
   const failures = [];
 
@@ -306,8 +355,16 @@ function executeLocalActions(workspacePath, options = {}) {
         dirActions.push(createDirectory(workspacePath, action));
         continue;
       }
+      if (type === 'delete' || type === 'remove' || type === 'rm' || type === 'delete_path') {
+        deleteActions.push(deletePath(workspacePath, action));
+        continue;
+      }
       if (type === 'inspect_path' || type === 'list_path' || type === 'stat_path') {
         inspections.push(inspectPath(workspacePath, action));
+        continue;
+      }
+      if (type === 'exec' || type === 'shell' || type === 'bash') {
+        execResults.push(runExecCommand(workspacePath, action));
         continue;
       }
       if (type === 'verify' || type === 'verification' || type === 'command') {
@@ -330,7 +387,7 @@ function executeLocalActions(workspacePath, options = {}) {
     }
   }
 
-  return { reads, writes, dirActions, inspections, verificationResults, systemActions, failures };
+  return { reads, writes, dirActions, deleteActions, inspections, verificationResults, execResults, systemActions, failures };
 }
 
 function listWorkspace(workspacePath, maxEntries = 80) {
@@ -474,6 +531,52 @@ function runSystemInstallCommand(installer, cwd) {
     command,
     args,
   }, cwd);
+}
+
+function classifyExecCommand(commandLine) {
+  const text = String(commandLine || '').trim();
+  if (!text) {
+    return { ok: false, reason: 'Comando vacio para exec local.' };
+  }
+  for (const pattern of BLOCKED_EXEC_PATTERNS) {
+    if (pattern.test(text)) {
+      return { ok: false, reason: `Comando bloqueado por riesgo: ${text}` };
+    }
+  }
+  return { ok: true, commandLine: text };
+}
+
+function runExecCommand(workspacePath, action = {}) {
+  const cwd = path.resolve(String(action.cwd || workspacePath || process.cwd()).trim() || process.cwd());
+  const commandLine = String(action.commandLine || action.command || '').trim();
+  const classified = classifyExecCommand(commandLine);
+  if (!classified.ok) {
+    return {
+      command: commandLine || '(vacio)',
+      exitCode: 1,
+      blocked: true,
+      output: classified.reason,
+    };
+  }
+  const timeout = Math.max(1_000, Math.min(120_000, Number(action.timeoutMs || 30_000)));
+  try {
+    const result = process.platform === 'win32'
+      ? spawnSync('cmd', ['/c', classified.commandLine], { cwd, encoding: 'utf8', timeout, windowsHide: true })
+      : spawnSync('bash', ['-lc', classified.commandLine], { cwd, encoding: 'utf8', timeout, windowsHide: true });
+    return {
+      command: classified.commandLine,
+      exitCode: typeof result.status === 'number' ? result.status : 1,
+      blocked: false,
+      output: truncate(`${result.stdout || ''}${result.stderr || ''}`.trim(), 4000),
+    };
+  } catch (error) {
+    return {
+      command: classified.commandLine,
+      exitCode: 1,
+      blocked: false,
+      output: String(error?.message || error),
+    };
+  }
 }
 
 function installSystemPackage(workspacePath, action = {}) {
@@ -675,6 +778,9 @@ function inferHeuristicActions(workspacePath, goal, packageSummary, options = {}
   const wantsLint = /lint/.test(normalizedGoal);
   const wantsGitInstall = /\b(instala|instalar|install|instale|setup)\b/.test(normalizedGoal) && /\bgit\b/.test(normalizedGoal);
   const wantsDirectoryInspect = /\b(revisa|revise|inspecciona|inspeccione|lista|ls|verifica|verifique)\b/.test(normalizedGoal) && /\b(carpeta|directorio|ruta)\b/.test(normalizedGoal);
+  const wantsDelete = /\b(borra|borrar|elimina|eliminar|delete|remove|rm)\b/.test(normalizedGoal);
+  const wantsProviderCatalogDiagnosis = isProviderCatalogDiagnosticGoal(goal);
+  const wantsAgentAutonomyDiagnosis = isAgentAutonomyDiagnosticGoal(goal);
 
   const requestedDirectory = parseCreateDirectoryIntent(focusedGoal);
   if (requestedDirectory) {
@@ -682,10 +788,21 @@ function inferHeuristicActions(workspacePath, goal, packageSummary, options = {}
   }
 
   const absolutePaths = parseAbsolutePathCandidates(focusedGoal);
+  if (wantsDelete) {
+    for (const candidate of [...referencedPaths, ...absolutePaths].slice(0, 3)) {
+      actions.push({ type: 'delete', path: candidate, allowAbsolute: true, recursive: true });
+    }
+  }
   if (wantsDirectoryInspect && absolutePaths.length > 0) {
     for (const candidate of absolutePaths.slice(0, 3)) {
       actions.push({ type: 'inspect_path', path: candidate, allowAbsolute: true });
     }
+  }
+
+  const explicitExecMatch = focusedGoal.match(/(?:ejecuta|corre|run)\s+(?:el\s+)?(?:comando\s*)?[`"]([^`"\n]+)[`"]/i)
+    || focusedGoal.match(/comando:\s*([^\n]+)/i);
+  if (explicitExecMatch && explicitExecMatch[1]) {
+    actions.push({ type: 'exec', commandLine: String(explicitExecMatch[1]).trim() });
   }
 
   if (wantsGitInstall) {
@@ -708,6 +825,37 @@ function inferHeuristicActions(workspacePath, goal, packageSummary, options = {}
   }
   if (wantsLint && scripts.includes('lint')) {
     addHeuristicVerify(actions, addedCommands, 'npm', ['run', 'lint']);
+  }
+
+  if (wantsProviderCatalogDiagnosis) {
+    for (const candidate of [
+      'package.json',
+      'src-js/core/provider-registry.js',
+      'src-js/core/control-panel.js',
+      'src-js/core/extension.runtime.js',
+      'copilot-agent/panel-state.json',
+    ]) {
+      if (!addedReads.has(candidate) && fileExistsInWorkspace(workspacePath, candidate)) {
+        addedReads.add(candidate);
+        actions.push({ type: 'read', path: candidate });
+      }
+    }
+  }
+
+  if (wantsAgentAutonomyDiagnosis) {
+    for (const candidate of [
+      'package.json',
+      'src-js/core/extension.runtime.js',
+      'src-js/core/freejt7-agent-runtime.js',
+      'src-js/core/local-agent-runtime.js',
+      'src-js/core/openclaw-agent-runtime.js',
+      'src-js/core/control-panel.js',
+    ]) {
+      if (!addedReads.has(candidate) && fileExistsInWorkspace(workspacePath, candidate)) {
+        addedReads.add(candidate);
+        actions.push({ type: 'read', path: candidate });
+      }
+    }
   }
 
   return actions;
@@ -772,6 +920,50 @@ function summarizeInspection(result) {
   return `${result.path}: file`;
 }
 
+function summarizeDeleteResult(result) {
+  if (result.missing) {
+    return `${result.path}: missing`;
+  }
+  return `${result.path}: removed ${result.kind}`;
+}
+
+function summarizeExecResult(result) {
+  const headline = String(result.output || '').split(/\r?\n/).map((line) => line.trim()).find(Boolean) || 'sin salida';
+  return `${result.command} (exit=${result.exitCode}${result.blocked ? ', blocked' : ''}): ${truncate(headline, 160)}`;
+}
+
+function isProviderCatalogDiagnosticGoal(goal) {
+  const text = String(extractFocusedText(goal) || '').toLowerCase();
+  if (!text) {
+    return false;
+  }
+  return /(?:porque|por que|why).*(?:no aparece|no sale|no se muestra)|(?:no aparece|no sale|no se muestra).*(?:proveedor|provider|modelo|model)|(?:lista|interfaz|panel).*(?:proveedor|provider|modelo|model)|(?:proveedor|provider).*(?:deepseek|ddeksee)|(?:modelo|model).*(?:deepseek|ddeksee)/i.test(text);
+}
+
+function isAgentAutonomyDiagnosticGoal(goal) {
+  const text = String(extractFocusedText(goal) || '').toLowerCase();
+  if (!text) {
+    return false;
+  }
+  return /(?:po?r? ?que|porque|why).*(?:modo agente|agente).*(?:no funciona|no actua|no actúa|no responde|falla)|(?:chat basico|chat básico)|(?:verdadero agente ?autonomo|verdadero agente ?autónomo|agente ?autonomo|agente ?autónomo|agenteautonomo)|(?:protagonista|dueñ[oa] del ide)|(?:po?r? ?que|porque).*(?:no eres|no actuas|no actúas).*(?:agente|autonom)/i.test(text);
+}
+
+function analyzeProviderCatalogEvidence(reads = []) {
+  const hasPackageEnum = reads.some((item) => item.path === 'package.json' && /"ddeksee"/.test(String(item.content || '')));
+  const hasRegistryProvider = reads.some((item) => /provider-registry\.js$/.test(item.path) && /\bid:\s*['"]ddeksee['"]/.test(String(item.content || '')));
+  const hasDeepSeekLabel = reads.some((item) => /provider-registry\.js$/.test(item.path) && /\blabel:\s*['"]DeepSeek['"]/.test(String(item.content || '')));
+  const hasPanelProvider = reads.some((item) => /control-panel\.js$/.test(item.path) && /ddeksee/.test(String(item.content || '')));
+  const hasRuntimeQuickPick = reads.some((item) => /extension\.runtime\.js$/.test(item.path) && /listSelectableApiProviders/.test(String(item.content || '')) && /ddeksee|DeepSeek/.test(String(item.content || '')));
+  return {
+    hasPackageEnum,
+    hasRegistryProvider,
+    hasDeepSeekLabel,
+    hasPanelProvider,
+    hasRuntimeQuickPick,
+    registeredInRepo: hasPackageEnum && hasRegistryProvider,
+  };
+}
+
 function classifyFallbackReason(fallbackReason) {
   const text = String(fallbackReason || '').trim();
   if (!text) {
@@ -801,6 +993,30 @@ function classifyFallbackReason(fallbackReason) {
   };
 }
 
+function summarizeFallbackReasonForUser(fallbackInfo = {}) {
+  if (!fallbackInfo || fallbackInfo.kind === 'none') {
+    return 'Free JT7 respondio con la ruta local de herramientas.';
+  }
+  if (fallbackInfo.kind === 'auth') {
+    return 'Free JT7 activó su ruta local porque el backend subordinado rechazó autenticación o permisos.';
+  }
+  if (fallbackInfo.kind === 'network') {
+    return 'Free JT7 activó su ruta local porque el backend subordinado no estuvo disponible por red o timeout.';
+  }
+  if (fallbackInfo.kind === 'gateway') {
+    return 'Free JT7 activó su ruta local porque el backend subordinado del harness no quedó operativo a tiempo.';
+  }
+  return 'Free JT7 activó su ruta local porque el backend subordinado principal no estuvo disponible.';
+}
+
+function isSimpleConversationalGoal(goalText) {
+  const text = String(goalText || '').trim().toLowerCase();
+  if (!text) {
+    return false;
+  }
+  return /^(hola|buenas|buenos dias|buen día|buen dia|buenas tardes|buenas noches|gracias|ok|vale|perfecto|entendido)[!. ]*$/i.test(text);
+}
+
 function buildGoalAwareSummary(goal, context = {}) {
   const goalText = extractFocusedGoal(goal);
   const lines = [];
@@ -816,6 +1032,12 @@ function buildGoalAwareSummary(goal, context = {}) {
     const heuristicLabels = context.heuristicActions.map((action) => {
       if (action.type === 'read') {
         return `leer ${action.path}`;
+      }
+      if (action.type === 'delete') {
+        return `borrar ${action.path}`;
+      }
+      if (action.type === 'exec') {
+        return String(action.commandLine || action.command || 'exec');
       }
       if (action.type === 'verify') {
         return [action.command, ...(action.args || [])].join(' ');
@@ -852,13 +1074,32 @@ function buildConversationalSummary(goal, context = {}) {
   const reads = Array.isArray(context.reads) ? context.reads : [];
   const writes = Array.isArray(context.writes) ? context.writes : [];
   const dirActions = Array.isArray(context.dirActions) ? context.dirActions : [];
+  const deleteActions = Array.isArray(context.deleteActions) ? context.deleteActions : [];
   const inspections = Array.isArray(context.inspections) ? context.inspections : [];
   const failures = Array.isArray(context.failures) ? context.failures : [];
   const verificationResults = Array.isArray(context.verificationResults) ? context.verificationResults : [];
+  const execResults = Array.isArray(context.execResults) ? context.execResults : [];
   const systemActions = Array.isArray(context.systemActions) ? context.systemActions : [];
   const heuristicActions = Array.isArray(context.heuristicActions) ? context.heuristicActions : [];
   const paragraphs = [];
   const fallbackInfo = classifyFallbackReason(fallbackReason);
+  const providerCatalogDiagnostic = isProviderCatalogDiagnosticGoal(goalText);
+  const providerCatalogEvidence = analyzeProviderCatalogEvidence(reads);
+  const autonomyDiagnostic = isAgentAutonomyDiagnosticGoal(goalText);
+
+  if (isSimpleConversationalGoal(goalText)) {
+    const opening = /^gracias|^ok|^vale|^perfecto|^entendido/i.test(goalText)
+      ? 'Entendido.'
+      : 'Hola.';
+    const shortReply = [opening];
+    if (fallbackInfo.kind === 'auth') {
+      shortReply.push('El backend principal no estuvo disponible por autenticación o permisos del proveedor activo.');
+    } else if (fallbackInfo.kind === 'gateway' || fallbackInfo.kind === 'network') {
+      shortReply.push('El backend principal no estuvo disponible en este intento.');
+    }
+    shortReply.push('Dime la tarea concreta y la ejecuto o la verifico desde el agente.');
+    return shortReply.join('\n\n');
+  }
 
   if (!dirActions.length && !inspections.length && !writes.length && !systemActions.length && !failures.length && isIncompleteCreateDirectoryIntent(goalText)) {
     return [
@@ -893,6 +1134,22 @@ function buildConversationalSummary(goal, context = {}) {
     return `Revise \`${inspection.path}\`. La ruta existe y corresponde a un archivo.`;
   }
 
+  if (deleteActions.length > 0 && failures.length === 0) {
+    const removed = deleteActions[0];
+    if (removed.missing) {
+      return `Revise \`${removed.path}\` para borrarlo, pero esa ruta ya no existe.`;
+    }
+    return `Elimine \`${removed.path}\` y verifique que ya no permanece en la ruta objetivo.`;
+  }
+
+  if (execResults.length > 0 && failures.length === 0) {
+    const result = execResults[0];
+    if (result.blocked) {
+      return `No ejecute \`${result.command}\` porque fue clasificado como comando bloqueado o riesgoso.`;
+    }
+    return `Ejecute \`${result.command}\` con salida verificada (exit=${result.exitCode}).`;
+  }
+
   if (systemActions.length > 0 && failures.length === 0) {
     const systemAction = systemActions[0];
     if (systemAction.status === 'already_installed') {
@@ -913,9 +1170,29 @@ function buildConversationalSummary(goal, context = {}) {
     }
   }
 
-  const intro = fallbackReason
-    ? `Free JT7 respondio con la ruta local de herramientas porque el motor principal no estuvo disponible: ${fallbackReason}.`
-    : 'Free JT7 respondio con la ruta local de herramientas.';
+  if (providerCatalogDiagnostic && providerCatalogEvidence.registeredInRepo) {
+    return [
+      'Diagnóstico local: en este repo el provider DeepSeek sí está registrado.',
+      providerCatalogEvidence.hasPackageEnum ? 'package.json ya expone `ddeksee` en la configuración del proveedor.' : '',
+      providerCatalogEvidence.hasDeepSeekLabel ? 'provider-registry ya publica la etiqueta visible `DeepSeek`.' : '',
+      providerCatalogEvidence.hasPanelProvider ? 'control-panel ya incluye `ddeksee` en el catálogo del panel.' : '',
+      providerCatalogEvidence.hasRuntimeQuickPick ? 'extension.runtime ya lo expone en los selectores del IDE.' : '',
+      'Si no aparece en la IDE, la causa probable ya no es el código fuente del repo sino la extensión instalada o el estado persistido del perfil.',
+    ].filter(Boolean).join('\n\n');
+  }
+
+  if (autonomyDiagnostic) {
+    return [
+      'Diagnóstico local: Free JT7 todavía cayó a ruta local porque el motor agente principal no estuvo disponible en este intento.',
+      fallbackInfo.detail ? `Causa operativa inmediata: ${fallbackInfo.detail}` : '',
+      'Causa estructural visible: el runtime propio ya es el control-plane, pero cuando OpenClaw o el backend remoto fallan el flujo sigue degradando a fallback local para no mentir sobre ejecución.',
+      reads.some((item) => /freejt7-agent-runtime\.js$/.test(item.path)) ? 'Evidencia de diseño: `freejt7-agent-runtime` ya decide la ruta principal y los fallbacks.' : '',
+      reads.some((item) => /control-panel\.js$/.test(item.path)) ? 'Evidencia de superficie: el panel propio ya actúa como interfaz principal del agente y no depende del chat host para operar.' : '',
+      'Lo que falta para sentirse como agente autónomo completo no es "más chat", sino que el backend principal falle menos y que la degradación local sea aún más ejecutora y menos explicativa.',
+    ].filter(Boolean).join('\n\n');
+  }
+
+  const intro = summarizeFallbackReasonForUser(fallbackInfo);
   paragraphs.push(intro);
 
   if (goalText) {
@@ -950,6 +1227,9 @@ function buildConversationalSummary(goal, context = {}) {
   if (dirActions.length) {
     evidence.push(`directorios: ${dirActions.map((item) => item.path).slice(0, 4).join(', ')}`);
   }
+  if (deleteActions.length) {
+    evidence.push(`borrados: ${deleteActions.map((item) => summarizeDeleteResult(item)).slice(0, 4).join('; ')}`);
+  }
   if (inspections.length) {
     evidence.push(`rutas inspeccionadas: ${inspections.map((item) => summarizeInspection(item)).slice(0, 3).join('; ')}`);
   }
@@ -959,6 +1239,9 @@ function buildConversationalSummary(goal, context = {}) {
   }
   if (systemActions.length) {
     evidence.push(`sistema: ${systemActions.map((item) => summarizeSystemAction(item)).join('; ')}`);
+  }
+  if (execResults.length) {
+    evidence.push(`exec: ${execResults.map((item) => summarizeExecResult(item)).join('; ')}`);
   }
   if (evidence.length) {
     paragraphs.push(`Evidencia breve: ${evidence.join('; ')}.`);
@@ -1054,8 +1337,14 @@ async function runLocalAgentTask(goal, options = {}) {
   if (actionResults.dirActions.length) {
     technicalSummaryLines.push(`Directorios verificados: ${actionResults.dirActions.map((item) => item.path).join(', ')}.`);
   }
+  if (actionResults.deleteActions.length) {
+    technicalSummaryLines.push(`Borrados verificados: ${actionResults.deleteActions.map((item) => summarizeDeleteResult(item)).join(' | ')}.`);
+  }
   if (actionResults.inspections.length) {
     technicalSummaryLines.push(`Rutas inspeccionadas: ${actionResults.inspections.map((item) => summarizeInspection(item)).join(' | ')}.`);
+  }
+  if (actionResults.execResults.length) {
+    technicalSummaryLines.push(`Comandos ejecutados: ${actionResults.execResults.map((item) => summarizeExecResult(item)).join(' | ')}`);
   }
   if (actionResults.systemActions.length) {
     technicalSummaryLines.push(`Acciones de sistema: ${actionResults.systemActions.map((item) => summarizeSystemAction(item)).join(' | ')}`);
@@ -1068,7 +1357,9 @@ async function runLocalAgentTask(goal, options = {}) {
     model,
     heuristicActions,
     reads: actionResults.reads,
+    deleteActions: actionResults.deleteActions,
     verificationResults: [...toolResults, ...actionResults.verificationResults],
+    execResults: actionResults.execResults,
     systemActions: actionResults.systemActions,
   }));
   const visibleSummary = buildConversationalSummary(goal, {
@@ -1080,10 +1371,12 @@ async function runLocalAgentTask(goal, options = {}) {
     heuristicActions,
     reads: actionResults.reads,
     dirActions: actionResults.dirActions,
+    deleteActions: actionResults.deleteActions,
     inspections: actionResults.inspections,
     writes: actionResults.writes,
     failures: actionResults.failures,
     verificationResults: [...toolResults, ...actionResults.verificationResults],
+    execResults: actionResults.execResults,
     systemActions: actionResults.systemActions,
   });
   const technicalSummary = technicalSummaryLines.join('\n');
@@ -1101,6 +1394,9 @@ async function runLocalAgentTask(goal, options = {}) {
   for (const dirAction of actionResults.dirActions) {
     verification.push(`LocalAgent: directorio ${dirAction.path} ${dirAction.created ? 'creado' : 'ya existente'} y verificado.`);
   }
+  for (const deleteAction of actionResults.deleteActions) {
+    verification.push(`LocalAgent: borrado ${deleteAction.path} removed=${deleteAction.removed} missing=${deleteAction.missing}.`);
+  }
   for (const inspection of actionResults.inspections) {
     verification.push(`LocalAgent: inspeccion ${inspection.path} exists=${inspection.exists} kind=${inspection.kind}.`);
   }
@@ -1109,6 +1405,9 @@ async function runLocalAgentTask(goal, options = {}) {
   }
   for (const result of actionResults.verificationResults) {
     verification.push(`LocalAgent: verificacion ${result.command} exit=${result.exitCode}${result.blocked ? ' blocked' : ''}.`);
+  }
+  for (const result of actionResults.execResults) {
+    verification.push(`LocalAgent: exec ${result.command} exit=${result.exitCode}${result.blocked ? ' blocked' : ''}.`);
   }
   for (const result of actionResults.systemActions) {
     verification.push(`LocalAgent: system_install ${result.package} status=${result.status}${result.exitCode !== undefined ? ` exit=${result.exitCode}` : ''}.`);
@@ -1143,6 +1442,7 @@ async function runLocalAgentTask(goal, options = {}) {
       changedFiles: [
         ...actionResults.writes.map((item) => item.path),
         ...actionResults.dirActions.map((item) => item.path),
+        ...actionResults.deleteActions.map((item) => item.path),
       ],
       verification,
       residualRisks: [
@@ -1156,6 +1456,9 @@ module.exports = {
   runLocalAgentTask,
   canResolveLocalGoal,
   deriveLocalActions,
+  executeLocalActions,
+  listWorkspace,
+  readPackageSummary,
   resolveWorkspacePath,
   readWorkspaceFile,
   writeWorkspaceFile,

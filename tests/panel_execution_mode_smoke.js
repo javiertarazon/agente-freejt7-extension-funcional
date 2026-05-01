@@ -58,6 +58,7 @@ async function main() {
   assert.strictEqual(agentResult.provider, 'openrouter', 'modo agente debe reflejar el proveedor externo real del panel');
   assert.strictEqual(agentResult.executionMode, 'agent', 'modo agente debe preservarse');
 
+  // El modo direct ya no está permitido, siempre se fuerza agent
   const directResult = await router.execute({
     goal: 'Responde solo con OK.',
     provider: 'openrouter',
@@ -67,9 +68,9 @@ async function main() {
     workspacePath: process.cwd(),
   });
 
-  assert.strictEqual(directCalls.length, 1, 'modo directo debe llamar al proveedor externo');
-  assert.strictEqual(directCalls[0].config.provider, 'openrouter', 'debe mantener el proveedor elegido');
-  assert.strictEqual(directResult.executionMode, 'direct', 'modo directo debe preservarse');
+  assert.strictEqual(agentCalls.length, 2, 'modo direct ahora usa executeAgentTask');
+  assert.strictEqual(directCalls.length, 0, 'modo direct ya no debe llamar al proveedor directo');
+  assert.strictEqual(directResult.executionMode, 'agent', 'modo direct debe forzarse a agent');
 
   console.log('panel_execution_mode_smoke: OK');
 }

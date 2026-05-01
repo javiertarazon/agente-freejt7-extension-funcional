@@ -14,6 +14,7 @@ const { PolicyEngine } = require('./policy-engine');
 const { ProviderRouter } = require('./provider-router');
 const { AuditBus } = require('./audit-bus');
 const { fetchProviderModels } = require('./api-provider-adapter');
+const { listProviders, normalizeProviderId } = require('./provider-registry');
 const { getRemoteBridge } = require('../runtime/remote-bridge');
 const freeModelsCatalog = require('../free-models-catalog');
 
@@ -26,25 +27,39 @@ const PANEL_FALLBACKS_KEY = 'freejt7.panel.fallbackProviders';
 const PANEL_ACTIVE_SESSION_KEY = 'freejt7.panel.activeSessionId';
 const PANEL_ACTIVE_PROVIDER_KEY = 'freejt7.panel.provider';
 const PANEL_DEFAULT_PROVIDER = 'openrouter';
+const PANEL_PROVIDER_ENTRIES = Object.freeze(
+  listProviders({ includeCopilot: false })
+    .filter((provider) => provider && provider.id && provider.id !== 'copilot')
+    .map((provider) => ({
+      id: String(provider.id).trim(),
+      label: String(provider.label || provider.id).trim(),
+    })),
+);
+const PANEL_PROVIDER_IDS = new Set(PANEL_PROVIDER_ENTRIES.map((provider) => provider.id));
+
+function getPanelProviderEntries() {
+  return PANEL_PROVIDER_ENTRIES.map((provider) => ({ ...provider }));
+}
+
+function getPanelProviderIds() {
+  return Array.from(PANEL_PROVIDER_IDS);
+}
 
 function normalizePanelProviderValue(provider) {
-  const value = String(provider || '').trim().toLowerCase();
+  const value = normalizeProviderId(provider);
   if (!value || value === 'copilot') return PANEL_DEFAULT_PROVIDER;
-  if (value === 'huggingface' || value === 'hugging-face') return 'hf';
-  if (value === 'zhipu' || value === 'zhipuai') return 'zai';
-  if (value === 'openrouter' || value === 'hf' || value === 'zai' || value === 'clod') return value;
-  return PANEL_DEFAULT_PROVIDER;
+  return PANEL_PROVIDER_IDS.has(value) ? value : PANEL_DEFAULT_PROVIDER;
 }
 
 function normalizePanelExecutionModeValue(executionMode, options = {}) {
-  if (options.standaloneMode) return 'agent';
-  return String(executionMode || '').trim().toLowerCase() === 'direct' ? 'direct' : 'agent';
+  // Siempre forzar 'agent' salvo compatibilidad específica (no implementada)
+  return 'agent';
 }
 
 function normalizePanelRuntimeBackendValue(runtimeBackend) {
   const value = String(runtimeBackend || '').trim().toLowerCase();
   if (!value) return 'auto';
-  if (value === 'auto' || value === 'openclaw' || value === 'local') return value;
+  if (value === 'auto' || value === 'freejt7' || value === 'freejt7-v2' || value === 'openclaw' || value === 'local') return value;
   if (value.startsWith('acp:')) return value;
   return 'auto';
 }
@@ -144,6 +159,47 @@ function ensurePanelSeedSession(engine, preferredSessionId = '') {
   return String(session && session.sessionId || '').trim();
 }
 
+async function handleTaskEnqueueRequest({
+  engine,
+  persistActiveSessionId,
+  prepareTask,
+  sessionId,
+  taskInput,
+  getSessionTitle,
+  postMessage,
+  postState,
+}) {
+  await Promise.resolve(persistActiveSessionId?.(sessionId));
+
+  let nextTaskInput = taskInput || {};
+  if (typeof prepareTask === 'function') {
+    const preparedTask = await prepareTask(nextTaskInput, {
+      sessionId,
+      sessionTitle: typeof getSessionTitle === 'function' ? getSessionTitle() : 'Sesion Free JT7',
+    });
+    if (!preparedTask) {
+      await Promise.resolve(postMessage?.({
+        type: 'task.enqueue.cancelled',
+        reason: 'intake-required',
+        sessionId,
+      }));
+      await Promise.resolve(postState?.());
+      return {
+        cancelled: true,
+        taskInput: null,
+      };
+    }
+    nextTaskInput = preparedTask;
+  }
+
+  engine.enqueueTask(sessionId, nextTaskInput);
+  await Promise.resolve(postState?.());
+  return {
+    cancelled: false,
+    taskInput: nextTaskInput,
+  };
+}
+
 function getNonce() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let value = '';
@@ -154,23 +210,24 @@ function getNonce() {
 }
 
 function getPanelCatalogSnapshot() {
-  const providers = ['openrouter', 'hf', 'zai', 'clod'];
+  const providers = getPanelProviderEntries();
   const modelsByProvider = {};
   const defaultModelByProvider = {};
 
   for (const provider of providers) {
+    const providerId = provider.id;
     try {
-      modelsByProvider[provider] = Array.isArray(freeModelsCatalog.getModelsForProvider(provider))
-        ? freeModelsCatalog.getModelsForProvider(provider)
+      modelsByProvider[providerId] = Array.isArray(freeModelsCatalog.getModelsForProvider(providerId))
+        ? freeModelsCatalog.getModelsForProvider(providerId)
         : [];
-      defaultModelByProvider[provider] = String(freeModelsCatalog.getDefaultModel(provider) || '');
+      defaultModelByProvider[providerId] = String(freeModelsCatalog.getDefaultModel(providerId) || '');
     } catch (_) {
-      modelsByProvider[provider] = [];
-      defaultModelByProvider[provider] = '';
+      modelsByProvider[providerId] = [];
+      defaultModelByProvider[providerId] = '';
     }
   }
 
-  return { modelsByProvider, defaultModelByProvider };
+  return { providers, modelsByProvider, defaultModelByProvider };
 }
 
 function isStandaloneAppMode() {
@@ -186,6 +243,17 @@ function isStandaloneAppMode() {
   }
 }
 
+function getFreeJt7Configuration() {
+  if (!vscode?.workspace?.getConfiguration) {
+    return null;
+  }
+  try {
+    return vscode.workspace.getConfiguration('freejt7');
+  } catch (_) {
+    return null;
+  }
+}
+
 function encodeWebviewJsonPayload(value) {
   try {
     return Buffer.from(JSON.stringify(value || {}), 'utf8').toString('base64');
@@ -197,13 +265,16 @@ function encodeWebviewJsonPayload(value) {
 function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
   const nonce = getNonce();
   const catalogPayload = encodeWebviewJsonPayload(
-    panelCatalog || { modelsByProvider: {}, defaultModelByProvider: {} },
+    panelCatalog || { providers: getPanelProviderEntries(), modelsByProvider: {}, defaultModelByProvider: {} },
   );
   const standaloneMode = Boolean(panelOptions?.standaloneMode);
-  const directOptionAttributes = standaloneMode ? ' disabled' : '';
-  const directModeHint = standaloneMode
-    ? '<div class="small">En perfil aislado, el panel fuerza modo agente para evitar bloqueos por proveedor.</div>'
-    : '';
+  const directModeHint = '<div class="small">Free JT7 fuerza modo agente para mantener herramientas, plan y trazabilidad activos.</div>';
+  const providerEntries = Array.isArray(panelCatalog?.providers) && panelCatalog.providers.length
+    ? panelCatalog.providers
+    : getPanelProviderEntries();
+  const providerOptionsHtml = providerEntries
+    .map((provider) => `<option value="${provider.id}">${provider.label || provider.id}</option>`)
+    .join('\n');
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -878,7 +949,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
     <section class="surface topbar">
       <div class="brand">
         <div class="title">Free JT7</div>
-        <div class="subtitle">Chat principal de Free JT7: sesiones a la izquierda, conversación al centro e inspector operativo a la derecha.</div>
+        <div class="subtitle">Free JT7 como superficie principal del IDE: sesiones a la izquierda, ejecución al centro y control operativo a la derecha.</div>
       </div>
       <div class="topbar-stack">
         <div class="quick-actions">
@@ -947,7 +1018,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
             </div>
             <textarea id="goal" placeholder="Escribe la instrucción para el agente. Ejemplo: audita la interfaz nueva, identifica fallos del proveedor activo y aplica un fix compatible."></textarea>
             <div class="composer-actions">
-              <div class="small">Free JT7 decide la ruta y deja la trazabilidad en el inspector. El modo directo queda para pruebas puntuales del proveedor o modelo activo. Ctrl/Cmd + Enter envía.</div>
+              <div class="small">Free JT7 decide la ruta y deja la trazabilidad en el inspector. Ctrl/Cmd + Enter envía.</div>
               <button id="enqueueTask" class="primary">Enviar al chat</button>
             </div>
           </div>
@@ -980,24 +1051,41 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
             <section class="tab-panel" data-panel="settings">
               <div class="section-head">
                 <div class="section-title">Configuración</div>
-                <div class="small">La selección se persiste por proveedor sin sacar al agente del centro.</div>
+                <div class="small">Free JT7 gobierna la configuración operativa desde los ajustes del IDE. Los providers y harnesses quedan subordinados al agente.</div>
               </div>
               <div class="settings-grid">
+                <div class="status-panel">
+                  <div class="status-title">Ajustes activos</div>
+                  <div class="metric-list">
+                    <div class="metric-line"><span>Proveedor</span><span id="settingsSummaryProvider">openrouter</span></div>
+                    <div class="metric-line"><span>Modelo</span><span id="settingsSummaryModel">default</span></div>
+                    <div class="metric-line"><span>Runtime</span><span id="settingsSummaryRuntime">auto</span></div>
+                    <div class="metric-line"><span>Policy</span><span id="settingsSummaryPolicy">coding</span></div>
+                    <div class="metric-line"><span>Auth profile</span><span id="settingsSummaryAuth">default</span></div>
+                    <div class="metric-line"><span>Owner mode</span><span id="settingsSummaryOwnerMode">agent</span></div>
+                    <div class="metric-line"><span>Host visibility</span><span id="settingsSummaryHostVisibility">minimal</span></div>
+                    <div class="metric-line"><span>Arranque panel</span><span id="settingsSummaryStartup">on</span></div>
+                  </div>
+                </div>
+                <div class="row">
+                  <button id="settingsSelectProvider" type="button">Cambiar proveedor</button>
+                  <button id="settingsSelectModel" type="button">Cambiar modelo</button>
+                  <button id="settingsSetApiKey" type="button">Configurar API key</button>
+                  <button id="settingsOpenVsCode" type="button">Abrir ajustes</button>
+                </div>
+                <div class="small">Usa los comandos de configuración para cambiar provider/model/runtime sin sacar al agente del flujo principal.</div>
+                <div hidden aria-hidden="true">
                 <div class="field">
                   <label for="executionMode">Modo de ejecución</label>
                   <select id="executionMode">
                     <option value="agent">agente free jt7</option>
-                    <option value="direct"${directOptionAttributes}>modelo directo</option>
                   </select>
                   ${directModeHint}
                 </div>
                 <div class="field">
                   <label for="provider">Proveedor</label>
                   <select id="provider">
-                    <option value="openrouter">openrouter</option>
-                    <option value="hf">hf</option>
-                    <option value="zai">zai</option>
-                    <option value="clod">clod</option>
+                    ${providerOptionsHtml}
                   </select>
                 </div>
                 <div class="field">
@@ -1026,6 +1114,8 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
                   <label for="runtimeBackend">Backend de runtime</label>
                   <select id="runtimeBackend">
                     <option value="auto">auto (recomendado)</option>
+                    <option value="freejt7-v2">freejt7 core-v2</option>
+                    <option value="freejt7">freejt7 (propio)</option>
                     <option value="openclaw">openclaw</option>
                     <option value="local">local</option>
                     <option value="acp:codex">acp:codex</option>
@@ -1062,7 +1152,8 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
                   <button id="controlPatch" type="button">Config patch</button>
                   <button id="controlRestart" type="button">Restart runtime</button>
                 </div>
-                <div class="small">Para CLŌD, el panel puede cargar el catálogo vivo desde tu API key si está disponible en SecretStorage, CLOD_API_KEY o env api.</div>
+                <div class="small">Los providers OpenAI-compatible del panel pueden cargar catálogo o autenticar desde SecretStorage, variables de entorno o env api local ignorado.</div>
+                </div>
               </div>
             </section>
 
@@ -1081,15 +1172,34 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
 
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
-    const directModeAllowed = ${standaloneMode ? 'false' : 'true'};
-    const knownProviders = ['openrouter', 'hf', 'zai', 'clod'];
+    const directModeAllowed = false;
     const catalogPayload = '${catalogPayload}';
-    let panelCatalog = { modelsByProvider: {}, defaultModelByProvider: {} };
+    let panelCatalog = { providers: [], modelsByProvider: {}, defaultModelByProvider: {} };
     let initialCatalogDecodeError = '';
+
+    function getKnownProviders() {
+      const entries = Array.isArray(panelCatalog.providers) && panelCatalog.providers.length
+        ? panelCatalog.providers
+        : [];
+      const ids = entries
+        .map((provider) => String((provider && provider.id) || '').trim().toLowerCase())
+        .filter(Boolean);
+      return ids.length ? ids : ['openrouter'];
+    }
+
+    function getProviderLabel(providerId) {
+      const normalized = normalizeProviderValue(providerId);
+      const entries = Array.isArray(panelCatalog.providers) ? panelCatalog.providers : [];
+      const match = entries.find((provider) => normalizeProviderValue(provider && provider.id) === normalized);
+      return String((match && (match.label || match.id)) || normalized || 'openrouter');
+    }
 
     function normalizeProviderValue(rawProvider) {
       const provider = String(rawProvider || '').trim().toLowerCase();
-      return knownProviders.includes(provider) ? provider : 'openrouter';
+      if (provider === 'huggingface' || provider === 'hugging-face') return getKnownProviders().includes('hf') ? 'hf' : 'openrouter';
+      if (provider === 'zhipu' || provider === 'zhipuai') return getKnownProviders().includes('zai') ? 'zai' : 'openrouter';
+      if (provider === 'deepseek') return getKnownProviders().includes('ddeksee') ? 'ddeksee' : 'openrouter';
+      return getKnownProviders().includes(provider) ? provider : 'openrouter';
     }
 
     function decodeBase64JsonPayload(payload) {
@@ -1110,7 +1220,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
       }
     } catch (error) {
       initialCatalogDecodeError = String((error && error.message) || error || 'catalog decode failed');
-      panelCatalog = { modelsByProvider: {}, defaultModelByProvider: {} };
+      panelCatalog = { providers: [], modelsByProvider: {}, defaultModelByProvider: {} };
     }
 
     const persistedViewState = vscode.getState() || {};
@@ -1125,9 +1235,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
     let providerState = {
       provider: normalizeProviderValue(persistedProviderState.provider || 'openrouter'),
       model: String(persistedProviderState.model || ''),
-      executionMode: (!directModeAllowed || String(persistedProviderState.executionMode || 'agent') !== 'direct')
-        ? 'agent'
-        : 'direct',
+      executionMode: 'agent',
       runtimeBackend: String(persistedProviderState.runtimeBackend || 'auto').trim().toLowerCase() || 'auto',
       policyProfile: String(persistedProviderState.policyProfile || 'coding').trim().toLowerCase() || 'coding',
       authProfile: String(persistedProviderState.authProfile || 'default').trim() || 'default',
@@ -1245,6 +1353,51 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
       };
     }
 
+    function getTaskCapabilityPlan(task) {
+      if (!task || typeof task !== 'object') return null;
+      if (task.routePlan && task.routePlan.capabilityPlan && typeof task.routePlan.capabilityPlan === 'object') {
+        return task.routePlan.capabilityPlan;
+      }
+      if (task.routeMeta && task.routeMeta.executionPlan && task.routeMeta.executionPlan.capabilityPlan
+        && typeof task.routeMeta.executionPlan.capabilityPlan === 'object') {
+        return task.routeMeta.executionPlan.capabilityPlan;
+      }
+      return null;
+    }
+
+    function buildApprovalDetails(task, capabilityPlan) {
+      const policy = task && task.policy && typeof task.policy === 'object' ? task.policy : null;
+      if (!policy || (!policy.requiresApproval && task.status !== 'waiting_approval')) {
+        return [];
+      }
+      const askTools = Array.isArray(policy.askTools) ? policy.askTools.filter(Boolean) : [];
+      const plannedActions = Array.isArray(capabilityPlan && capabilityPlan.plannedActions)
+        ? capabilityPlan.plannedActions.filter(Boolean)
+        : [];
+      const dispatch = capabilityPlan && capabilityPlan.dispatch && typeof capabilityPlan.dispatch === 'object'
+        ? capabilityPlan.dispatch
+        : null;
+      const dispatchTrace = Array.isArray(dispatch && dispatch.trace) ? dispatch.trace.filter(Boolean) : [];
+      const details = [];
+      details.push(
+        'aprobación requerida'
+        + ' | risk: ' + String(policy.risk || task.risk || 'auto')
+        + ' | profile: ' + String(policy.profile || task.policyProfile || providerState.policyProfile || 'coding')
+        + (askTools.length ? ' | tools: ' + askTools.join(', ') : '')
+      );
+      if (plannedActions.length) {
+        details.push('acciones propuestas: ' + plannedActions.slice(0, 6).join(' | '));
+      }
+      if (dispatch) {
+        const traceSummary = dispatchTrace.slice(0, 4).join(' | ');
+        details.push(
+          'dispatch: ' + String(dispatch.dispatchTarget || 'n/a')
+          + (traceSummary ? ' | trace: ' + traceSummary : '')
+        );
+      }
+      return details;
+    }
+
     function getCurrentSession() {
       return currentState && currentState.sessions ? currentState.sessions[currentSessionId] : null;
     }
@@ -1285,16 +1438,13 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
     }
 
     function normalizeExecutionMode(provider, executionMode) {
-      if (!directModeAllowed) {
-        return 'agent';
-      }
-      return executionMode === 'direct' ? 'direct' : 'agent';
+      return 'agent';
     }
 
     function normalizeRuntimeBackend(runtimeBackend) {
       const value = String(runtimeBackend || '').trim().toLowerCase();
       if (!value) return 'auto';
-      if (value === 'auto' || value === 'openclaw' || value === 'local') return value;
+      if (value === 'auto' || value === 'freejt7' || value === 'freejt7-v2' || value === 'openclaw' || value === 'local') return value;
       if (value.startsWith('acp:')) return value;
       return 'auto';
     }
@@ -1388,13 +1538,28 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
       const session = getCurrentSession();
       const runtimeLabel = providerState.runtimeBackend === 'local'
         ? 'runtime local limitado'
+        : providerState.runtimeBackend === 'freejt7-v2'
+          ? 'runtime freejt7 core-v2'
+        : providerState.runtimeBackend === 'freejt7'
+          ? 'runtime freejt7 propio'
         : ('runtime ' + (providerState.runtimeBackend || 'auto'));
       $('activeSession').textContent = currentSessionId || 'sin sesión';
       $('activeSessionTitle').textContent = session ? (session.title || 'Sesión Free JT7') : 'Sin sesión activa';
-      $('activeMode').textContent = providerState.executionMode === 'direct' ? 'modelo directo' : 'agente free jt7';
-      $('activeProvider').textContent = providerState.provider || 'sin proveedor';
+      $('activeMode').textContent = 'agente free jt7';
+      $('activeProvider').textContent = providerState.provider ? getProviderLabel(providerState.provider) : 'sin proveedor';
       $('activeModel').textContent = providerState.model || 'modelo por defecto';
       $('activeRuntime').textContent = runtimeLabel + ' · profile ' + (providerState.policyProfile || 'coding');
+    }
+
+    function renderSettingsSummary() {
+      $('settingsSummaryProvider').textContent = providerState.provider ? getProviderLabel(providerState.provider) : 'sin proveedor';
+      $('settingsSummaryModel').textContent = providerState.model || 'default';
+      $('settingsSummaryRuntime').textContent = providerState.runtimeBackend || 'auto';
+      $('settingsSummaryPolicy').textContent = providerState.policyProfile || 'coding';
+      $('settingsSummaryAuth').textContent = providerState.authProfile || 'default';
+      $('settingsSummaryOwnerMode').textContent = providerState.ownerMode || 'agent';
+      $('settingsSummaryHostVisibility').textContent = providerState.hostVisibility || 'minimal';
+      $('settingsSummaryStartup').textContent = providerState.openOnStartup ? 'on' : 'off';
     }
 
     function switchTab(tab) {
@@ -1571,7 +1736,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
         })(),
         meta: [
           entry.role === 'assistant' ? (entry.isError ? 'error' : 'respuesta') : 'solicitud',
-          entry.executionMode === 'direct' ? 'modelo directo' : 'agente',
+          'agente',
           entry.provider || providerState.provider,
           entry.model || providerState.model || 'default',
           entry.status || '',
@@ -1695,7 +1860,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
             '<div class="row">' +
               '<span class="chip">ruta: ' + escapeHtml(effectiveRoute.backend + ' / ' + effectiveRoute.provider) + '</span>' +
               '<span class="chip">modelo: ' + escapeHtml(effectiveRoute.model || task.model || providerState.model || 'default') + '</span>' +
-              '<span class="chip">modo: ' + escapeHtml(task.executionMode === 'direct' ? 'direct' : 'agent') + '</span>' +
+              '<span class="chip">modo: agent</span>' +
               '<span class="chip">risk: ' + escapeHtml(task.risk || 'auto') + '</span>' +
               '<span class="chip ' + chipClassForVerification(String(task.verification && task.verification.status || '')) + '">verify: ' + escapeHtml(task.verification && task.verification.status || 'pending') + '</span>' +
               '<span class="chip">retries: ' + Number(task.retries || 0) + '/' + Number(task.maxRetries || 0) + '</span>' +
@@ -1709,11 +1874,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
             '</div>' +
           '</div>';
 
-        const capabilityPlan = task.routePlan && task.routePlan.capabilityPlan && typeof task.routePlan.capabilityPlan === 'object'
-          ? task.routePlan.capabilityPlan
-          : task.routeMeta && task.routeMeta.executionPlan && task.routeMeta.executionPlan.capabilityPlan && typeof task.routeMeta.executionPlan.capabilityPlan === 'object'
-            ? task.routeMeta.executionPlan.capabilityPlan
-            : null;
+        const capabilityPlan = getTaskCapabilityPlan(task);
         if (capabilityPlan) {
           const detail = document.createElement('div');
           detail.className = 'task-detail';
@@ -1727,6 +1888,13 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
             + ' | mcp: ' + mcpCount
             + ' | profile: ' + String(task.policyProfile || providerState.policyProfile || 'coding')
             + (ops ? ' | ops: ' + ops : '');
+          card.appendChild(detail);
+        }
+
+        for (const approvalDetail of buildApprovalDetails(task, capabilityPlan)) {
+          const detail = document.createElement('div');
+          detail.className = 'task-detail';
+          detail.textContent = approvalDetail;
           card.appendChild(detail);
         }
 
@@ -1771,7 +1939,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
         ['Sesión activa', currentSessionId ? 'ok' : 'pendiente'],
         ['Modo agente', providerState.executionMode === 'agent' ? 'ok' : 'directo'],
         ['Proveedor configurado', providerState.provider || 'pendiente'],
-        ['Runtime backend', providerState.runtimeBackend === 'local' ? 'local-limitado' : (providerState.runtimeBackend || runtime.backend || 'auto')],
+        ['Runtime backend', providerState.runtimeBackend === 'local' ? 'local-limitado' : providerState.runtimeBackend === 'freejt7-v2' ? 'freejt7-core-v2' : providerState.runtimeBackend === 'freejt7' ? 'freejt7-propio' : (providerState.runtimeBackend || runtime.backend || 'auto')],
         ['Policy profile', providerState.policyProfile || 'coding'],
         ['Onboarding mínimo', onboarding.complete ? 'ok' : 'pendiente'],
       ];
@@ -1814,6 +1982,7 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
       ensureActiveSession();
       renderOverview();
       updateHeaderState();
+      renderSettingsSummary();
       renderSessions();
       renderChat();
       renderTasks();
@@ -1854,6 +2023,22 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
     $('refreshCatalog').onclick = () => {
       persistProviderSelection();
       vscode.postMessage({ type: 'catalog.refresh', provider: providerState.provider });
+    };
+
+    $('settingsSelectProvider').onclick = () => {
+      vscode.postMessage({ type: 'config.selectProvider' });
+    };
+
+    $('settingsSelectModel').onclick = () => {
+      vscode.postMessage({ type: 'config.selectModel' });
+    };
+
+    $('settingsSetApiKey').onclick = () => {
+      vscode.postMessage({ type: 'config.setApiKey' });
+    };
+
+    $('settingsOpenVsCode').onclick = () => {
+      vscode.postMessage({ type: 'config.openSettings' });
     };
 
     $('testProvider').onclick = () => {
@@ -2164,6 +2349,15 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
         log(msg.ok ? 'runtime reiniciado desde panel.' : 'runtime restart falló.', msg.ok ? 'ok' : 'err');
       }
 
+      if (msg.type === 'config.command.result') {
+        log(
+          msg.ok
+            ? String(msg.message || 'configuración actualizada desde ajustes.')
+            : 'configuración falló: ' + String(msg.message || 'sin detalle'),
+          msg.ok ? 'ok' : 'err'
+        );
+      }
+
       if (msg.type === 'state.snapshot') {
         currentState = msg.state;
         currentOperationalStatus = msg.operationalStatus || currentOperationalStatus || {};
@@ -2184,6 +2378,9 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
           runtimeBackend: normalizeRuntimeBackend(String(msg.runtimeBackend || providerState.runtimeBackend || 'auto')),
           policyProfile: normalizePolicyProfile(String(msg.policyProfile || providerState.policyProfile || 'coding')),
           authProfile: String(msg.authProfile || providerState.authProfile || 'default').trim() || 'default',
+          ownerMode: String(msg.ownerMode || providerState.ownerMode || 'agent').trim().toLowerCase() || 'agent',
+          hostVisibility: String(msg.hostVisibility || providerState.hostVisibility || 'minimal').trim().toLowerCase() || 'minimal',
+          openOnStartup: Boolean(typeof msg.openOnStartup === 'boolean' ? msg.openOnStartup : providerState.openOnStartup),
           fallbackProviders: String(msg.fallbackProviders || providerState.fallbackProviders || '').trim(),
         };
         persistWebviewState();
@@ -2246,6 +2443,8 @@ function createControlPanel(context, output, options = {}) {
   });
   const engine = new SessionEngine({
     rootDir: workspacePath,
+    stateSchemaVersion: '2026-04-29-agent-first-v2',
+    resetStateOnSchemaMismatch: standaloneMode,
     workerCount: Number(options.workerCount || 3),
     policyEngine,
     providerRouter,
@@ -2271,29 +2470,48 @@ function createControlPanel(context, output, options = {}) {
   }
 
   async function getPersistedExecutionMode() {
-    const value = await context.globalState?.get?.(PANEL_EXECUTION_MODE_KEY);
-    if (standaloneMode) {
-      return 'agent';
-    }
-    return value === 'direct' ? 'direct' : 'agent';
+    return 'agent';
   }
 
   async function getPersistedRuntimeBackend() {
+    const configured = String(getFreeJt7Configuration()?.get('panel.runtimeBackend', '') || '').trim().toLowerCase();
+    if (configured === 'auto' || configured === 'freejt7' || configured === 'freejt7-v2' || configured === 'openclaw' || configured === 'local' || configured.startsWith('acp:')) {
+      return configured || 'auto';
+    }
     const value = String(await context.globalState?.get?.(PANEL_RUNTIME_BACKEND_KEY) || '').trim().toLowerCase();
     if (!value) return 'auto';
-    if (value === 'auto' || value === 'openclaw' || value === 'local') return value;
+    if (value === 'auto' || value === 'freejt7' || value === 'freejt7-v2' || value === 'openclaw' || value === 'local') return value;
     if (value.startsWith('acp:')) return value;
     return 'auto';
   }
 
   async function getPersistedPolicyProfile() {
+    const configured = String(getFreeJt7Configuration()?.get('panel.policyProfile', '') || '').trim().toLowerCase();
+    if (configured === 'messaging' || configured === 'minimal' || configured === 'coding') return configured || 'coding';
     const value = String(await context.globalState?.get?.(PANEL_POLICY_PROFILE_KEY) || '').trim().toLowerCase();
     if (value === 'messaging' || value === 'minimal') return value;
     return 'coding';
   }
 
   async function getPersistedAuthProfile() {
+    const configured = String(getFreeJt7Configuration()?.get('panel.authProfile', '') || '').trim();
+    if (configured) return configured;
     return String(await context.globalState?.get?.(PANEL_AUTH_PROFILE_KEY) || 'default').trim() || 'default';
+  }
+
+  function getConfiguredOwnerMode() {
+    const configured = String(getFreeJt7Configuration()?.get('ide.ownerMode', '') || '').trim().toLowerCase();
+    return configured === 'mixed' ? 'mixed' : 'agent';
+  }
+
+  function getConfiguredHostVisibility() {
+    const configured = String(getFreeJt7Configuration()?.get('ide.hostVisibility', '') || '').trim().toLowerCase();
+    return configured === 'full' ? 'full' : 'minimal';
+  }
+
+  function getConfiguredOpenOnStartup() {
+    const configured = getFreeJt7Configuration()?.get('panel.openOnStartup', true);
+    return configured !== false;
   }
 
   async function getPersistedFallbackProviders() {
@@ -2311,6 +2529,10 @@ function createControlPanel(context, output, options = {}) {
   }
 
   async function getPersistedActiveProvider() {
+    const configured = String(getFreeJt7Configuration()?.get('apiProvider', '') || '').trim();
+    if (configured) {
+      return normalizePanelProviderValue(configured);
+    }
     const value = String(await context.globalState?.get?.(PANEL_ACTIVE_PROVIDER_KEY) || '').trim();
     return value || PANEL_DEFAULT_PROVIDER;
   }
@@ -2357,6 +2579,14 @@ function createControlPanel(context, output, options = {}) {
       : [];
     const selections = await getPersistedSelections();
     selections[activeProvider] = activeModel;
+    const config = getFreeJt7Configuration();
+    if (config?.update) {
+      await config.update('apiProvider', activeProvider, vscode.ConfigurationTarget.Global);
+      await config.update('apiProviderModel', activeModel, vscode.ConfigurationTarget.Global);
+      await config.update('panel.runtimeBackend', runtimeBackend, vscode.ConfigurationTarget.Global);
+      await config.update('panel.policyProfile', policyProfile, vscode.ConfigurationTarget.Global);
+      await config.update('panel.authProfile', authProfile, vscode.ConfigurationTarget.Global);
+    }
     await context.globalState?.update?.(PANEL_PROVIDER_SELECTIONS_KEY, selections);
     await context.globalState?.update?.(PANEL_EXECUTION_MODE_KEY, normalizedExecutionMode);
     await context.globalState?.update?.(PANEL_ACTIVE_PROVIDER_KEY, activeProvider);
@@ -2372,6 +2602,9 @@ function createControlPanel(context, output, options = {}) {
       runtimeBackend,
       policyProfile,
       authProfile,
+      ownerMode: getConfiguredOwnerMode(),
+      hostVisibility: getConfiguredHostVisibility(),
+      openOnStartup: getConfiguredOpenOnStartup(),
       fallbackProviders,
     };
   }
@@ -2384,9 +2617,9 @@ function createControlPanel(context, output, options = {}) {
     const authProfile = await getPersistedAuthProfile();
     const fallbackProviders = await getPersistedFallbackProviders();
     const provider = await getPersistedActiveProvider();
+    const configuredModel = String(getFreeJt7Configuration()?.get('apiProviderModel', '') || '').trim();
     const normalizedProvider = provider === 'copilot' ? PANEL_DEFAULT_PROVIDER : provider;
-    const configuredModel = selections[normalizedProvider] || '';
-    const model = configuredModel || selections[provider] || freeModelsCatalog.getDefaultModel(provider) || '';
+    const model = configuredModel || selections[normalizedProvider] || selections[provider] || freeModelsCatalog.getDefaultModel(provider) || '';
     const sanitized = sanitizePanelProviderConfig({
       provider: normalizedProvider,
       model,
@@ -2401,7 +2634,7 @@ function createControlPanel(context, output, options = {}) {
     });
 
     const shouldRepairState =
-      sanitized.executionMode !== (executionMode === 'direct' ? 'direct' : 'agent')
+      sanitized.executionMode !== 'agent'
       || sanitized.runtimeBackend !== runtimeBackend
       || sanitized.policyProfile !== policyProfile
       || sanitized.authProfile !== authProfile
@@ -2425,17 +2658,30 @@ function createControlPanel(context, output, options = {}) {
 
   async function refreshPanelCatalog(postToWebview = false) {
     const nextCatalog = getPanelCatalogSnapshot();
-    nextCatalog.modelsByProvider.clod = await fetchProviderModels('clod', context.secrets, { workspacePath });
-    if (!Array.isArray(nextCatalog.modelsByProvider.clod) || nextCatalog.modelsByProvider.clod.length === 0) {
-      nextCatalog.modelsByProvider.clod = getPanelCatalogSnapshot().modelsByProvider.clod || [];
+    for (const provider of Array.isArray(nextCatalog.providers) ? nextCatalog.providers : []) {
+      const providerId = String(provider?.id || '').trim();
+      if (!providerId) continue;
+      nextCatalog.modelsByProvider[providerId] = await fetchProviderModels(providerId, context.secrets, { workspacePath });
+      if (!Array.isArray(nextCatalog.modelsByProvider[providerId]) || nextCatalog.modelsByProvider[providerId].length === 0) {
+        nextCatalog.modelsByProvider[providerId] = getPanelCatalogSnapshot().modelsByProvider[providerId] || [];
+      }
     }
     currentCatalog = nextCatalog;
     if (postToWebview && panel) {
       panel.webview.postMessage({ type: 'catalog.update', catalog: currentCatalog });
     }
     if (output) {
+      const countsSummary = (Array.isArray(currentCatalog.providers) ? currentCatalog.providers : [])
+        .map((provider) => {
+          const providerId = String(provider?.id || '').trim();
+          return providerId
+            ? `${providerId}=${(currentCatalog.modelsByProvider[providerId] || []).length}`
+            : '';
+        })
+        .filter(Boolean)
+        .join(' ');
       output.appendLine(
-        `[freejt7-panel] catalog refresh openrouter=${(currentCatalog.modelsByProvider.openrouter || []).length} hf=${(currentCatalog.modelsByProvider.hf || []).length} zai=${(currentCatalog.modelsByProvider.zai || []).length} clod=${(currentCatalog.modelsByProvider.clod || []).length}`,
+        `[freejt7-panel] catalog refresh ${countsSummary}`,
       );
     }
     return currentCatalog;
@@ -2448,7 +2694,7 @@ function createControlPanel(context, output, options = {}) {
       properties: {
         runtimeBackend: {
           type: 'string',
-          enum: ['auto', 'openclaw', 'local', 'acp:codex', 'acp:claude-code', 'acp:opencode'],
+          enum: ['auto', 'freejt7-v2', 'freejt7', 'openclaw', 'local', 'acp:codex', 'acp:claude-code', 'acp:opencode'],
           default: 'auto',
         },
         policyProfile: {
@@ -2462,8 +2708,8 @@ function createControlPanel(context, output, options = {}) {
         },
         executionMode: {
           type: 'string',
-          enum: ['agent', 'direct'],
-          default: standaloneMode ? 'agent' : 'agent',
+          enum: ['agent'],
+          default: 'agent',
         },
       },
     };
@@ -2598,7 +2844,6 @@ function createControlPanel(context, output, options = {}) {
       };
     }
   }
-
   async function getOperationalStatusSnapshot(providerConfig = null) {
     const engineState = engine.getState();
     const taskIndex = engine._taskIndex || {};
@@ -2647,7 +2892,7 @@ function createControlPanel(context, output, options = {}) {
       fallbackProviders: current.fallbackProviders,
     };
     if (typeof patch.executionMode === 'string') {
-      next.executionMode = patch.executionMode === 'direct' ? 'direct' : 'agent';
+      next.executionMode = 'agent';
     }
     if (typeof patch.runtimeBackend === 'string') {
       const backend = patch.runtimeBackend.trim().toLowerCase();
@@ -2696,6 +2941,9 @@ function createControlPanel(context, output, options = {}) {
       runtimeBackend,
       policyProfile,
       authProfile,
+      ownerMode,
+      hostVisibility,
+      openOnStartup,
       fallbackProviders,
     } = activeConfig;
     const persistedSessionId = await getPersistedActiveSessionId();
@@ -2711,6 +2959,9 @@ function createControlPanel(context, output, options = {}) {
       runtimeBackend,
       policyProfile,
       authProfile,
+      ownerMode,
+      hostVisibility,
+      openOnStartup,
       fallbackProviders: Array.isArray(fallbackProviders)
         ? fallbackProviders.map((item) => `${item.provider}:${item.model || ''}`).join(', ')
         : '',
@@ -2808,17 +3059,16 @@ function createControlPanel(context, output, options = {}) {
         }
 
         if (type === 'task.enqueue') {
-          let taskInput = msg.task || {};
-          await persistActiveSessionId(msg.sessionId);
-          if (prepareTask) {
-            const session = engine.getState().sessions?.[msg.sessionId];
-            taskInput = await prepareTask(taskInput, {
-              sessionId: msg.sessionId,
-              sessionTitle: session?.title || 'Sesion Free JT7',
-            }) || taskInput;
-          }
-          engine.enqueueTask(msg.sessionId, taskInput);
-          postState();
+          await handleTaskEnqueueRequest({
+            engine,
+            persistActiveSessionId,
+            prepareTask,
+            sessionId: msg.sessionId,
+            taskInput: msg.task || {},
+            getSessionTitle: () => engine.getState().sessions?.[msg.sessionId]?.title || 'Sesion Free JT7',
+            postMessage: (message) => panel.webview.postMessage(message),
+            postState,
+          });
           return;
         }
 
@@ -2924,6 +3174,84 @@ function createControlPanel(context, output, options = {}) {
           return;
         }
 
+        if (type === 'config.selectProvider') {
+          try {
+            await vscode.commands.executeCommand('freejt7.selectApiProvider');
+            await refreshPanelCatalog(true);
+            await postState();
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: true,
+              message: 'Proveedor actualizado desde los ajustes del IDE.',
+            });
+          } catch (error) {
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: false,
+              message: String(error?.message || error),
+            });
+          }
+          return;
+        }
+
+        if (type === 'config.selectModel') {
+          try {
+            await vscode.commands.executeCommand('freejt7.selectFreeModel');
+            await refreshPanelCatalog(true);
+            await postState();
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: true,
+              message: 'Modelo actualizado desde los ajustes del IDE.',
+            });
+          } catch (error) {
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: false,
+              message: String(error?.message || error),
+            });
+          }
+          return;
+        }
+
+        if (type === 'config.setApiKey') {
+          try {
+            await vscode.commands.executeCommand('freejt7.setApiKey');
+            await refreshPanelCatalog(true);
+            await postState();
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: true,
+              message: 'API key actualizada desde el flujo del IDE.',
+            });
+          } catch (error) {
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: false,
+              message: String(error?.message || error),
+            });
+          }
+          return;
+        }
+
+        if (type === 'config.openSettings') {
+          try {
+            await vscode.commands.executeCommand('workbench.action.openSettings', 'freejt7');
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: true,
+              message: 'Ajustes de Free JT7 abiertos en el IDE.',
+            });
+          } catch (error) {
+            panel.webview.postMessage({
+              type: 'config.command.result',
+              ok: false,
+              message: String(error?.message || error),
+            });
+          }
+          return;
+        }
+
         if (type === 'provider.test') {
           const provider = String(msg.provider || '').trim() || (await getActiveProviderConfig()).provider;
           const model = provider === 'copilot'
@@ -2934,7 +3262,7 @@ function createControlPanel(context, output, options = {}) {
               goal: 'Responde solo con OK y el modelo usado.',
               provider,
               model,
-              executionMode: 'direct',
+              executionMode: 'agent',
             }, { workspacePath });
             panel.webview.postMessage({
               type: 'provider.test.result',
@@ -3032,4 +3360,7 @@ module.exports = {
   createControlPanel,
   sanitizePanelProviderConfig,
   ensurePanelSeedSession,
+  __testing: {
+    handleTaskEnqueueRequest,
+  },
 };
