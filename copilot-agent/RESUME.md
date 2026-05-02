@@ -1,10 +1,10 @@
 # Estado actual
-*Actualizado: 2026-05-02 02:25 UTC*
-- Publicacion Git activa: se clasifico el working tree para una rama/PR nueva; entran codigo, documentacion, trazabilidad y empaquetado versionado, y se excluyen artefactos generados pesados (`dist-deb/**/runtime/**`, binarios `.deb/.rpm` y outputs temporales del prompt probe).
+*Actualizado: 2026-05-02 02:36 UTC*
+- Publicacion Git cerrada: la iteracion actual quedo publicada en `origin/release/v4.2.12-own-ide-native-product` y la PR #3 (`release: own-ide native-product and core-v2 hardening`) ya esta abierta contra `release/v4.2.12-clean-install`; se excluyeron del scope los artefactos generados pesados (`dist-deb/**/runtime/**`, binarios `.deb/.rpm` y outputs temporales del prompt probe).
 - Incidente activo: `20260501-own-ide-native-product-ownership`. Primer slice completado: own-ide ya siembra un control-plane propio de perfil (`freejt7-owned-ide.json`) y el runtime/panel leen con prioridad ese estado app-owned para provider/model/runtime/owner-mode en standalone. El empaquetado deb/rpm ya incluye el helper compartido y existe plan maestro en `own-ide-native-product-plan.md`.
 - Incidente cerrado: `20260501-own-ide-live-agent-first-prompt-verification`. La VSIX activa se recompilo/reinstalo en `own-ide` y la prueba real con el prompt typo `qiuero una skill...` ya no muestra fallback tecnico visible; la ruta sigue en `freejt7-agent-core-v2` y el probe prioriza `skill-creator` + `make-skill-template`.
 - Incidente cerrado: `20260501-own-ide-agent-first-runtime-hardening`. own-ide ya sanea `runtimeBackend` a `freejt7-v2` en standalone, el planner usa `freejt7-agent-core-v2` como default para provider externo y deja `openclaw-agent` solo para prompts con MCP nativo, y `routeTaskWithGoal()` dejó de usar `_callProvider()` directo.
-- Incidente activo: `20260501-corev2-skill-intent-context-fix` en progreso para completar la skill nueva de instalacion GUI para Zorin/Linux; el bug de filtro tecnico ya quedo mitigado con tolerancia al typo `qiuero`, default seguro para `inspect_path` y resumen publico saneado en `freejt7-agent-core-v2`.
+- Incidente cerrado: `20260501-corev2-skill-intent-context-fix`. `chat-context`, `freejt7-agent-core-v2` y `freejt7-agent-runtime` ya endurecen el routing de creacion de skills, evitan reinyectar rutas viejas no pedidas y mantienen separado el resumen tecnico del visible; la skill Zorin GUI quedo creada en `.github/skills/zorin-gui-software-install/SKILL.md`.
 - Último run exitoso cerrado: `20260430-rpm-buildid-justification-tree-validation` (2026-04-30).
 - Run relacionado previo: `20260430-auditoria-standalone-packaging-claim`.
 - Resultado base vigente: existe `freejt7-agent-core-v2` paralelo y `own-ide` sigue apuntando a `freejt7.panel.runtimeBackend=freejt7-v2`.
@@ -18,7 +18,7 @@
 - Justificación RPM vigente: los warnings `Missing build-id` confirmados en `package:rpm` provienen solo de módulos nativos precompilados del runtime VSCodium embebido; el spec generado ya los trata como payload vendor no bloqueante.
 - Regla operativa vigente: en validaciones de árbol/working tree excluir `dist-deb/**` y `dist-rpm/**` salvo auditoría explícita de packaging para no inflar contexto con artefactos generados.
 - Iteración operativa vigente: `own-ide` fue desmontado y reinstalado sobre perfil/runtime limpio; la evidencia de ejecución y estado real de providers quedó consolidada en `docs/23-REINSTALACION-LIMPIA-OWN-IDE-Y-VERIFICACION-PROVIDERS.md`.
-- Rama remota vigente para esta iteración: `origin/release/v4.2.12-clean-install`.
+- Rama remota vigente para esta iteración: `origin/release/v4.2.12-own-ide-native-product`.
 - Incidente `20260501-panel-intake-corev2-chat-fix` cerrado: el panel mantiene el intake dentro del chat y el fallo restante de core-v2 estaba en la policy MCP nativa, que bloqueaba rutas absolutas externas explícitas con `ok=false` aunque la acción ya viniera resuelta.
 
 ## Verificación más reciente
@@ -73,4 +73,4 @@
 - [ ] Resolver cuota/rate-limit de `openrouter` y `clod` si se quiere cierre de verificación live al 100% sobre todos los providers autenticados.
 
 ## Siguiente acción recomendada
-Completar la publicacion actual: crear la rama nueva, agrupar commits logicos, empujar a `origin` y abrir la PR con la evidencia fresca de build/tests/deb/rpm.
+Continuar el incidente `20260501-own-ide-native-product-ownership`: mover más estado fuera del host/VSIX heredado y profundizar el claim de producto propio más allá del launcher + VSIX.

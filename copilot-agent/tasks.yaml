@@ -82,20 +82,22 @@ tareas:
       de skills cuando el usuario las pide de forma explicita. Ademas, crear la
       nueva skill para instalar programas en Zorin/Linux con pocos clics y sin
       terminal.
-    estado: "en_progreso"
+    estado: "completado"
     riesgo: "high"
     skills_usados: ["systematic-debugging", "skill-creator", "verification-before-completion"]
     resultado: >
-      En progreso: intake resuelto, traza real aislada en
-      `copilot-agent/core-v2-runs.jsonl` y parche minimo aplicado sobre el
-      slice local de `extension.runtime` + `freejt7-agent-core-v2`: la
-      heuristica de skill-creation ya tolera el typo `qiuero`, `inspect_path`
-      normaliza `path='.'` cuando el planner omite la ruta y el resumen visible
-      del panel ya no filtra mensajes tecnicos ni la ruta de traza. Validado
-      con `node tests/installed_extension_smoke.js` y
-      `node temp_install_test/own_ide_prompt_probe.js`. Sigue pendiente la
-      parte no ejecutada de crear la nueva skill Zorin GUI y revisar si hace
-      falta tocar `chat-context` para historiales heredados.
+      Completado: la traza real quedo aislada en
+      `copilot-agent/core-v2-runs.jsonl` y el slice local de `chat-context` +
+      `freejt7-agent-core-v2` + `freejt7-agent-runtime` ya endurece la
+      creacion explicita de skills, tolera el typo `qiuero`, evita reinyectar
+      rutas viejas no pedidas y mantiene el resumen visible libre de salida
+      tecnica. La nueva skill Zorin GUI quedo creada en
+      `.github/skills/zorin-gui-software-install/SKILL.md`. Validado con
+      `node tests/chat_context_smoke.js`,
+      `npm run test:freejt7-agent-core-v2-smoke`,
+      `node tests/freejt7_agent_runtime_smoke.js`,
+      `node tests/extension_runtime_skill_priority_smoke.js` y
+      `node temp_install_test/own_ide_prompt_probe.js`.
   - id: "20260502-own-ide-native-product-publication-pr"
     fecha: "2026-05-02"
     titulo: "Publicar la iteracion own-ide native-product en rama nueva con commits, push y PR"
@@ -105,20 +107,21 @@ tareas:
       trazabilidad y empaquetado versionado relevante; excluir binarios y
       runtimes generados pesados; ejecutar verificacion fresca de build/tests y
       packaging deb/rpm; y cerrar con rama nueva, commits logicos, push y PR.
-    estado: "en_progreso"
+    estado: "completado"
     riesgo: "high"
     skills_usados: ["make-repo-contribution", "git-pushing", "verification-before-completion"]
     resultado: >
-      En progreso: intake resuelto con entregable = rama + commits + push + PR,
+      Completado: intake resuelto con entregable = rama + commits + push + PR,
       alcance = todo lo pendiente del working tree y validacion = build/tests +
-      deb/rpm + push. El arbol ya quedo clasificado para publicar codigo,
-      docs, trazabilidad y empaquetado versionado, excluyendo artefactos
-      generados pesados (`dist-deb/**/runtime/**`, `.deb`, `.rpm` y outputs
-      temporales del prompt probe). La verificacion fresca ya quedo en verde con
+      deb/rpm + push. El arbol se publico incluyendo codigo, docs,
+      trazabilidad y empaquetado versionado, excluyendo artefactos generados
+      pesados (`dist-deb/**/runtime/**`, `.deb`, `.rpm` y outputs temporales
+      del prompt probe). La verificacion fresca quedo en verde con
       `npm run build:bundle`, smokes focalizadas del slice actual,
       `npm run package:deb` + `npm run test:deb-package-smoke` y
-      `npm run package:rpm` + `npm run test:rpm-package-smoke`. Pendiente:
-      crear rama nueva, agrupar commits, hacer push y abrir PR.
+      `npm run package:rpm` + `npm run test:rpm-package-smoke`. Publicado en
+      `origin/release/v4.2.12-own-ide-native-product` con PR #3 abierta contra
+      `release/v4.2.12-clean-install`.
   - id: "20260501-panel-intake-corev2-chat-fix"
     fecha: "2026-05-01"
     titulo: "Corregir intake modal del panel y respuestas inadecuadas de core-v2"

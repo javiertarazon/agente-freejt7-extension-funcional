@@ -39,26 +39,26 @@
   - [x] Reconciliar `RESUME.md` + `audit-log.jsonl` con el resultado final
 
 ## Correccion core-v2 skill-intent + skill nueva Zorin GUI (2026-05-01)
-- [ ] Objetivo principal: eliminar el fallback tecnico de core-v2 en solicitudes de creacion de skills y crear la skill nueva para instalar programas en Zorin/Linux sin terminal
+- [x] Objetivo principal: eliminar el fallback tecnico de core-v2 en solicitudes de creacion de skills y crear la skill nueva para instalar programas en Zorin/Linux sin terminal
   - [x] Intake derivado de la solicitud: entregable = corregir el comportamiento del IDE para el prompt real + crear la skill; restricciones = cambio minimo y compatible, sin reabrir packaging; validacion = el prompt deja de devolver el fallback tecnico y la skill existe/invoca correctamente
   - [x] Resolver skills aplicables: `systematic-debugging`, `skill-creator`, `verification-before-completion`
   - [x] Decision de delegacion: no delegada; el fallo y la nueva skill cruzan el mismo slice entre ensamblado de contexto, resolucion de skills y artefactos `.github/skills`
   - [x] Aislar la traza exacta del fallo en `copilot-agent/core-v2-runs.jsonl`
   - [x] Confirmar la hipotesis local sobre contexto local heredado del historial y routing debil de `skill-creator`
-  - [ ] Parchear `chat-context` para no reinyectar rutas viejas no pedidas en la solicitud actual
+  - [x] Parchear `chat-context` para no reinyectar rutas viejas no pedidas en la solicitud actual
   - [x] Reforzar la resolucion de skills para prompts explicitos de creacion de skills
-  - [ ] Crear la skill nueva para instalacion GUI en Zorin/Linux
+  - [x] Crear la skill nueva para instalacion GUI en Zorin/Linux
   - [x] Ejecutar smokes focalizadas y reconciliar `RESUME.md` + `audit-log.jsonl`
 
 ## Publicacion Git/PR own-ide native-product (2026-05-02)
-- [ ] Objetivo principal: publicar en rama nueva y PR la iteracion actual del working tree, incluyendo codigo, documentacion, trazabilidad y empaquetado versionado, excluyendo artefactos binarios generados
+- [x] Objetivo principal: publicar en rama nueva y PR la iteracion actual del working tree, incluyendo codigo, documentacion, trazabilidad y empaquetado versionado, excluyendo artefactos binarios generados
   - [x] Intake derivado de la solicitud: entregable = rama + commits + push + PR; restricciones = incluir todo el working tree publicable sin meter basura generada; validacion = build/tests + deb/rpm + push
   - [x] Resolver skills aplicables: `make-repo-contribution`, `git-pushing`, `verification-before-completion`
   - [x] Decision de delegacion: no delegada; la clasificacion del arbol, la verificacion, el staging y la publicacion comparten el mismo slice tecnico y de trazabilidad
   - [x] Clasificar el working tree: incluir codigo/docs/trazabilidad/empaquetado versionado y excluir `dist-deb/**/runtime/**`, binarios `.deb/.rpm` y outputs temporales del prompt probe
   - [x] Ejecutar verificacion fresca: `npm run build:bundle`, `chat_context_smoke`, `freejt7_agent_core_v2_smoke`, `freejt7_agent_runtime_smoke`, `control_panel_state_regression_smoke`, `control_panel_enqueue_cancel_smoke`, `extension_runtime_skill_priority_smoke`, `freejt7_app_bootstrap_smoke`, `package:deb/test:deb-package-smoke`, `package:rpm/test:rpm-package-smoke`
-  - [ ] Crear rama nueva, agrupar commits logicos y hacer push a `origin`
-  - [ ] Abrir PR con resumen tecnico y evidencia de verificacion
+  - [x] Crear rama nueva, agrupar commits logicos y hacer push a `origin`
+  - [x] Abrir PR con resumen tecnico y evidencia de verificacion (`#3` contra `release/v4.2.12-clean-install`)
 
 ## Reinstalacion limpia own-ide + verificacion live providers + rama remota (2026-05-01)
 - [x] Objetivo principal: desmontar la instalacion actual de `own-ide`, verificar en vivo los providers con credencial detectable y reinstalar limpio antes de publicar una rama correlativa remota
