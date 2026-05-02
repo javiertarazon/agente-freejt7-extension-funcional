@@ -6931,6 +6931,22 @@
     "active": false
   },
   {
+    "id": "free-jt7-core",
+    "name": "free-jt7-core",
+    "description": "",
+    "category": "general",
+    "path": ".github/skills/free-jt7-core/SKILL.md",
+    "gh_path": ".github/skills/free-jt7-core/SKILL.md",
+    "tags": [
+      "free",
+      "jt7",
+      "core"
+    ],
+    "risk": "unknown",
+    "source": "local",
+    "active": false
+  },
+  {
     "id": "free-jt7-global-runtime-audit",
     "name": "free-jt7-global-runtime-audit",
     "description": "Audit and enforce Free JT7 global runtime behavior across IDEs (Copilot, Codex, Claude, Gemini), including filesystem/pr",
@@ -14993,6 +15009,23 @@
     "tags": [
       "zoom",
       "automation"
+    ],
+    "risk": "unknown",
+    "source": "local",
+    "active": false
+  },
+  {
+    "id": "zorin-gui-software-install",
+    "name": "zorin-gui-software-install",
+    "description": "'Guia para instalar programas en Zorin OS y Linux derivados de Ubuntu usando pocos clics, interfaz grafica y sin escribi",
+    "category": "development",
+    "path": ".github/skills/zorin-gui-software-install/SKILL.md",
+    "gh_path": ".github/skills/zorin-gui-software-install/SKILL.md",
+    "tags": [
+      "zorin",
+      "gui",
+      "software",
+      "install"
     ],
     "risk": "unknown",
     "source": "local",

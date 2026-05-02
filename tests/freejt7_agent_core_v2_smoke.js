@@ -215,8 +215,71 @@ async function main() {
   assert.equal(subagentResult.coreV2.subagents.length, 1);
   assert.equal(subagentResult.coreV2.subagents[0].subagentId, 'writer-subagent');
   assert.ok(subagentResult.coreV2.subagents[0].tracePath);
-  assert.ok(subagentResult.run.summary.includes('Subagentes: 1.'));
+  assert.ok(subagentResult.coreV2.technicalSummary.includes('Subagentes: 1.'));
+  assert.equal(subagentResult.run.summary.includes('Subagentes: 1.'), false);
   assert.ok(subagentResult.final.changedFiles.some((filePath) => String(filePath).includes('child-output/subagent.txt')));
+
+  const conversationalCore = createFreeJt7AgentCoreV2({
+    callProvider: async () => ({
+      final: {
+        summary: JSON.stringify({
+          status: 'completed',
+          summary: 'Respuesta conversacional sin tools forzadas.',
+          actions: [],
+        }),
+      },
+    }),
+    maxIterations: 2,
+  });
+  const conversationalResult = await conversationalCore.executeTask({ secrets: {} }, { appendLine() {} }, {
+    goal: [
+      'Solicitud base:',
+      'tu respuesta no fue correcta y tus preguntas deben estar en el chat',
+      '',
+      'Aclaraciones obligatorias previas al plan:',
+      '- Entregable esperado: corregir la respuesta del agente',
+      '- Restricciones / no-goals: sin modales fuera del chat',
+      '- Verificacion esperada: evidencia breve',
+      '',
+      'Politica operativa obligatoria:',
+      '- No declarar exito sin verificacion y cierre trazado.',
+    ].join('\n'),
+    workspacePath,
+    provider: 'ddeksee',
+    model: 'deepseek-chat',
+  });
+  assert.equal(conversationalResult.run.status, 'completed');
+  assert.equal(conversationalResult.coreV2.steps.length, 0, 'no debe forzar inspect_path por texto auditado en una solicitud conversacional');
+  assert.ok(conversationalResult.run.summary.includes('Respuesta conversacional sin tools forzadas.'));
+
+  const externalProject = fs.mkdtempSync(path.join(os.tmpdir(), 'freejt7-core-v2-external-'));
+  fs.writeFileSync(path.join(externalProject, 'README.md'), '# Externo\n', 'utf8');
+  const externalPathCore = createFreeJt7AgentCoreV2({
+    callProvider: async () => ({
+      final: {
+        summary: JSON.stringify({
+          status: 'needs_action',
+          summary: 'Leo un archivo fuera del workspace usando ruta absoluta.',
+          actions: [
+            { type: 'mcp_call', serverId: 'free-jt7-local', toolName: 'jt7_document_read', path: path.join(externalProject, 'README.md'), maxChars: 200 },
+          ],
+        }),
+      },
+    }),
+    maxIterations: 1,
+  });
+  const externalPathResult = await externalPathCore.executeTask({ secrets: {} }, { appendLine() {} }, {
+    goal: 'analiza el archivo externo ' + path.join(externalProject, 'README.md'),
+    workspacePath,
+    provider: 'ddeksee',
+    model: 'deepseek-chat',
+    capabilityPlan: {
+      toolMode: 'agent-owned',
+      mcpServers: [{ id: 'free-jt7-local', transport: 'stdio', enabled: true }],
+    },
+  });
+  assert.equal(externalPathResult.run.status, 'completed');
+  assert.ok(externalPathResult.final.verification.some((line) => line.includes('mcp_call free-jt7-local/jt7_document_read ok=true')));
 
   const normalized = normalizeActions([{ tool: 'settings_patch', settings: { a: 1 } }]);
   assert.equal(normalized[0].type, 'config_patch');

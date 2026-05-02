@@ -171,17 +171,18 @@ async function main() {
     provider: 'openrouter',
     model: 'qwen/qwen3-coder:free',
   });
-  assert.equal(directResult.final.summary, 'direct ok');
-  assert.equal(directResult.provider, 'freejt7-agent');
-  assert.equal(directResult.model, 'freejt7-runtime');
-  assert.equal(calls.some((item) => item.type === 'openclaw'), true, 'debe intentar OpenClaw primero');
-  assert.equal(calls.some((item) => item.type === 'direct'), true, 'debe usar provider directo como fallback operativo');
-  assert.equal(directResult.raw.routeMeta.executionPlan.capabilityPlan.toolMode, 'agent-backends');
+  assert.equal(directResult.final.summary, 'core v2 ok');
+  assert.equal(directResult.provider, 'openrouter');
+  assert.equal(directResult.model, 'qwen/qwen3-coder:free');
+  assert.equal(calls.some((item) => item.type === 'core-v2'), true, 'provider externo en auto ahora debe entrar por core-v2');
+  assert.equal(calls.some((item) => item.type === 'openclaw'), false, 'provider externo en auto ya no debe abrir OpenClaw como ruta primaria');
+  assert.equal(calls.some((item) => item.type === 'direct'), false, 'provider externo en auto ya no debe usar provider-direct como ruta primaria');
+  assert.equal(directResult.raw.routeMeta.executionPlan.capabilityPlan.toolMode, 'agent-owned');
   assert.equal(directResult.raw.routeMeta.controlPlaneOwner, 'freejt7-agent');
-  assert.equal(directResult.raw.routeMeta.backend.kind, 'provider-direct');
+  assert.equal(directResult.raw.routeMeta.backend.kind, 'freejt7-core-v2');
   assert.equal(directResult.raw.routeMeta.backend.provider, 'openrouter');
   assert.equal(directResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.owner, 'freejt7-agent-runtime');
-  assert.equal(directResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.dispatchTarget, 'openclaw-agent-runtime');
+  assert.equal(directResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.dispatchTarget, 'freejt7-agent-core-v2');
 
   calls.length = 0;
   const ownedResult = await runtime.executeAgentTask('analiza el cambio y responde como agente', {
@@ -225,11 +226,11 @@ async function main() {
       continuationHint: 'Objetivo: crea el plan base | Ultimo resultado: Plan base listo con checkpoint-1',
     },
   });
-  const openclawCall = calls.find((item) => item.type === 'openclaw');
-  assert.ok(openclawCall, 'executeTask debe seguir usando el runtime propio para agent routes');
-  assert.match(openclawCall.goal, /Historial conversacional previo:/, 'debe serializar continuidad conversacional dentro del runtime del agente');
-  assert.match(openclawCall.goal, /checkpoint-1/, 'debe incluir el contexto previo del assistant');
-  assert.match(openclawCall.goal, /Contexto de continuidad recuperado por Free JT7:/, 'debe enriquecer prompts breves de continuidad con agent state persistido');
+  const continuityCoreV2Call = calls.find((item) => item.type === 'core-v2');
+  assert.ok(continuityCoreV2Call, 'executeTask debe seguir usando el runtime propio para agent routes');
+  assert.match(continuityCoreV2Call.goal, /Historial conversacional previo:/, 'debe serializar continuidad conversacional dentro del runtime del agente');
+  assert.match(continuityCoreV2Call.goal, /checkpoint-1/, 'debe incluir el contexto previo del assistant');
+  assert.match(continuityCoreV2Call.goal, /Contexto de continuidad recuperado por Free JT7:/, 'debe enriquecer prompts breves de continuidad con agent state persistido');
   assert.deepStrictEqual(
     continuityResult.raw.routeMeta.executionPlan.capabilityPlan.selectedSkills,
     ['memory-forensics', 'prompt-engineering-patterns'],
@@ -239,12 +240,12 @@ async function main() {
     'debe trazar el activation path de skills desde el runtime propio',
   );
   assert.ok(
-    continuityResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.trace.includes('mcp:free-jt7-local->openclaw-agent-runtime'),
+    continuityResult.raw.routeMeta.executionPlan.capabilityPlan.dispatch.trace.includes('mcp:free-jt7-local->freejt7-agent-core-v2'),
     'debe trazar el snapshot MCP sin depender del provider',
   );
   assert.equal(
     continuityResult.raw.routeMeta.executionPlan.primaryRoute,
-    'openclaw-agent',
+    'freejt7-agent-core-v2',
     'debe planificar con el objetivo real del usuario aunque el prompt serializado contenga pistas que parezcan local-first',
   );
 
@@ -267,11 +268,11 @@ async function main() {
       continuationHint: 'Aplica el fix en el runtime propio y verifica con smokes.',
     },
   });
-  const vagueOpenclawCall = calls.find((item) => item.type === 'openclaw');
-  assert.ok(vagueOpenclawCall, 'las continuaciones vagas deben seguir yendo por la ruta agente cuando existe contexto previo');
-  assert.match(vagueOpenclawCall.goal, /Contexto de continuidad recuperado por Free JT7:/);
-  assert.match(vagueOpenclawCall.goal, /corrige el bug del runtime agente/);
-  assert.equal(vagueContinuationResult.raw.routeMeta.executionPlan.primaryRoute, 'openclaw-agent');
+  const vagueCoreV2Call = calls.find((item) => item.type === 'core-v2');
+  assert.ok(vagueCoreV2Call, 'las continuaciones vagas deben seguir yendo por la ruta agente cuando existe contexto previo');
+  assert.match(vagueCoreV2Call.goal, /Contexto de continuidad recuperado por Free JT7:/);
+  assert.match(vagueCoreV2Call.goal, /corrige el bug del runtime agente/);
+  assert.equal(vagueContinuationResult.raw.routeMeta.executionPlan.primaryRoute, 'freejt7-agent-core-v2');
   assert.equal(calls.some((item) => item.type === 'local'), false, 'no debe degradar a local por confundir continuidad con auditoria serializada');
 
   const health = runtime.getHealthStatus();

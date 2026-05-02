@@ -214,6 +214,31 @@ function buildLocalContextBlock(text, options = {}) {
   );
 }
 
+function shouldReuseRecentLocalContext(prompt) {
+  return /\b(continua|continue|retoma|retomar|seguir|sigue|desde ahi|esa carpeta|ese archivo|misma ruta)\b/i.test(String(prompt || ''));
+}
+
+function buildLocalContextSource(prompt, history, options = {}) {
+  const currentPrompt = String(prompt || '').trim();
+  if (!currentPrompt) return '';
+  if (extractExistingPaths(currentPrompt, options).length) {
+    return currentPrompt;
+  }
+  if (!shouldReuseRecentLocalContext(currentPrompt)) {
+    return currentPrompt;
+  }
+
+  const entries = Array.isArray(history) ? history : [];
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const content = String(entries[index]?.content || '').trim();
+    if (!content) continue;
+    if (extractExistingPaths(content, options).length) {
+      return `${currentPrompt}\n${content}`;
+    }
+  }
+  return currentPrompt;
+}
+
 function buildFreeJt7SystemPrompt(options = {}) {
   const channel = String(options.channel || 'chat').trim();
   const sessionTitle = String(options.sessionTitle || '').trim();
@@ -232,6 +257,15 @@ function buildFreeJt7SystemPrompt(options = {}) {
     ? [
       Array.isArray(capabilities.selectedSkills) && capabilities.selectedSkills.length
         ? `- Skills resueltos: ${capabilities.selectedSkills.join(', ')}`
+        : '',
+      Array.isArray(capabilities.mcpServers) && capabilities.mcpServers.length
+        ? `- MCP disponibles: ${capabilities.mcpServers.join(', ')}`
+        : '',
+      Array.isArray(capabilities.localOperations) && capabilities.localOperations.length
+        ? `- Tools/operaciones locales: ${capabilities.localOperations.join(', ')}`
+        : '',
+      Array.isArray(capabilities.plannedActions) && capabilities.plannedActions.length
+        ? `- Acciones candidatas del runtime: ${capabilities.plannedActions.join(', ')}`
         : '',
       capabilities.dispatchTarget ? `- Destino operativo preferido: ${String(capabilities.dispatchTarget).trim()}` : '',
       capabilities.runtimeBackend ? `- Backend preferido: ${String(capabilities.runtimeBackend).trim()}` : '',
@@ -265,10 +299,7 @@ function buildConversationRequest(options = {}) {
   const sessionTitle = String(options.sessionTitle || '').trim();
   const history = stripDuplicatePrompt(normalizeConversationHistory(options.history), prompt);
   const trimmedHistory = history.slice(-HISTORY_LIMIT);
-  const textForLocalContext = [
-    prompt,
-    ...trimmedHistory.map((entry) => entry.content),
-  ].filter(Boolean).join('\n');
+  const textForLocalContext = buildLocalContextSource(prompt, trimmedHistory, { workspacePath: options.workspacePath });
   const localContext = buildLocalContextBlock(textForLocalContext, { workspacePath: options.workspacePath });
   const systemPrompt = [
     buildFreeJt7SystemPrompt({
@@ -341,6 +372,7 @@ module.exports = {
   buildConversationRequest,
   buildFreeJt7SystemPrompt,
   buildLocalContextBlock,
+  buildLocalContextSource,
   extractChatContextMessages,
   extractExistingPaths,
   normalizeConversationHistory,
