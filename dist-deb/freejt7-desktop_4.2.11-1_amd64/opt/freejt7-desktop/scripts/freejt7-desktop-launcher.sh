@@ -24,8 +24,15 @@ if ! command -v "$NODE_BIN" >/dev/null 2>&1; then
 fi
 
 WORKSPACE="${FREEJT7_WORKSPACE:-$PWD}"
+BUNDLED_IDE="$APP_ROOT/runtime/vscodium/current/bin/codium"
+
+EXTRA_ARGS=()
+if [[ -x "$BUNDLED_IDE" ]]; then
+  EXTRA_ARGS+=("--ide-bin=$BUNDLED_IDE")
+fi
 
 exec "$NODE_BIN" "$APP_ROOT/scripts/freejt7-own-ide-bootstrap.js" \
   --repo-root="$APP_ROOT" \
   --workspace="$WORKSPACE" \
+  "${EXTRA_ARGS[@]}" \
   "$@"

@@ -15,6 +15,27 @@ Repositorio funcional del runtime Free JT7 para VS Code y otros IDE compatibles:
 - Extension VS Code incluida (`package.json` + `extension.js`).
 - Variante Linux documentada y validada en la rama `feature/linux-v4.2.3`.
 
+## Ultimas modificaciones destacadas
+
+El estado actual del repositorio consolida el giro hacia un modelo agent-first
+con IDE propia y runtime autonomo de Free JT7.
+
+- Runtime propio del agente en `src-js/core/freejt7-agent-runtime.js`, con
+  planificacion por tarea, continuidad de sesion y `capabilityPlan` para
+  skills, MCP y tools nativas.
+- Panel own-ide chat-first en `src-js/core/control-panel.js`, con inspector
+  lateral, modos `agent/direct`, persistencia de estado y trazabilidad visible.
+- Backends subordinados: OpenClaw y providers externos quedan detras del
+  runtime de Free JT7, mientras la compatibilidad Copilot se mantiene aislada
+  como ruta heredada.
+- Nueva capa app/desktop para Free JT7: bootstrap standalone, perfil `own-ide`,
+  empaquetado `.deb` y `.rpm`, instaladores rootless y launchers dedicados.
+- Servidor MCP ampliado con tools de navegador y documentos, mas validaciones de
+  policy y selftests para el entorno local.
+- Documentacion de cierre y auditoria en `docs/14-*` hasta `docs/21-*`, donde
+  se describe la evolucion del runtime, la UI agent-first y el plan maestro de
+  IDE propia.
+
 ## Origen y trazabilidad
 
 - Repositorio fuente: `https://github.com/javiertarazon/agente-copilot.git`
@@ -127,6 +148,42 @@ Diagnóstico en seco:
 ```bash
 npm run app:own-ide:dry-run
 ```
+
+### Instalador nativo `.deb` (Linux)
+
+Construir paquete Debian:
+
+```bash
+npm run package:deb
+```
+
+Instalar:
+
+```bash
+npm run install:deb
+```
+
+Notas:
+- Si hay permisos root/sudo non-interactive, instala con `dpkg -i` del sistema.
+- Si no hay permisos root, aplica fallback local en `~/.local/freejt7-desktop` y crea launcher `~/.local/bin/freejt7-desktop`.
+
+### Instalador nativo `.rpm` (Linux)
+
+Construir paquete RPM:
+
+```bash
+npm run package:rpm
+```
+
+Instalar:
+
+```bash
+npm run install:rpm
+```
+
+Notas:
+- Si hay permisos root/sudo non-interactive y runtime RPM disponible, instala con `rpm -Uvh`.
+- Si no hay permisos root, aplica fallback local en `~/.local/freejt7-desktop-rpm` y crea launcher `~/.local/bin/freejt7-desktop-rpm`.
 
 ## Router real con Copilot SDK
 

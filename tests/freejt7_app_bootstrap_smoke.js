@@ -48,8 +48,11 @@ function main() {
 
   assert.ok(result.paths.settingsPath.endsWith(path.join('user-data', 'User', 'settings.json')));
   assert.ok(fs.existsSync(result.paths.settingsPath), 'Debe crear settings de perfil aislado');
+  assert.ok(result.paths.controlPlanePath.endsWith('freejt7-owned-ide.json'));
+  assert.ok(fs.existsSync(result.paths.controlPlanePath), 'Debe crear control-plane propio del perfil');
 
   const settings = JSON.parse(fs.readFileSync(result.paths.settingsPath, 'utf8'));
+  const controlPlane = JSON.parse(fs.readFileSync(result.paths.controlPlanePath, 'utf8'));
   assert.equal(settings['freejt7.panel.enabled'], true);
   assert.equal(settings['freejt7.panel.chatParticipant.enabled'], false);
   assert.equal(settings['freejt7.panel.openOnStartup'], true);
@@ -61,6 +64,13 @@ function main() {
   assert.equal(settings['freejt7.ide.hostVisibility'], 'minimal');
   assert.equal(settings['freejt7.app.standaloneMode'], true);
   assert.equal(settings['workbench.startupEditor'], 'none');
+  assert.equal(controlPlane.mode, 'freejt7-owned-ide');
+  assert.equal(controlPlane.ide.ownerMode, 'agent');
+  assert.equal(controlPlane.ide.hostVisibility, 'minimal');
+  assert.equal(controlPlane.ide.openOnStartup, true);
+  assert.equal(controlPlane.runtime.runtimeBackend, 'freejt7-v2');
+  assert.equal(controlPlane.runtime.policyMode, 'autonomous');
+  assert.equal(controlPlane.provider.activeProvider, 'openrouter');
 
   console.log('freejt7_app_bootstrap_smoke: ok');
 }

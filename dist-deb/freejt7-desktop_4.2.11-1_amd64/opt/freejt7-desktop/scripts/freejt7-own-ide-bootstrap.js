@@ -6,10 +6,20 @@ const os = require('os');
 const path = require('path');
 const https = require('https');
 const cp = require('child_process');
+const crypto = require('crypto');
 
 const { runBootstrap } = require('./freejt7-app-bootstrap');
 
-const VSCODIUM_RELEASES_API = 'https://api.github.com/repos/VSCodium/vscodium/releases/latest';
+const DEFAULT_RUNTIME_PIN_PATH = path.join(__dirname, 'freejt7-vscodium-linux-x64.json');
+
+function ensureSupportedOwnIdePlatform() {
+  if (process.platform !== 'linux') {
+    throw new Error(`Free JT7 own-ide solo soporta Linux por ahora. Plataforma actual: ${process.platform}`);
+  }
+  if (process.arch !== 'x64') {
+    throw new Error(`Free JT7 own-ide solo soporta Linux x64 por ahora. Arquitectura actual: ${process.arch}`);
+  }
+}
 
 function parseArgs(argv) {
   const options = {
@@ -23,6 +33,7 @@ function parseArgs(argv) {
     skipInstall: false,
     ideBin: '',
     vsixPath: '',
+    runtimePinPath: '',
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -72,6 +83,10 @@ function parseArgs(argv) {
       options.vsixPath = path.resolve(arg.split('=').slice(1).join('='));
       continue;
     }
+    if (arg.startsWith('--runtime-pin=')) {
+      options.runtimePinPath = path.resolve(arg.split('=').slice(1).join('='));
+      continue;
+    }
     throw new Error(`Argumento no soportado: ${arg}`);
   }
 
@@ -95,6 +110,7 @@ function printHelp() {
     '  --profile=<name>        Perfil aislado (default: own-ide)',
     '  --ide-bin=<path>        Fuerza binario de IDE y omite descarga de VSCodium',
     '  --vsix=<path>           VSIX a instalar',
+    '  --runtime-pin=<path>    JSON pinneado del runtime VSCodium Linux x64',
     '  --force-download        Fuerza recarga de runtime VSCodium',
     '  --skip-install          No reinstalar VSIX',
     '  --no-launch             No abrir IDE',
@@ -137,39 +153,34 @@ function resolveCommand(command) {
   return first || '';
 }
 
-function fetchJson(url) {
-  return new Promise((resolve, reject) => {
-    const req = https.get(url, {
-      headers: {
-        'User-Agent': 'freejt7-own-ide-bootstrap',
-        'Accept': 'application/vnd.github+json',
-      },
-    }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        res.resume();
-        fetchJson(res.headers.location).then(resolve).catch(reject);
-        return;
-      }
-      if (res.statusCode !== 200) {
-        const chunks = [];
-        res.on('data', (chunk) => chunks.push(chunk));
-        res.on('end', () => {
-          reject(new Error(`HTTP ${res.statusCode} al consultar release VSCodium: ${Buffer.concat(chunks).toString('utf8').slice(0, 300)}`));
-        });
-        return;
-      }
-      const chunks = [];
-      res.on('data', (chunk) => chunks.push(chunk));
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
-        } catch (error) {
-          reject(new Error(`No se pudo parsear JSON de VSCodium release: ${String(error.message || error)}`));
-        }
-      });
-    });
-    req.on('error', reject);
-  });
+function readPinnedOwnIdeRuntime(pinPath = DEFAULT_RUNTIME_PIN_PATH) {
+  const resolvedPath = path.resolve(pinPath);
+  const raw = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
+  const releaseTag = String(raw.releaseTag || '').trim();
+  const assetName = String(raw.assetName || '').trim();
+  const assetUrl = String(raw.assetUrl || '').trim();
+  const sha256 = String(raw.sha256 || '').trim().toLowerCase();
+  if (!releaseTag || !assetName || !assetUrl || !/^[a-f0-9]{64}$/.test(sha256)) {
+    throw new Error(`Pin de runtime invalido en ${resolvedPath}`);
+  }
+  return {
+    path: resolvedPath,
+    releaseTag,
+    assetName,
+    assetUrl,
+    sha256,
+    size: Number(raw.size || 0) || 0,
+  };
+}
+
+function computeFileSha256(filePath) {
+  const hash = crypto.createHash('sha256');
+  hash.update(fs.readFileSync(filePath));
+  return hash.digest('hex');
+}
+
+function verifyFileSha256(filePath, expectedSha256) {
+  return computeFileSha256(filePath) === String(expectedSha256 || '').trim().toLowerCase();
 }
 
 function pickLinuxX64Asset(release) {
@@ -249,6 +260,7 @@ function findCodiumBinary(runtimeDir) {
 }
 
 async function ensureOwnIdeBinary(options) {
+  ensureSupportedOwnIdePlatform();
   if (options.ideBin) {
     const forced = resolveCommand(options.ideBin);
     if (!forced) {
@@ -283,20 +295,28 @@ async function ensureOwnIdeBinary(options) {
     return { ideBin: '/tmp/freejt7-vscodium-dry-run/codium', source: 'dry-run' };
   }
 
-  const release = await fetchJson(VSCODIUM_RELEASES_API);
-  const asset = pickLinuxX64Asset(release);
-  if (!asset || !asset.browser_download_url) {
-    throw new Error('No se encontro asset Linux x64 de VSCodium en release latest.');
-  }
-
-  const assetName = String(asset.name || '').trim();
-  const version = inferVersionFromAsset(assetName, release?.tag_name);
+  const runtimePin = readPinnedOwnIdeRuntime(
+    options.runtimePinPath
+      || String(process.env.FREEJT7_VSCODIUM_RUNTIME_PIN || '').trim()
+      || DEFAULT_RUNTIME_PIN_PATH,
+  );
+  const assetName = runtimePin.assetName;
+  const version = inferVersionFromAsset(assetName, runtimePin.releaseTag);
   const archivePath = path.join(archiveDir, assetName);
   const versionDir = path.join(extractDir, version);
 
+  if (fs.existsSync(archivePath) && !verifyFileSha256(archivePath, runtimePin.sha256)) {
+    fs.rmSync(archivePath, { force: true });
+  }
+
   if (!fs.existsSync(archivePath)) {
     process.stdout.write(`[freejt7-own-ide] Descargando VSCodium ${version}...\n`);
-    await downloadFile(String(asset.browser_download_url), archivePath);
+    await downloadFile(runtimePin.assetUrl, archivePath);
+  }
+
+  if (!verifyFileSha256(archivePath, runtimePin.sha256)) {
+    fs.rmSync(archivePath, { force: true });
+    throw new Error(`Checksum invalido para ${assetName}. Se esperaba ${runtimePin.sha256}`);
   }
 
   if (!fs.existsSync(versionDir) || options.forceDownload) {
@@ -331,11 +351,13 @@ async function ensureOwnIdeBinary(options) {
 
   writeJson(metadataPath, {
     updatedAt: new Date().toISOString(),
-    source: 'vscodium-latest',
-    releaseTag: String(release?.tag_name || ''),
+    source: 'vscodium-pinned',
+    releaseTag: runtimePin.releaseTag,
     assetName,
     archivePath,
     version,
+    sha256: runtimePin.sha256,
+    pinPath: runtimePin.path,
     ideBin,
   });
 
@@ -383,6 +405,9 @@ module.exports = {
   parseArgs,
   pickLinuxX64Asset,
   inferVersionFromAsset,
+  ensureSupportedOwnIdePlatform,
+  readPinnedOwnIdeRuntime,
+  verifyFileSha256,
   ensureOwnIdeBinary,
   runOwnIdeBootstrap,
 };
