@@ -2,6 +2,144 @@
 # Actualizado automaticamente por skills_manager.py
 
 tareas:
+  - id: "20260501-own-ide-native-product-ownership"
+    fecha: "2026-05-01"
+    titulo: "Migrar own-ide de shell VSIX a IDE agent-first con control-plane nativo"
+    descripcion: >
+      Rediseñar el slice estructural que hoy hace que Free JT7 siga viviendo
+      como extension montada sobre VSCodium, moviendo la fuente de verdad del
+      panel/runtime/providers/settings hacia un control-plane propio del perfil
+      aislado de `own-ide`. La iteracion debe dejar plan maestro ejecutable y
+      una implementacion inicial real que empiece a desacoplar bootstrap,
+      configuracion y persistencia del namespace/configuracion de extension.
+    estado: "en_progreso"
+    riesgo: "high"
+    skills_usados: ["using-superpowers", "agent-orchestration", "autonomous-agents", "plan-writing", "software-architecture"]
+    resultado: >
+      En progreso: intake cerrado y primer slice ya aplicado. `own-ide` ahora
+      siembra `freejt7-owned-ide.json` dentro del perfil aislado y el
+      runtime/panel lo usan como fuente preferente en standalone para
+      provider/model/runtime/owner-mode. Tambien existe roadmap ejecutable en
+      `own-ide-native-product-plan.md`. Pendiente: sacar mas estado del panel de
+      `globalState`, llevar settings/proveedores a UI nativa y completar la
+      inversion total del empaquetado hacia producto.
+  - id: "20260501-own-ide-live-agent-first-prompt-verification"
+    fecha: "2026-05-01"
+    titulo: "Reinstalar VSIX activa y validar en own-ide el prompt real sin fallback tecnico"
+    descripcion: >
+      Reempaquetar y reinstalar la VSIX activa de Free JT7 sobre `own-ide`,
+      ejecutar la prueba dirigida con el prompt real "qiuero una skill para
+      instalar programas en linux zorin con pocos clip sin escribor codigo ni
+      utilizar la terminal" y capturar evidencia visual y de runtime para
+      confirmar que ya no aparece el fallback tecnico al usuario y que las
+      aclaraciones, si aparecen, salen por el flujo agent-first.
+    estado: "completada"
+    riesgo: "high"
+    skills_usados: ["verification-before-completion", "free-jt7-global-runtime-audit"]
+    resultado: >
+      Completada. Se recompilo `dist/extension.cjs`, se reempaqueto la VSIX
+      4.2.11 y `app:own-ide:setup` reinstalo el payload con fallback manual en
+      el perfil aislado. La prueba real con
+      "qiuero una skill para instalar programas en linux zorin con pocos clip
+      sin escribor codigo ni utilizar la terminal" quedo verificada con
+      `node tests/installed_extension_smoke.js` y
+      `node temp_install_test/own_ide_prompt_probe.js`: `executionRoute` sigue
+      en `freejt7-agent-core-v2`, `visibleTechnicalFallback=false` y el panel
+      prioriza `skill-creator`/`make-skill-template` sin exponer trazas ni
+      mensajes tecnicos al usuario.
+  - id: "20260501-own-ide-agent-first-runtime-hardening"
+    fecha: "2026-05-01"
+    titulo: "Forzar own-ide agent-first y eliminar bypass legacy al proveedor externo"
+    descripcion: >
+      Corregir la configuracion y el routing que siguen dejando a OpenClaw como
+      ruta primaria en own-ide cuando hay proveedor externo y `runtimeBackend=auto`,
+      y eliminar el bypass legacy de `routeTaskWithGoal()` que llama al proveedor
+      externo sin pasar por el runtime agente. Mantener que el proveedor externo
+      pueda hacer preguntas de aclaracion dentro del flujo agent-first y validar
+      con smokes del panel/runtime mas una regresion adicional del slice.
+    estado: "completada"
+    riesgo: "high"
+    skills_usados: ["agent-orchestration", "verification-before-completion"]
+    resultado: >
+      Completada. `control-panel.js` sanea el estado standalone para arrancar en
+      `freejt7-v2` cuando el modo es `agent`, `freejt7-agent-runtime.js` ahora
+      usa `freejt7-agent-core-v2` como ruta primaria por defecto para provider
+      externo y reserva `openclaw-agent` solo para prompts que requieren MCP
+      nativo (browser/documentos/escritorio), y `routeTaskWithGoal()` dejó de
+      llamar `_callProvider()` directamente para pasar por el runtime propio o
+      por core-v2. Verificado con `node tests/panel_execution_mode_smoke.js`,
+      `node tests/provider_direct_mode_smoke.js`,
+      `node tests/control_panel_state_regression_smoke.js` y
+      `node tests/freejt7_agent_runtime_smoke.js`.
+  - id: "20260501-corev2-skill-intent-context-fix"
+    fecha: "2026-05-01"
+    titulo: "Corregir contaminacion de contexto y routing de skill-creation en core-v2"
+    descripcion: >
+      Investigar por que own-ide sigue mostrando el fallback tecnico
+      `planner-no-json` en solicitudes como "quiero una skill..." y aplicar
+      un parche minimo compatible para evitar que el contexto local automatico
+      reutilice rutas viejas del historial y para priorizar skills de creacion
+      de skills cuando el usuario las pide de forma explicita. Ademas, crear la
+      nueva skill para instalar programas en Zorin/Linux con pocos clics y sin
+      terminal.
+    estado: "en_progreso"
+    riesgo: "high"
+    skills_usados: ["systematic-debugging", "skill-creator", "verification-before-completion"]
+    resultado: >
+      En progreso: intake resuelto, traza real aislada en
+      `copilot-agent/core-v2-runs.jsonl` y parche minimo aplicado sobre el
+      slice local de `extension.runtime` + `freejt7-agent-core-v2`: la
+      heuristica de skill-creation ya tolera el typo `qiuero`, `inspect_path`
+      normaliza `path='.'` cuando el planner omite la ruta y el resumen visible
+      del panel ya no filtra mensajes tecnicos ni la ruta de traza. Validado
+      con `node tests/installed_extension_smoke.js` y
+      `node temp_install_test/own_ide_prompt_probe.js`. Sigue pendiente la
+      parte no ejecutada de crear la nueva skill Zorin GUI y revisar si hace
+      falta tocar `chat-context` para historiales heredados.
+  - id: "20260502-own-ide-native-product-publication-pr"
+    fecha: "2026-05-02"
+    titulo: "Publicar la iteracion own-ide native-product en rama nueva con commits, push y PR"
+    descripcion: >
+      Preparar y publicar el estado actual del working tree como una iteracion
+      Git completa: clasificar el arbol para incluir codigo, documentacion,
+      trazabilidad y empaquetado versionado relevante; excluir binarios y
+      runtimes generados pesados; ejecutar verificacion fresca de build/tests y
+      packaging deb/rpm; y cerrar con rama nueva, commits logicos, push y PR.
+    estado: "en_progreso"
+    riesgo: "high"
+    skills_usados: ["make-repo-contribution", "git-pushing", "verification-before-completion"]
+    resultado: >
+      En progreso: intake resuelto con entregable = rama + commits + push + PR,
+      alcance = todo lo pendiente del working tree y validacion = build/tests +
+      deb/rpm + push. El arbol ya quedo clasificado para publicar codigo,
+      docs, trazabilidad y empaquetado versionado, excluyendo artefactos
+      generados pesados (`dist-deb/**/runtime/**`, `.deb`, `.rpm` y outputs
+      temporales del prompt probe). La verificacion fresca ya quedo en verde con
+      `npm run build:bundle`, smokes focalizadas del slice actual,
+      `npm run package:deb` + `npm run test:deb-package-smoke` y
+      `npm run package:rpm` + `npm run test:rpm-package-smoke`. Pendiente:
+      crear rama nueva, agrupar commits, hacer push y abrir PR.
+  - id: "20260501-panel-intake-corev2-chat-fix"
+    fecha: "2026-05-01"
+    titulo: "Corregir intake modal del panel y respuestas inadecuadas de core-v2"
+    descripcion: >
+      Investigar por que el panel de Free JT7 sigue abriendo preguntas de intake
+      en cuadros nativos de VS Code en vez del chat, por que core-v2 responde
+      con textos tecnicos del planner/fallback al usuario y por que el analisis
+      de rutas absolutas externas falla al resolver paths fuera del workspace.
+      Aplicar un parche minimo compatible y verificarlo con smokes del slice.
+    estado: "completado"
+    riesgo: "high"
+    skills_usados: ["systematic-debugging", "verification-before-completion"]
+    resultado: >
+      Completado: el slice del panel ya quedo estabilizado con intake implicito
+      dentro del chat y guard de cancelacion sin `enqueue`, y el defecto restante
+      de `core-v2` quedo reducido al acceso MCP sobre rutas absolutas externas.
+      Se corrigio `freejt7-agent-core-v2` para extender la policy MCP nativa solo
+      con los paths absolutos explicitamente declarados en los argumentos del
+      `mcp_call`, evitando que `jt7_document_read` devolviera `ok=false` para
+      archivos fuera del workspace. Verificado con `node tests/freejt7_agent_core_v2_smoke.js`
+      y `node tests/control_panel_enqueue_cancel_smoke.js`.
   - id: "20260501-own-ide-clean-reinstall-provider-verification-remote-branch"
     fecha: "2026-05-01"
     titulo: "Reinstalar own-ide limpio, verificar providers live y publicar rama correlativa"

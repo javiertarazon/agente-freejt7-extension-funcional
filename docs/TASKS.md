@@ -6,6 +6,60 @@
 - Cada item debe cambiar de `[ ]` a `[x]` al completarse.
 - Si una tarea falla, agregar sub-item de remediacion y reintento.
 
+## Migracion own-ide a producto nativo agent-first (2026-05-01)
+- [ ] Objetivo principal: dejar de tratar own-ide como extension montada y moverlo hacia un IDE con control-plane propio, configuracion app-owned, autonomia avanzada y empaquetado standalone coherente
+  - [x] Intake derivado de la solicitud: entregable = plan maestro ejecutable + implementacion inicial real; restricciones = se puede romper compatibilidad con el modo extension; validacion = documento de arquitectura, smokes del runtime propio, demo real en own-ide, settings/panel nativos funcionales y paquete standalone
+  - [x] Resolver skills aplicables: `using-superpowers`, `agent-orchestration`, `autonomous-agents`, `plan-writing`, `software-architecture`
+  - [x] Decision de delegacion: no delegada; el primer slice cruza el mismo contrato entre bootstrap del perfil aislado, lectura/persistencia de provider/runtime/panel y empaquetado del launcher propio
+  - [x] Confirmar la causa raiz tecnica de por que own-ide sigue comportandose como VSIX sobre VSCodium
+  - [x] Crear un control-plane app-owned del perfil (`own-ide`) y hacerlo fuente preferente en standalone
+  - [x] Separar el primer slice de provider/model/runtime/owner-mode del namespace de extension hacia ese control-plane
+  - [x] Escribir roadmap de migracion completa a IDE agent-first nativo
+  - [x] Ejecutar smokes del slice y reconciliar `RESUME.md` + `audit-log.jsonl`
+
+## Hardening own-ide agent-first + aclaraciones por proveedor externo (2026-05-01)
+- [x] Objetivo principal: dejar own-ide con backend propio agent-first por defecto, eliminar el bypass legacy al proveedor externo y mantener preguntas de aclaracion del modelo externo dentro del flujo del agente
+  - [x] Intake derivado de la solicitud: entregable = aplicar ambos cambios; restricciones = mantener preguntas de aclaracion del proveedor externo; validacion = smokes + prueba dirigida del panel/runtime + regresion adicional del slice
+  - [x] Resolver skills aplicables: `agent-orchestration`, `verification-before-completion`
+  - [x] Decision de delegacion: no delegada; el cambio cruza el mismo contrato entre estado inicial del panel, `freejt7-agent-runtime` y `routeTaskWithGoal()` legacy
+  - [x] Forzar configuracion inicial/persistida de own-ide a backend propio (`freejt7-v2`) sin perder proveedor externo subordinado
+  - [x] Cambiar la planificacion por defecto de proveedores externos para que el runtime propio sea primario y OpenClaw quede como fallback
+  - [x] Eliminar el bypass legacy de `routeTaskWithGoal()` para que toda ejecucion pase por el runtime agente
+  - [x] Añadir/ajustar regresiones del slice para bloquear futuras recaidas
+  - [x] Ejecutar smokes y reconciliar `RESUME.md` + `audit-log.jsonl`
+
+## Verificacion live own-ide + reinstalacion VSIX activa (2026-05-01)
+- [x] Objetivo principal: reinstalar la VSIX activa y verificar en own-ide el prompt real sin fallback tecnico visible
+  - [x] Intake derivado de la solicitud: entregable = reinstalar VSIX activa + ejecutar prompt real + evidencia visual y runtime; restricciones = usar el prompt exacto del usuario y preservar aclaraciones del proveedor dentro del flujo agent-first; validacion = prueba real en own-ide con capturas/logs frescos
+  - [x] Resolver skills aplicables: `verification-before-completion`, `free-jt7-global-runtime-audit`
+  - [x] Decision de delegacion: no delegada; la verificacion cruza el mismo slice operativo entre packaging VSIX, bootstrap own-ide, runtime instalado y evidencia final del flujo real
+  - [x] Reempaquetar VSIX local y reinstalarla en la instalacion activa de own-ide
+  - [x] Ejecutar el prompt dirigido real en own-ide: `qiuero una skill para instalar programas en linux zorin con pocos clip sin escribor codigo ni utilizar la terminal`
+  - [x] Capturar evidencia del resultado y evidencia de runtime/logs de la ruta agent-first
+  - [x] Reconciliar `RESUME.md` + `audit-log.jsonl` con el resultado final
+
+## Correccion core-v2 skill-intent + skill nueva Zorin GUI (2026-05-01)
+- [ ] Objetivo principal: eliminar el fallback tecnico de core-v2 en solicitudes de creacion de skills y crear la skill nueva para instalar programas en Zorin/Linux sin terminal
+  - [x] Intake derivado de la solicitud: entregable = corregir el comportamiento del IDE para el prompt real + crear la skill; restricciones = cambio minimo y compatible, sin reabrir packaging; validacion = el prompt deja de devolver el fallback tecnico y la skill existe/invoca correctamente
+  - [x] Resolver skills aplicables: `systematic-debugging`, `skill-creator`, `verification-before-completion`
+  - [x] Decision de delegacion: no delegada; el fallo y la nueva skill cruzan el mismo slice entre ensamblado de contexto, resolucion de skills y artefactos `.github/skills`
+  - [x] Aislar la traza exacta del fallo en `copilot-agent/core-v2-runs.jsonl`
+  - [x] Confirmar la hipotesis local sobre contexto local heredado del historial y routing debil de `skill-creator`
+  - [ ] Parchear `chat-context` para no reinyectar rutas viejas no pedidas en la solicitud actual
+  - [x] Reforzar la resolucion de skills para prompts explicitos de creacion de skills
+  - [ ] Crear la skill nueva para instalacion GUI en Zorin/Linux
+  - [x] Ejecutar smokes focalizadas y reconciliar `RESUME.md` + `audit-log.jsonl`
+
+## Publicacion Git/PR own-ide native-product (2026-05-02)
+- [ ] Objetivo principal: publicar en rama nueva y PR la iteracion actual del working tree, incluyendo codigo, documentacion, trazabilidad y empaquetado versionado, excluyendo artefactos binarios generados
+  - [x] Intake derivado de la solicitud: entregable = rama + commits + push + PR; restricciones = incluir todo el working tree publicable sin meter basura generada; validacion = build/tests + deb/rpm + push
+  - [x] Resolver skills aplicables: `make-repo-contribution`, `git-pushing`, `verification-before-completion`
+  - [x] Decision de delegacion: no delegada; la clasificacion del arbol, la verificacion, el staging y la publicacion comparten el mismo slice tecnico y de trazabilidad
+  - [x] Clasificar el working tree: incluir codigo/docs/trazabilidad/empaquetado versionado y excluir `dist-deb/**/runtime/**`, binarios `.deb/.rpm` y outputs temporales del prompt probe
+  - [x] Ejecutar verificacion fresca: `npm run build:bundle`, `chat_context_smoke`, `freejt7_agent_core_v2_smoke`, `freejt7_agent_runtime_smoke`, `control_panel_state_regression_smoke`, `control_panel_enqueue_cancel_smoke`, `extension_runtime_skill_priority_smoke`, `freejt7_app_bootstrap_smoke`, `package:deb/test:deb-package-smoke`, `package:rpm/test:rpm-package-smoke`
+  - [ ] Crear rama nueva, agrupar commits logicos y hacer push a `origin`
+  - [ ] Abrir PR con resumen tecnico y evidencia de verificacion
+
 ## Reinstalacion limpia own-ide + verificacion live providers + rama remota (2026-05-01)
 - [x] Objetivo principal: desmontar la instalacion actual de `own-ide`, verificar en vivo los providers con credencial detectable y reinstalar limpio antes de publicar una rama correlativa remota
   - [x] Intake derivado de la solicitud: entregable = uninstall limpio + verificacion previa de providers/modelos + reinstall limpio + push a rama correlativa; restricciones = respuestas cortas, tecnicas y ahorro de contexto; validacion = auditoria runtime fresca + smokes/providers live + arranque limpio own-ide
@@ -17,6 +71,16 @@
   - [x] Validar arranque/setup limpio de `own-ide` con smoke acotada
   - [x] Crear rama correlativa desde `release/v4.2.11-panel-pro` y subir cambios al remoto
   - [x] Generar informe `.md` final con lo ejecutado
+
+## Correccion panel/core-v2 chat-first (2026-05-01)
+- [x] Objetivo principal: corregir el intake modal del panel y las respuestas tecnicas/fallidas de core-v2 en solicitudes de chat
+  - [x] Intake derivado de la solicitud: entregable = identificar y corregir la falla real en panel/core-v2; restricciones = cambio minimo, compatible hacia atras y sin repreguntas fuera del chat; validacion = smokes de core-v2/panel y evidencia en trazas
+  - [x] Resolver skills aplicables: `systematic-debugging`, `verification-before-completion`
+  - [x] Decision de delegacion: no delegada; el fallo cruza el mismo slice entre `preparePanelTask`, heuristica del core-v2 y resolucion de rutas para documentos/MCP
+  - [x] Sustituir intake modal del panel por intake implicito no bloqueante en el flujo webview/chat
+  - [x] Limitar `operationalGoal()` al objetivo focal del usuario para no disparar fallback tecnico por texto auditado
+  - [x] Corregir resolucion de rutas absolutas externas en `freejt7-agent-core-v2`
+  - [x] Ejecutar smokes del slice y reconciliar `RESUME.md` + `audit-log.jsonl`
 
 ## Cierre de packaging RPM y regla de validacion de arbol (2026-04-30)
 - [x] Objetivo principal: dejar justificado formalmente el warning `Missing build-id` del RPM y fijar una regla operativa para no inspeccionar artefactos `dist-*` en validaciones de arbol

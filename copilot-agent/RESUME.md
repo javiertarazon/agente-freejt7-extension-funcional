@@ -1,5 +1,10 @@
 # Estado actual
-*Actualizado: 2026-05-01 00:26 UTC*
+*Actualizado: 2026-05-02 02:25 UTC*
+- Publicacion Git activa: se clasifico el working tree para una rama/PR nueva; entran codigo, documentacion, trazabilidad y empaquetado versionado, y se excluyen artefactos generados pesados (`dist-deb/**/runtime/**`, binarios `.deb/.rpm` y outputs temporales del prompt probe).
+- Incidente activo: `20260501-own-ide-native-product-ownership`. Primer slice completado: own-ide ya siembra un control-plane propio de perfil (`freejt7-owned-ide.json`) y el runtime/panel leen con prioridad ese estado app-owned para provider/model/runtime/owner-mode en standalone. El empaquetado deb/rpm ya incluye el helper compartido y existe plan maestro en `own-ide-native-product-plan.md`.
+- Incidente cerrado: `20260501-own-ide-live-agent-first-prompt-verification`. La VSIX activa se recompilo/reinstalo en `own-ide` y la prueba real con el prompt typo `qiuero una skill...` ya no muestra fallback tecnico visible; la ruta sigue en `freejt7-agent-core-v2` y el probe prioriza `skill-creator` + `make-skill-template`.
+- Incidente cerrado: `20260501-own-ide-agent-first-runtime-hardening`. own-ide ya sanea `runtimeBackend` a `freejt7-v2` en standalone, el planner usa `freejt7-agent-core-v2` como default para provider externo y deja `openclaw-agent` solo para prompts con MCP nativo, y `routeTaskWithGoal()` dejó de usar `_callProvider()` directo.
+- Incidente activo: `20260501-corev2-skill-intent-context-fix` en progreso para completar la skill nueva de instalacion GUI para Zorin/Linux; el bug de filtro tecnico ya quedo mitigado con tolerancia al typo `qiuero`, default seguro para `inspect_path` y resumen publico saneado en `freejt7-agent-core-v2`.
 - Último run exitoso cerrado: `20260430-rpm-buildid-justification-tree-validation` (2026-04-30).
 - Run relacionado previo: `20260430-auditoria-standalone-packaging-claim`.
 - Resultado base vigente: existe `freejt7-agent-core-v2` paralelo y `own-ide` sigue apuntando a `freejt7.panel.runtimeBackend=freejt7-v2`.
@@ -14,8 +19,16 @@
 - Regla operativa vigente: en validaciones de árbol/working tree excluir `dist-deb/**` y `dist-rpm/**` salvo auditoría explícita de packaging para no inflar contexto con artefactos generados.
 - Iteración operativa vigente: `own-ide` fue desmontado y reinstalado sobre perfil/runtime limpio; la evidencia de ejecución y estado real de providers quedó consolidada en `docs/23-REINSTALACION-LIMPIA-OWN-IDE-Y-VERIFICACION-PROVIDERS.md`.
 - Rama remota vigente para esta iteración: `origin/release/v4.2.12-clean-install`.
+- Incidente `20260501-panel-intake-corev2-chat-fix` cerrado: el panel mantiene el intake dentro del chat y el fallo restante de core-v2 estaba en la policy MCP nativa, que bloqueaba rutas absolutas externas explícitas con `ok=false` aunque la acción ya viniera resuelta.
 
 ## Verificación más reciente
+- `npm run build:bundle && node tests/chat_context_smoke.js && npm run test:freejt7-agent-core-v2-smoke && node tests/freejt7_agent_runtime_smoke.js && node tests/control_panel_state_regression_smoke.js && npm run test:control-panel-enqueue-cancel-smoke && node tests/extension_runtime_skill_priority_smoke.js && npm run test:freejt7-app-bootstrap-smoke` -> OK
+- `npm run package:deb && npm run test:deb-package-smoke` -> OK (`dist-deb/freejt7-desktop_4.2.11-1_amd64.deb`)
+- `npm run package:rpm && npm run test:rpm-package-smoke` -> OK (`dist-rpm/freejt7-desktop_4.2.11-1_x86_64.rpm`; warnings `Missing build-id` solo en payload vendor `runtime/vscodium/.../node_modules/**`)
+- `npm run test:freejt7-app-bootstrap-smoke` -> OK (crea `freejt7-owned-ide.json`)
+- `get_errors` en runtime/panel/bootstrap/control-plane -> OK
+- `npm run build:bundle` -> OK
+- `npm run test:freejt7-own-ide-bootstrap-smoke` -> OK
 - `node tests/control_panel_enqueue_cancel_smoke.js` -> OK
 - `node tests/freejt7_own_ide_bootstrap_smoke.js` -> OK
 - `node tests/own_ide_panel_headless_e2e_smoke.js` -> OK
@@ -30,8 +43,12 @@
 - `rpm2cpio dist-rpm/freejt7-desktop_4.2.11-1_noarch.rpm | cpio -t` -> OK; evidencia de launcher+VSIX
 - `sha256sum` VSIX raíz vs VSIX embebida en `.deb`/`.rpm` -> distinto; artefactos `dist-*` no alineados con la VSIX actual
 - `node tests/freejt7_agent_core_v2_smoke.js` -> OK
+- `node tests/control_panel_enqueue_cancel_smoke.js` -> OK
 - `node tests/freejt7_agent_core_v2_evidence_gate_smoke.js` -> OK
 - `node tests/freejt7_agent_runtime_smoke.js` -> OK
+- `node tests/panel_execution_mode_smoke.js` -> OK
+- `node tests/provider_direct_mode_smoke.js` -> OK
+- `node tests/control_panel_state_regression_smoke.js` -> OK
 - `node tests/freejt7_own_ide_bootstrap_smoke.js` -> OK
 - `npm run app:own-ide:dry-run` -> OK
 - `npm run app:own-ide:setup` -> OK (fallback manual de VSIX activado)
@@ -49,10 +66,11 @@
 - `node tests/freejt7_own_ide_bootstrap_smoke.js` -> OK
 - `node tests/installed_extension_smoke.js` -> OK
 - `node tests/own_ide_panel_headless_e2e_smoke.js` -> OK
+- `node temp_install_test/own_ide_prompt_probe.js` -> OK (`visibleTechnicalFallback=false`, `executionRoute=freejt7-agent-core-v2`, `prioritizedSkills=skill-creator, make-skill-template, ...`)
 
 ## Bloqueos activos
 - [ ] Seguir endureciendo el claim de app propia más allá del launcher + VSIX si se busca paridad fuerte con IDEs totalmente propios.
 - [ ] Resolver cuota/rate-limit de `openrouter` y `clod` si se quiere cierre de verificación live al 100% sobre todos los providers autenticados.
 
 ## Siguiente acción recomendada
-Con la reinstalación limpia ya validada, el siguiente frente útil es resolver cuota/keys de providers pendientes y luego reducir superficie heredada del host en la app standalone.
+Completar la publicacion actual: crear la rama nueva, agrupar commits logicos, empujar a `origin` y abrir la PR con la evidencia fresca de build/tests/deb/rpm.
