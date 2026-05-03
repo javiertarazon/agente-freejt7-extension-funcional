@@ -92,12 +92,15 @@
   - [x] Reinstalar own-ide limpio con el payload actual y verificar panel/agente en instalacion real
 
 ## Migracion own-ide a producto nativo agent-first (2026-05-01)
-- [ ] Objetivo principal: dejar de tratar own-ide como extension montada y moverlo hacia un IDE con control-plane propio, configuracion app-owned, autonomia avanzada y empaquetado standalone coherente
+- [x] Objetivo principal: dejar de tratar own-ide como extension montada y moverlo hacia un IDE con control-plane propio, configuracion app-owned, autonomia avanzada y empaquetado standalone coherente
   - [x] Intake derivado de la solicitud: entregable = plan maestro ejecutable + implementacion inicial real; restricciones = se puede romper compatibilidad con el modo extension; validacion = documento de arquitectura, smokes del runtime propio, demo real en own-ide, settings/panel nativos funcionales y paquete standalone
   - [x] Resolver skills aplicables: `using-superpowers`, `agent-orchestration`, `autonomous-agents`, `plan-writing`, `software-architecture`
   - [x] Decision de delegacion: no delegada; el primer slice cruza el mismo contrato entre bootstrap del perfil aislado, lectura/persistencia de provider/runtime/panel y empaquetado del launcher propio
   - [x] Confirmar la causa raiz tecnica de por que own-ide sigue comportandose como VSIX sobre VSCodium
   - [x] Crear un control-plane app-owned del perfil (`own-ide`) y hacerlo fuente preferente en standalone
+  - [x] Separar el primer slice de provider/model/runtime/owner-mode del namespace de extension hacia ese control-plane
+  - [x] Escribir roadmap de migracion completa a IDE agent-first nativo
+  - [x] Ejecutar smokes del slice y reconciliar `RESUME.md` + `audit-log.jsonl`
   - [x] Separar el primer slice de provider/model/runtime/owner-mode del namespace de extension hacia ese control-plane
   - [x] Escribir roadmap de migracion completa a IDE agent-first nativo
   - [x] Ejecutar smokes del slice y reconciliar `RESUME.md` + `audit-log.jsonl`
