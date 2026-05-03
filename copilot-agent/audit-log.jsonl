@@ -778,3 +778,4 @@
 {"ts": "2026-05-02T16:29:52Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
 {"ts": "2026-05-03T03:39:13Z", "action": "task-close", "detail": "hermes-integration-modules+H1-02-host-as-adapter+own-ide-clean-install: succeeded"}
 {"ts": "2026-05-03T12:24:11Z", "action": "task-close", "detail": "plan-progress-H1-02-Hermes-own-ide: succeeded"}
+{"ts": "2026-05-03T12:26:45Z", "action": "task-close", "detail": "Migracion own-ide a producto nativo agent-first: succeeded"}
