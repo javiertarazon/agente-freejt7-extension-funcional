@@ -4178,6 +4178,127 @@
       },
       "lastSeenAt": "2026-05-01T11:42:30.602Z",
       "status": "active"
+    },
+    "panel-6ac419f8": {
+      "sessionId": "panel-6ac419f8",
+      "createdAt": "2026-05-02T04:09:38.194Z",
+      "events": [
+        {
+          "id": "651ded31-2ac3-4edc-ac5b-84b3ca0a7e13",
+          "type": "panel:session.created",
+          "createdAt": "2026-05-02T04:09:38.199Z",
+          "payload": {
+            "title": "Prueba dirigida own-ide"
+          }
+        },
+        {
+          "id": "ae1826fa-71a9-4686-92fa-f1ceec5cb2a1",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-02T04:09:38.257Z",
+          "payload": {
+            "taskId": "task-d4b8e4bd-a",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "791f182a-8fd9-4b0f-84eb-098457769e07",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-02T04:09:38.370Z",
+          "payload": {
+            "taskId": "task-d4b8e4bd-a",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "94bf8365-03c2-42e4-8d8a-110b7e01945b",
+          "type": "panel:task.failed",
+          "createdAt": "2026-05-02T04:09:39.795Z",
+          "payload": {
+            "taskId": "task-d4b8e4bd-a",
+            "retries": 1,
+            "error": "Free JT7 router fallback exhausted: Free JT7 (openrouter): error HTTP 400. deepseek-reasoner is not a valid model ID"
+          }
+        }
+      ],
+      "reviewHistory": [],
+      "metadata": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "systemIdentity": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "lastSeenAt": "2026-05-02T04:09:39.795Z",
+      "status": "active"
+    },
+    "panel-aaa828e9": {
+      "sessionId": "panel-aaa828e9",
+      "createdAt": "2026-05-02T04:11:11.563Z",
+      "events": [
+        {
+          "id": "4cca26f2-af38-48a4-9d2f-b6b9224fcf30",
+          "type": "panel:session.created",
+          "createdAt": "2026-05-02T04:11:11.566Z",
+          "payload": {
+            "title": "Prueba dirigida own-ide"
+          }
+        },
+        {
+          "id": "8bc165ce-9b92-4f5b-84ed-7ed3ce08731a",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-02T04:11:11.637Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "e0e47c52-02ee-427e-a86a-71cb2951e0e1",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-02T04:11:11.721Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "993c29cb-a124-4226-b666-4dbc7e2df0a9",
+          "type": "panel:task.completed",
+          "createdAt": "2026-05-02T04:11:18.499Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "provider": "openrouter",
+            "model": "openai/gpt-oss-20b:free"
+          }
+        },
+        {
+          "id": "b18f95e7-27f1-474c-9631-72e4cb079add",
+          "type": "panel:task.verified",
+          "createdAt": "2026-05-02T04:11:18.511Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "verificationStatus": "verified",
+            "evidenceCount": 2,
+            "warnings": []
+          }
+        }
+      ],
+      "reviewHistory": [],
+      "metadata": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "systemIdentity": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "lastSeenAt": "2026-05-02T04:11:18.511Z",
+      "status": "active"
     }
   },
   "queue": [],
@@ -4292,5 +4413,5 @@
       "createdAt": "2026-04-26T04:39:38.262Z"
     }
   ],
-  "updatedAt": "2026-05-02T02:09:59.677Z"
+  "updatedAt": "2026-05-02T23:59:57.530Z"
 }

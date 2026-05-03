@@ -122,10 +122,12 @@ function testRunSkeletonMarksLegacySecondaryCompatibility() {
   );
 
   assert.equal(run.model_resolution.compatibility_mode, "copilot-legacy-secondary");
+  assert.equal(run.model_resolution.host_adapter_mode, "secondary-host-adapter");
   assert.equal(run.model_resolution.legacy_route_isolated, true);
   assert.equal(run.model_resolution.legacy_provider_source, "default-copilot");
   assert.equal(run.model_resolution.ignored_primary_provider, true);
   assert.equal(run.model_resolution.config_namespace, "freejt7.copilotRouter.*");
+  assert.equal(run.execution_route.host_adapter_mode, "secondary-host-adapter");
   assert.equal(run.execution_route.legacy_secondary, true);
   assert.equal(run.execution_route.primary_provider_observed, "openrouter");
 }

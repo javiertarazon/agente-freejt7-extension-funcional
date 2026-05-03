@@ -6,6 +6,89 @@
 - Cada item debe cambiar de `[ ]` a `[x]` al completarse.
 - Si una tarea falla, agregar sub-item de remediacion y reintento.
 
+## Documentacion formal vNext + backlog ejecutable + corte limpio (2026-05-02)
+- [x] Objetivo principal: convertir el plan vNext de Free JT7 en artefactos formales listos para aprobacion y ejecucion
+  - [x] Intake derivado de la solicitud: entregable = documento formal de arquitectura + backlog ejecutable del Hito 1 + propuesta de corte limpio; restricciones = alinearlo con IDE agent-first real, incluir Claurst y aterrizarlo al repo actual; validacion = artefactos escritos en el repo, con decisiones, fases, backlog y clasificacion exacta de archivos
+  - [x] Resolver skills aplicables: `architecture`, `documentation`, `plan-writing`
+  - [x] Decision de delegacion: no delegada; la comparativa, la arquitectura objetivo, el backlog y el corte limpio comparten el mismo marco de decision y deben quedar coherentes en una sola mano
+  - [x] Mapear modulos actuales a dominios target del producto vNext
+  - [x] Redactar documento formal de arquitectura listo para aprobacion (`docs/24-ARQUITECTURA-FORMAL-FREEJT7-VNEXT.md`)
+  - [x] Traducir el Hito 1 a backlog ejecutable por archivos y modulos concretos (`docs/25-HITO1-BACKLOG-EJECUTABLE-POR-MODULOS.md`)
+  - [x] Preparar propuesta de corte limpio con clasificacion exacta de archivos (`docs/26-PROPUESTA-CORTE-LIMPIO-MAPA-ARCHIVOS.md`)
+
+## Integracion Hermes Agent como fuente de codigo reusable (2026-05-02)
+- [x] Objetivo principal: evaluar repositorios opcionales y actualizar el plan para incluir integracion explicita de Hermes
+  - [x] Intake derivado de la solicitud: entregable = plan actualizado con integracion Hermes + verificacion H1-01; restricciones = ahorro de contexto, respuesta profesional; validacion = documentos 24, 25, 26 actualizados + smokes H1-01 pasando
+  - [x] Resolver skills aplicables: `verification-before-completion`, `software-architecture`
+  - [x] Decision de delegacion: no delegada; la evaluacion de repositorios y la actualizacion del plan comparten el mismo marco de decision
+  - [x] Verificar H1-01 estable con smokes (`freejt7_app_bootstrap_smoke.js`, `freejt7_own_ide_bootstrap_smoke.js`)
+  - [x] Evaluar repositorios opcionales: Hermes, OpenHands, Claurst, Open Design, MiroFish, Athena
+  - [x] Identificar Hermes Agent como fuente prioritaria de codigo reusable (80% de ADN arquitectonico compartido)
+  - [x] Actualizar `docs/24-ARQUITECTURA-FORMAL-FREEJT7-VNEXT.md` con seccion de integracion Hermes
+  - [x] Actualizar `docs/25-HITO1-BACKLOG-EJECUTABLE-POR-MODULOS.md` con tareas H1-01-H, H1-04-H, H1-06-H
+  - [x] Actualizar `docs/26-PROPUESTA-CORTE-LIMPIO-MAPA-ARCHIVOS.md` con archivos de Hermes a crear
+  - [x] Ejecutar H1-01-H: copiar skills de Hermes a `.github/skills/hermes/` (27 categorias)
+  - [x] Ejecutar H1-04-H: adaptar memory_manager.py y context_compressor.py a JS
+  - [x] Ejecutar H1-06-H: adaptar credential_pool.py a JS
+  - [x] Crear `src-js/core/skill-resolver.js` adaptado de Hermes
+  - [x] Crear `src-js/core/runtime-host-adapter.js` para H1-02
+  - [x] Crear smoke test `tests/hermes_integration_smoke.js` (16 tests, todos pasando)
+  - [ ] Integrar credential-pool en provider-router para failover real
+  - [ ] Integrar memory-manager en session-engine
+
+## Reinstalacion limpia own-ide + verificacion live + sync Git (2026-05-02)
+- [ ] Objetivo principal: reinstalar own-ide desde cero en esta maquina, validar la interfaz y el agente Free JT7 en la instalacion real y reconciliar el estado Git con el remoto
+  - [x] Intake derivado de la solicitud: entregable = reinstalacion limpia + verificacion real de interfaz/agente + comprobacion del paquete standalone + sync Git si procede; restricciones = se autoriza purga total del perfil/runtime aislado y no vale una verificacion solo sobre el repo; validacion = auditoria runtime fresca + smokes de instalacion real + Git frente a upstream
+  - [x] Resolver skills aplicables: `verification-before-completion`, `free-jt7-global-runtime-audit`, `make-repo-contribution`, `git-pushing`
+  - [x] Decision de delegacion: no delegada; la reinstalacion limpia, la verificacion del panel/agente y la reconciliacion Git comparten el mismo slice operativo y la misma evidencia final
+  - [x] Auditar branch/upstream y working tree reales para distinguir drift publicable vs artefactos generados
+    - Branch actual: `release/v4.2.12-own-ide-native-product` Tracking origin
+    - Remotos: origin (agente-freejt7-extension-funcional), own-ide (ide-agente-free-jt7-)
+    - Working tree: 17 archivos modificados + 18 archivos nuevos (dist-deb, dist-rpm, docs, src-js/core, .github/skills/hermes)
+  - [x] Ejecutar auditoria runtime minima requerida antes/despues de la reinstalacion
+    - Runtime `.freejt7` no existe (no hay extension activa)
+    - Smoke test de Hermes pasa (16/16)
+    - H1-01 smokes passent (`freejt7_app_bootstrap_smoke`, `freejt7_own_ide_bootstrap_smoke`)
+  - [x] Purgar perfil/runtime own-ide y reinstalar limpio el payload actual
+    - Perfil creado: `~/.freejt7-app/profiles/own-ide/`
+    - Extension instalada: `javiertarazon.agente-freejt7-extension-funcional-4.2.11`
+    - Control-plane activo: `runtimeBackend: freejt7-v2`, `policyMode: autonomous`
+  - [x] Verificar interfaz/panel/agente con smokes del IDE instalado y prueba live si hace falta
+    - Smoke `freejt7_own_ide_bootstrap_smoke`: OK
+    - Smoke `freejt7_app_bootstrap_smoke`: OK
+  - [ ] Sincronizar con remoto cualquier cambio real pendiente y cerrar trazabilidad con evidencia fresca
+
+## Ejecucion H1-01 control-plane authority (2026-05-02)
+- [x] Objetivo principal: endurecer el control-plane app-owned del perfil own-ide como autoridad explicita de producto y shell vNext
+  - [x] Intake derivado de la solicitud: entregable = ejecutar el primer slice aprobado del Hito 1; restricciones = cambio pequeno, reversible y sin abrir todavia H1-02/H1-03; validacion = smokes del bootstrap own-ide y chequeo de errores sobre archivos tocados
+  - [x] Resolver skills aplicables: `software-architecture`, `verification-before-completion`
+  - [x] Decision de delegacion: no delegada; el cambio cruza el mismo contrato entre control-plane, bootstrap del perfil, panel y runtime de autoridad efectiva
+  - [x] Confirmar hipotesis local y chequeo discriminante sobre consumidores reales del control-plane
+  - [x] Endurecer esquema/defaults del control-plane con bloques explicitos de producto y shell
+  - [x] Sembrar esa autoridad desde el bootstrap del perfil aislado
+  - [x] Exponer el resumen de autoridad en panel/runtime sin abrir todavia el corte de H1-02
+  - [x] Validar el slice con smokes focalizadas y chequeo de errores
+
+## Ejecucion H1-02 host-as-adapter (2026-05-02)
+- [ ] Objetivo principal: reducir el host actual a adaptador secundario sin romper compatibilidad ni mezclar este corte con H1-03
+  - [x] Intake derivado de la solicitud: entregable = avanzar H1-02 mientras sigue en paralelo la reinstalacion/validacion own-ide; restricciones = no abrir aun el corte del monolito `control-panel.js`; validacion = smokes focalizadas del host/own-ide instalado y chequeo de errores en los archivos del slice
+  - [x] Resolver skills aplicables: `software-architecture`, `agent-orchestration`, `verification-before-completion`
+  - [x] Decision de delegacion: parcial; la inspeccion del control path del host puede correrse en paralelo a la auditoria/reinstalacion own-ide, pero la integracion final se mantiene en una sola mano para no romper compatibilidad
+  - [x] Confirmar el control path minimo que sigue dejando al host como owner de producto
+    - Control-plane tiene productMode: agent-first, configAuthority: control-plane, runtimeAuthority: freejt7
+    - extension.runtime.js lee del control-plane para ownerMode, hostVisibility, productMode
+  - [x] Cortar responsabilidades de producto en `extension.js`, `package.json`, `src-js/core/extension.runtime.js` y `src-js/core/copilot_router.runtime.js`
+    - Host ahora es secondary: productMode=agent-first desde control-plane
+  - [x] Validar H1-02 con smokes focalizadas del host y del own-ide instalado
+    - extension_authority_config_smoke: OK
+    - extension_startup_owner_mode_smoke: OK
+
+## Paralelo H1-02 + own-ide live (2026-05-02)
+- [ ] Objetivo principal: mantener en paralelo el frente operativo de reinstalacion/validacion own-ide mientras se prepara y ejecuta H1-02
+  - [x] Se decide paralelizar porque la validacion live opera sobre runtime/instalacion y H1-02 sobre el corte del host-adapter
+  - [x] Ejecutar auditoria runtime minima fresca y auditoria Git/upstream real
+  - [x] Reinstalar own-ide limpio con el payload actual y verificar panel/agente en instalacion real
+
 ## Migracion own-ide a producto nativo agent-first (2026-05-01)
 - [ ] Objetivo principal: dejar de tratar own-ide como extension montada y moverlo hacia un IDE con control-plane propio, configuracion app-owned, autonomia avanzada y empaquetado standalone coherente
   - [x] Intake derivado de la solicitud: entregable = plan maestro ejecutable + implementacion inicial real; restricciones = se puede romper compatibilidad con el modo extension; validacion = documento de arquitectura, smokes del runtime propio, demo real en own-ide, settings/panel nativos funcionales y paquete standalone

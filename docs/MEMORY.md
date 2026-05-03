@@ -127,3 +127,6 @@ Este archivo evita repetir errores en sesiones futuras. Se actualiza despues de 
 
 ## Historial de bloqueos complejos
 - Pendiente: agregar entradas cuando haya bloqueos con 3+ intentos.
+| 2026-05-02 | Hermes Agent comparte 80% del ADN arquitectónico de Free JT7 vNext | Al evaluar repositorios opcionales, Hermes tenía los mismos contratos: control-plane propio, runtime agnóstico, skills como unidades operativas, memoria por sesión y delegación a subagentes | Regla: al integrar código de Hermes, copiar skills directamente, adaptar módulos Python→JS conservando lógica, y usar como especificación ejecutable para validar implementación propia |
+| 2026-05-02 | Los smoke tests de integración deben usar rutas relativas correctas | El test `hermes_integration_smoke.js` usaba `./src-js/core/` en vez de `../src-js/core/` desde el directorio `tests/`, causando errores de module not found | Regla: los tests en subdirectorios deben usar rutas relativas correctas (`../`) para importar módulos del proyecto |
+| 2026-05-02 | El YAML parser simple no convierte tipos automáticamente | `parseFrontmatter()` extrae valores como strings; `priority: 10` se convierte en `'10'`, no en `10` | Regla: cuando se necesiten tipos numéricos del frontmatter, convertir explícitamente con `Number()` o aceptar ambos formatos en los tests |

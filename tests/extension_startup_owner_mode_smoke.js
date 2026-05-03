@@ -53,6 +53,20 @@ function main() {
     'si el panel está deshabilitado no debe autoabrirse',
   );
 
+  assert.equal(
+    shouldAutoOpenControlPanel(null, {
+      standaloneMode: true,
+      authority: {
+        panelEnabled: true,
+        openOnStartup: true,
+        ownerMode: 'agent',
+        hostIntegration: 'hidden',
+      },
+    }),
+    false,
+    'si el host está oculto no debe autoabrirse aunque la autoridad del panel siga activa',
+  );
+
   console.log('extension_startup_owner_mode_smoke: ok');
 }
 

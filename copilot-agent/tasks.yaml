@@ -2,6 +2,81 @@
 # Actualizado automaticamente por skills_manager.py
 
 tareas:
+  - id: "20260502-h1-02-host-adapter-cut"
+    fecha: "2026-05-02"
+    titulo: "Ejecutar H1-02: reducir el host a adaptador secundario"
+    descripcion: >
+      Ejecutar el segundo slice del backlog del Hito 1 para reducir el host
+      tipo extension a un adaptador secundario, moviendo las decisiones de
+      producto fuera de `extension.js`, `package.json`,
+      `src-js/core/extension.runtime.js` y `src-js/core/copilot_router.runtime.js`
+      sin romper la compatibilidad actual.
+    estado: "en_progreso"
+    riesgo: "high"
+    skills_usados: ["software-architecture", "agent-orchestration", "verification-before-completion"]
+    resultado: >
+      En progreso: se abre el slice H1-02 en paralelo al frente operativo de
+      reinstalacion/validacion own-ide. Pendiente localizar el control path
+      minimo que sigue dejando al host como owner de producto y aplicar el
+      corte sin invadir todavia H1-03.
+  - id: "20260502-h1-01-owned-control-plane-authority"
+    fecha: "2026-05-02"
+    titulo: "Ejecutar H1-01: endurecer control-plane app-owned como autoridad de producto y shell"
+    descripcion: >
+      Ejecutar el primer slice del backlog aprobado del Hito 1 reforzando el
+      control-plane del perfil own-ide como fuente explicita de verdad para el
+      modo de producto, la shell agent-first visible y la autoridad operativa
+      del runtime/provider, con validacion inmediata mediante smokes del
+      bootstrap del perfil.
+    estado: "completada"
+    riesgo: "high"
+    skills_usados: ["software-architecture", "verification-before-completion"]
+    resultado: >
+      Completada: el control-plane app-owned ahora declara bloques explicitos
+      de `product` y `shell`, el bootstrap del perfil los siembra como
+      autoridad operativa, el panel/runtime exponen ese resumen de autoridad y
+      las smokes `freejt7_app_bootstrap_smoke` +
+      `freejt7_own_ide_bootstrap_smoke` junto con `get_errors` quedaron en OK.
+  - id: "20260502-vnext-architecture-approval-docs"
+    fecha: "2026-05-02"
+    titulo: "Documentar arquitectura formal vNext, backlog ejecutable de Hito 1 y propuesta de corte limpio"
+    descripcion: >
+      Convertir el plan arquitectonico discutido para Free JT7 en artefactos
+      formales listos para aprobacion: un documento de arquitectura vNext,
+      un backlog ejecutable del Hito 1 por archivos y modulos concretos del
+      repo actual, y una propuesta de corte limpio que indique con precision
+      que archivos conservar, congelar y reemplazar primero durante la
+      migracion hacia un IDE agent-first real.
+    estado: "completada"
+    riesgo: "high"
+    skills_usados: ["architecture", "documentation", "plan-writing"]
+    resultado: >
+      Completada: se materializaron los tres artefactos solicitados en el repo:
+      `docs/24-ARQUITECTURA-FORMAL-FREEJT7-VNEXT.md`,
+      `docs/25-HITO1-BACKLOG-EJECUTABLE-POR-MODULOS.md` y
+      `docs/26-PROPUESTA-CORTE-LIMPIO-MAPA-ARCHIVOS.md`. El paquete deja
+      aprobable la arquitectura objetivo, el Hito 1 queda traducido a backlog
+      por archivos/modulos reales del repo y el corte limpio clasifica con
+      precision que conservar, congelar y reemplazar primero.
+  - id: "20260502-own-ide-clean-reinstall-live-verification-git-sync"
+    fecha: "2026-05-02"
+    titulo: "Reinstalar own-ide limpio, validar interfaz/agente reales y reconciliar Git con remoto"
+    descripcion: >
+      Ejecutar una validacion operativa nueva sobre la instalacion real de
+      own-ide tras el reporte de que la interfaz y el agente no estan
+      funcionando en el IDE instalado, incluyendo limpieza total del perfil
+      aislado, reinstalacion limpia, verificacion funcional del panel/agente y
+      auditoria del estado Git frente al remoto para sincronizar cualquier
+      cambio real pendiente de publicacion.
+    estado: "en_progreso"
+    riesgo: "high"
+    skills_usados: ["verification-before-completion", "free-jt7-global-runtime-audit", "make-repo-contribution", "git-pushing"]
+    resultado: >
+      En progreso: intake cerrado con limpieza total autorizada del perfil
+      own-ide, validacion incluida del paquete standalone y objetivo Git de
+      verificar + sincronizar con remoto si procede. Pendiente: auditoria Git
+      real contra upstream, limpieza/reinstalacion y verificacion funcional
+      fresca del IDE instalado.
   - id: "20260501-own-ide-native-product-ownership"
     fecha: "2026-05-01"
     titulo: "Migrar own-ide de shell VSIX a IDE agent-first con control-plane nativo"

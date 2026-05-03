@@ -1136,6 +1136,8 @@ function getEffectiveAgentAuthorityConfig() {
   const standaloneMode = Boolean(isStandaloneOwnIdeMode());
   const ownedControlPlane = standaloneMode ? readOwnedIdeControlPlane({ allowMissing: true }) : null;
   const ownedConfig = ownedControlPlane?.config || null;
+  const ownedProduct = ownedConfig?.product || {};
+  const ownedShell = ownedConfig?.shell || {};
   const ownedProvider = ownedConfig?.provider || {};
   const ownedRuntime = ownedConfig?.runtime || {};
   const ownedIde = ownedConfig?.ide || {};
@@ -1152,18 +1154,42 @@ function getEffectiveAgentAuthorityConfig() {
   const panelEnabled = typeof ownedIde.panelEnabled === 'boolean'
     ? ownedIde.panelEnabled
     : Boolean(config.get("panel.enabled", true));
+  const policyMode = String(ownedRuntime.policyMode || config.get("panel.policy.mode") || 'mixed').trim().toLowerCase() || 'mixed';
+  const workerPoolSize = Number(ownedRuntime.workerPoolSize || config.get("panel.workerPool.size") || 3) || 3;
+  const productMode = String(ownedProduct.productMode || 'agent-first').trim().toLowerCase() || 'agent-first';
+  const configAuthority = String(ownedProduct.configAuthority || 'control-plane').trim().toLowerCase() || 'control-plane';
+  const runtimeAuthority = String(ownedProduct.runtimeAuthority || 'freejt7').trim().toLowerCase() || 'freejt7';
+  const hostIntegration = String(ownedProduct.hostIntegration || 'secondary').trim().toLowerCase() || 'secondary';
+  const shellExperience = String(ownedShell.experience || 'agent-first').trim().toLowerCase() || 'agent-first';
+  const primarySurface = String(ownedShell.primarySurface || 'panel').trim().toLowerCase() || 'panel';
+  const settingsAuthority = String(ownedShell.settingsAuthority || 'control-plane').trim().toLowerCase() || 'control-plane';
+  const chatParticipantEnabled = typeof ownedShell.chatParticipantEnabled === 'boolean'
+    ? ownedShell.chatParticipantEnabled
+    : Boolean(config.get("panel.chatParticipant.enabled", false));
+  const hostAdapterMode = hostIntegration === 'hidden' ? 'hidden-host-adapter' : 'secondary-host-adapter';
 
   if (provider === "copilot" && isStandaloneOwnIdeMode()) {
     return {
       provider: DEFAULT_EXTERNAL_PROVIDER,
       model: getDefaultModel(DEFAULT_EXTERNAL_PROVIDER) || DEFAULT_EXTERNAL_MODEL,
       runtimeBackend: configuredRuntimeBackend,
+      policyMode,
+      workerPoolSize,
       policyProfile,
       authProfile,
       ownerMode,
       hostVisibility,
       openOnStartup,
       panelEnabled,
+      productMode,
+      configAuthority,
+      runtimeAuthority,
+      hostIntegration,
+      shellExperience,
+      primarySurface,
+      settingsAuthority,
+      chatParticipantEnabled,
+      hostAdapterMode,
       standaloneMode,
     };
   }
@@ -1172,12 +1198,23 @@ function getEffectiveAgentAuthorityConfig() {
       provider,
       model: "",
       runtimeBackend: configuredRuntimeBackend,
+      policyMode,
+      workerPoolSize,
       policyProfile,
       authProfile,
       ownerMode,
       hostVisibility,
       openOnStartup,
       panelEnabled,
+      productMode,
+      configAuthority,
+      runtimeAuthority,
+      hostIntegration,
+      shellExperience,
+      primarySurface,
+      settingsAuthority,
+      chatParticipantEnabled,
+      hostAdapterMode,
       standaloneMode,
     };
   }
@@ -1186,13 +1223,41 @@ function getEffectiveAgentAuthorityConfig() {
     provider,
     model: configuredModel || getDefaultModel(provider) || DEFAULT_EXTERNAL_MODEL,
     runtimeBackend: configuredRuntimeBackend,
+    policyMode,
+    workerPoolSize,
     policyProfile,
     authProfile,
     ownerMode,
     hostVisibility,
     openOnStartup,
     panelEnabled,
+    productMode,
+    configAuthority,
+    runtimeAuthority,
+    hostIntegration,
+    shellExperience,
+    primarySurface,
+    settingsAuthority,
+    chatParticipantEnabled,
+    hostAdapterMode,
     standaloneMode,
+  };
+}
+
+function getHostAdapterSurface(authority = null) {
+  const resolvedAuthority = authority || getEffectiveAgentAuthorityConfig();
+  const hostIntegration = String(resolvedAuthority.hostIntegration || 'secondary').trim().toLowerCase() || 'secondary';
+  return {
+    authority: resolvedAuthority,
+    panelEnabled: Boolean(resolvedAuthority.panelEnabled) && hostIntegration !== 'hidden',
+    openOnStartup: Boolean(resolvedAuthority.openOnStartup),
+    chatParticipantEnabled: Boolean(resolvedAuthority.chatParticipantEnabled) && hostIntegration !== 'hidden',
+    hostIntegration,
+    hostAdapterMode: String(resolvedAuthority.hostAdapterMode || 'secondary-host-adapter').trim().toLowerCase() || 'secondary-host-adapter',
+    primarySurface: String(resolvedAuthority.primarySurface || 'panel').trim().toLowerCase() || 'panel',
+    settingsAuthority: String(resolvedAuthority.settingsAuthority || 'control-plane').trim().toLowerCase() || 'control-plane',
+    policyMode: String(resolvedAuthority.policyMode || 'mixed').trim().toLowerCase() || 'mixed',
+    workerPoolSize: Number(resolvedAuthority.workerPoolSize || 3) || 3,
   };
 }
 
@@ -1380,7 +1445,7 @@ function formatProviderStatusBarTooltip(provider, model) {
   if (provider === "copilot") {
     return "Free JT7\nProveedor activo: Copilot (legacy)\nModelo: integrado\nRuta heredada secundaria; el flujo principal own-ide usa proveedores externos.";
   }
-  return `Free JT7\nProveedor activo: ${provider}\nModelo activo: ${model || "default"}\nOwner mode: ${authority.ownerMode}\nHost visibility: ${authority.hostVisibility}\nClick para cambiar proveedor o modelo.`;
+  return `Free JT7\nProveedor activo: ${provider}\nModelo activo: ${model || "default"}\nOwner mode: ${authority.ownerMode}\nHost visibility: ${authority.hostVisibility}\nProduct mode: ${authority.productMode}\nPrimary surface: ${authority.primarySurface}\nSettings authority: ${authority.settingsAuthority}\nClick para cambiar proveedor o modelo.`;
 }
 
 function updateProviderStatusBar(providerStatusBar) {
@@ -1394,17 +1459,19 @@ function updateProviderStatusBar(providerStatusBar) {
 
 function shouldAutoOpenControlPanel(panelConfig, options = {}) {
   const standaloneMode = Boolean(options.standaloneMode);
-  const authority = typeof panelConfig?.get === 'function'
+  const authority = options.authority || (typeof panelConfig?.get === 'function'
     ? {
         panelEnabled: Boolean(panelConfig.get("panel.enabled", true)),
         openOnStartup: Boolean(panelConfig.get("panel.openOnStartup", true)),
         ownerMode: String(panelConfig.get("ide.ownerMode", "agent") || "agent").trim().toLowerCase(),
+        hostIntegration: String(panelConfig.get("product.hostIntegration", "secondary") || "secondary").trim().toLowerCase(),
       }
-    : getEffectiveAgentAuthorityConfig();
+    : getEffectiveAgentAuthorityConfig());
   const panelEnabled = Boolean(authority.panelEnabled);
   const openOnStartup = Boolean(authority.openOnStartup);
   const ownerMode = String(authority.ownerMode || 'agent').trim().toLowerCase();
-  if (!panelEnabled || !openOnStartup) {
+  const hostIntegration = String(authority.hostIntegration || 'secondary').trim().toLowerCase();
+  if (!panelEnabled || !openOnStartup || hostIntegration === 'hidden') {
     return false;
   }
   return standaloneMode || ownerMode === 'agent';
@@ -1759,11 +1826,11 @@ async function routeTaskWithCopilot(context, output) {
   const usesExternalProvider = provider !== "copilot";
   const goal = await vscode.window.showInputBox({
     prompt: usesExternalProvider
-      ? `Objetivo para ejecutar Free JT7 con ${provider}${model ? ` / ${model}` : ""}`
-      : "Objetivo para el router Copilot de Free JT7",
+      ? `Objetivo para ejecutar Free JT7 desde la capa host secundaria con ${provider}${model ? ` / ${model}` : ""}`
+      : "Objetivo para la ruta host secundaria de compatibilidad Copilot",
     placeHolder: usesExternalProvider
-      ? "Ej: analiza el bug y ejecútalo con el proveedor externo activo"
-      : "Ej: analiza el bug, planifica y aplica la solucion con validacion",
+      ? "Ej: analiza el bug y ejecútalo desde la capa host con el proveedor activo"
+      : "Ej: usa la compatibilidad host para revisar una tarea puntual sin salir del IDE",
     ignoreFocusOut: true,
   });
   if (!goal) {
@@ -2506,14 +2573,18 @@ async function ensureMcpDependencies(extensionPath, output) {
 }
 
 function activate(context) {
+  let ownAgentRuntime = null;
   let providerStatusBar;
   const output = vscode.window.createOutputChannel("Free JT7");
+  const authority = getEffectiveAgentAuthorityConfig();
+  const hostSurface = getHostAdapterSurface(authority);
   const chatDiagnostics = getChatDiagnostics();
   if (!chatDiagnostics.ok) {
     for (const issue of chatDiagnostics.issues) {
       output.appendLine(`[freejt7] ${issue}`);
     }
   }
+  output.appendLine(`[freejt7-host] adapter=${hostSurface.hostAdapterMode} integration=${hostSurface.hostIntegration} primarySurface=${hostSurface.primarySurface} settingsAuthority=${hostSurface.settingsAuthority}`);
   // FIX #4: Check Python disponible
   const pyCmd = pythonCommand(context.extensionPath);
   if (!isWorkingPython(pyCmd.bin, pyCmd.args)) {
@@ -2575,10 +2646,10 @@ function activate(context) {
   } catch (_) { /* non-fatal — scheduler must never crash extension startup */ }
 
   const panelConfig = vscode.workspace.getConfiguration("freejt7");
-  const panelEnabled = panelConfig.get("panel.enabled", true);
+  const panelEnabled = hostSurface.panelEnabled;
   if (panelEnabled) {
     try {
-      const ownAgentRuntime = createFreeJt7AgentRuntime({
+      ownAgentRuntime = createFreeJt7AgentRuntime({
         context,
         output,
         runtimeRoot: operationalRoot,
@@ -2630,8 +2701,8 @@ function activate(context) {
 
       activeControlPanel = createControlPanel(context, output, {
         workspacePath: operationalRoot,
-        workerCount: Number(panelConfig.get("panel.workerPool.size", 3) || 3),
-        policyMode: String(panelConfig.get("panel.policy.mode", "mixed") || "mixed"),
+        workerCount: hostSurface.workerPoolSize,
+        policyMode: hostSurface.policyMode,
         remoteBridge: getRemoteBridge({ rootDir: operationalRoot }),
         agentRuntime: ownAgentRuntime,
         prepareTask: async (taskInput, meta) => preparePanelTask(context, output, taskInput, meta),
@@ -2893,7 +2964,7 @@ function activate(context) {
     }));
   }
 
-  const chatParticipantEnabled = panelConfig.get("panel.chatParticipant.enabled", true);
+  const chatParticipantEnabled = hostSurface.chatParticipantEnabled;
   if (chatParticipantEnabled && vscode.chat?.createChatParticipant) {
     const participant = vscode.chat.createChatParticipant("freejt7.chat", (request, chatContext, stream, token) => (
       handleChatRequest(context, output, request, chatContext, stream, token)
@@ -2912,7 +2983,7 @@ function activate(context) {
         <body style="margin:0;padding:12px;font-family:Segoe UI,sans-serif;color:var(--vscode-foreground);background:var(--vscode-editor-background);">
           <div style="display:flex;flex-direction:column;gap:8px;">
             <div style="font-weight:600;">Agente Free JT7</div>
-            <div style="opacity:.8;">Si la superficie principal del agente no se abrió sola, usa este acceso directo.</div>
+            <div style="opacity:.8;">Acceso de compatibilidad del host. La superficie principal del producto sigue viviendo en el panel/control-plane propios.</div>
             <a href="command:freejt7.openControlPanel" style="color:var(--vscode-textLink-foreground);text-decoration:none;">Abrir agente Free JT7</a>
           </div>
         </body>
@@ -2925,7 +2996,7 @@ function activate(context) {
     vscode.window.registerWebviewViewProvider('freejt7.controlPanelView', sidebarProvider)
   );
 
-  if (shouldAutoOpenControlPanel(panelConfig, { standaloneMode: isStandaloneOwnIdeMode() })) {
+  if (shouldAutoOpenControlPanel(null, { standaloneMode: isStandaloneOwnIdeMode(), authority })) {
     setTimeout(() => {
       revealFreeJt7ControlPanel(activeControlPanel, output).catch((error) => {
         output.appendLine(`[freejt7-panel] auto-open error: ${String(error?.message || error)}`);
@@ -2958,6 +3029,7 @@ module.exports = {
   findOpenClawBinary,
   getGlobalVsCodeSettingsRepairState,
   getEffectiveAgentAuthorityConfig,
+  getHostAdapterSurface,
   resolveProviderFallbackChain,
   shouldAutoOpenControlPanel,
   shouldPreferLocalExecution,

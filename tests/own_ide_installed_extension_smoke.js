@@ -32,7 +32,14 @@ function main() {
 
   const installedPkg = readJson(packageJsonPath);
   assert.equal(installedPkg.version, '4.2.11');
+  assert.match(installedPkg.description, /compatibilidad host secundaria/i);
   assert.equal(installedPkg.contributes.configuration.properties['freejt7.panel.runtimeBackend'].default, 'freejt7-v2');
+  const routeTaskWithCopilot = installedPkg.contributes.commands.find((command) => command.command === 'freejt7.routeTaskWithCopilot');
+  assert.ok(routeTaskWithCopilot, 'Debe exponer el comando host de compatibilidad');
+  assert.match(routeTaskWithCopilot.title, /compatibilidad host/i);
+  const chatParticipant = installedPkg.contributes.chatParticipants.find((participant) => participant.id === 'freejt7.chat');
+  assert.ok(chatParticipant, 'Debe exponer el chat participant legacy');
+  assert.match(chatParticipant.description, /ruta secundaria de compatibilidad/i);
 
   const bundle = fs.readFileSync(bundlePath, 'utf8');
   for (const marker of [

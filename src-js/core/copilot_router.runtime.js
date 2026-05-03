@@ -29,6 +29,7 @@ const ROUTER_DEFAULTS = {
 
 const LEGACY_COPILOT_PROVIDER = "copilot";
 const LEGACY_COPILOT_COMPATIBILITY_MODE = "copilot-legacy-secondary";
+const SECONDARY_HOST_ADAPTER_MODE = "secondary-host-adapter";
 const DEFAULT_EXTERNAL_PROVIDER = "openrouter";
 const DEFAULT_EXTERNAL_PROVIDER_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
 
@@ -1229,6 +1230,7 @@ function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, selecte
       selected_provider: executionMeta.selectedProvider || resolvedProvider,
       selected_model: executionMeta.selectedModel || resolvedModel,
       compatibility_mode: executionMeta.compatibilityMode || LEGACY_COPILOT_COMPATIBILITY_MODE,
+      host_adapter_mode: executionMeta.hostAdapterMode || SECONDARY_HOST_ADAPTER_MODE,
       legacy_route_isolated: executionMeta.legacyRouteIsolated ?? true,
       legacy_provider_source: executionMeta.legacyProviderSource || "default-copilot",
       ignored_primary_provider: Boolean(executionMeta.ignoredPrimaryProvider),
@@ -1259,6 +1261,7 @@ function buildRunSkeleton(runId, goal, workspacePath, routing, authInfo, selecte
       provider: resolvedProvider,
       model: resolvedModel,
       compatibility_mode: executionMeta.compatibilityMode || LEGACY_COPILOT_COMPATIBILITY_MODE,
+      host_adapter_mode: executionMeta.hostAdapterMode || SECONDARY_HOST_ADAPTER_MODE,
       legacy_route_isolated: executionMeta.legacyRouteIsolated ?? true,
       legacy_secondary: true,
       legacy_provider_source: executionMeta.legacyProviderSource || "default-copilot",
@@ -1330,6 +1333,7 @@ async function runCopilotRouter(options) {
         selectedProvider: LEGACY_COPILOT_PROVIDER,
         selectedModel: routing.plannerModel,
         compatibilityMode: legacySelection.compatibilityMode,
+        hostAdapterMode: SECONDARY_HOST_ADAPTER_MODE,
         legacyRouteIsolated: legacySelection.isolatedFromPrimaryProvider,
         legacyProviderSource: legacySelection.source,
         ignoredPrimaryProvider: legacySelection.ignoredPrimaryProvider,
@@ -1354,6 +1358,7 @@ async function runCopilotRouter(options) {
         selectedProvider,
         selectedModel: selectedProviderModel || "default",
         compatibilityMode: legacySelection.compatibilityMode,
+        hostAdapterMode: SECONDARY_HOST_ADAPTER_MODE,
         legacyRouteIsolated: legacySelection.isolatedFromPrimaryProvider,
         legacyProviderSource: legacySelection.source,
         ignoredPrimaryProvider: legacySelection.ignoredPrimaryProvider,
@@ -1470,6 +1475,7 @@ async function runCopilotRouter(options) {
       selected_provider: selectedProvider,
       selected_model: selectedProviderModel || "default",
       compatibility_mode: legacySelection.compatibilityMode,
+      host_adapter_mode: SECONDARY_HOST_ADAPTER_MODE,
       legacy_route_isolated: legacySelection.isolatedFromPrimaryProvider,
       legacy_provider_source: legacySelection.source,
       ignored_primary_provider: legacySelection.ignoredPrimaryProvider,
@@ -1487,6 +1493,7 @@ async function runCopilotRouter(options) {
       provider: selectedProvider,
       model: selectedProviderModel || "default",
       compatibility_mode: legacySelection.compatibilityMode,
+      host_adapter_mode: SECONDARY_HOST_ADAPTER_MODE,
       legacy_route_isolated: legacySelection.isolatedFromPrimaryProvider,
       legacy_secondary: true,
       legacy_provider_source: legacySelection.source,

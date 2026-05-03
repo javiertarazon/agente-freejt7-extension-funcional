@@ -3,11 +3,24 @@
 const fs = require('fs');
 const path = require('path');
 
-const OWNED_IDE_CONTROL_PLANE_SCHEMA_VERSION = '2026-05-01-owned-ide-v1';
+const OWNED_IDE_CONTROL_PLANE_SCHEMA_VERSION = '2026-05-02-owned-ide-v2';
 
 const DEFAULT_OWNED_IDE_CONTROL_PLANE = Object.freeze({
   schemaVersion: OWNED_IDE_CONTROL_PLANE_SCHEMA_VERSION,
   mode: 'freejt7-owned-ide',
+  product: {
+    productMode: 'agent-first',
+    configAuthority: 'control-plane',
+    runtimeAuthority: 'freejt7',
+    hostIntegration: 'secondary',
+  },
+  shell: {
+    experience: 'agent-first',
+    primarySurface: 'panel',
+    settingsAuthority: 'control-plane',
+    chatParticipantEnabled: false,
+    quickActionsEnabled: true,
+  },
   ide: {
     ownerMode: 'agent',
     hostVisibility: 'minimal',
@@ -43,6 +56,55 @@ function cloneDefaultControlPlane() {
   return JSON.parse(JSON.stringify(DEFAULT_OWNED_IDE_CONTROL_PLANE));
 }
 
+function normalizeChoice(value, allowed, fallback) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return allowed.includes(normalized) ? normalized : fallback;
+}
+
+function normalizeBoolean(value, fallback) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function normalizePositiveInteger(value, fallback) {
+  const normalized = Number(value);
+  if (!Number.isFinite(normalized) || normalized <= 0) {
+    return fallback;
+  }
+  return Math.trunc(normalized);
+}
+
+function normalizeSelectionMap(value) {
+  if (!isPlainObject(value)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([provider, model]) => [String(provider || '').trim().toLowerCase(), String(model || '').trim()])
+      .filter(([provider]) => Boolean(provider)),
+  );
+}
+
+function normalizeFallbackProviders(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item) => {
+      if (!isPlainObject(item)) {
+        return null;
+      }
+      const provider = String(item.provider || '').trim().toLowerCase();
+      if (!provider) {
+        return null;
+      }
+      return {
+        provider,
+        model: String(item.model || '').trim(),
+      };
+    })
+    .filter(Boolean);
+}
+
 function mergeControlPlane(base, patch) {
   const source = isPlainObject(base) ? base : {};
   const extra = isPlainObject(patch) ? patch : {};
@@ -59,6 +121,60 @@ function mergeControlPlane(base, patch) {
     result[key] = value;
   }
   return result;
+}
+
+function normalizeOwnedIdeControlPlane(nextConfig) {
+  const merged = mergeControlPlane(cloneDefaultControlPlane(), nextConfig);
+  const normalized = { ...merged };
+
+  normalized.schemaVersion = OWNED_IDE_CONTROL_PLANE_SCHEMA_VERSION;
+  normalized.mode = 'freejt7-owned-ide';
+  normalized.product = {
+    ...mergeControlPlane(DEFAULT_OWNED_IDE_CONTROL_PLANE.product, merged.product),
+    productMode: normalizeChoice(merged?.product?.productMode, ['agent-first'], 'agent-first'),
+    configAuthority: normalizeChoice(merged?.product?.configAuthority, ['control-plane'], 'control-plane'),
+    runtimeAuthority: normalizeChoice(merged?.product?.runtimeAuthority, ['freejt7', 'host-adapter'], 'freejt7'),
+    hostIntegration: normalizeChoice(merged?.product?.hostIntegration, ['secondary', 'legacy-adapter', 'hidden'], 'secondary'),
+  };
+  normalized.shell = {
+    ...mergeControlPlane(DEFAULT_OWNED_IDE_CONTROL_PLANE.shell, merged.shell),
+    experience: normalizeChoice(merged?.shell?.experience, ['agent-first'], 'agent-first'),
+    primarySurface: normalizeChoice(merged?.shell?.primarySurface, ['panel', 'agent-shell', 'headless'], 'panel'),
+    settingsAuthority: normalizeChoice(merged?.shell?.settingsAuthority, ['control-plane'], 'control-plane'),
+    chatParticipantEnabled: normalizeBoolean(merged?.shell?.chatParticipantEnabled, false),
+    quickActionsEnabled: normalizeBoolean(merged?.shell?.quickActionsEnabled, true),
+  };
+  normalized.ide = {
+    ...mergeControlPlane(DEFAULT_OWNED_IDE_CONTROL_PLANE.ide, merged.ide),
+    ownerMode: normalizeChoice(merged?.ide?.ownerMode, ['agent', 'user'], 'agent'),
+    hostVisibility: normalizeChoice(merged?.ide?.hostVisibility, ['minimal', 'hidden', 'full'], 'minimal'),
+    openOnStartup: normalizeBoolean(merged?.ide?.openOnStartup, true),
+    panelEnabled: normalizeBoolean(merged?.ide?.panelEnabled, true),
+  };
+  normalized.runtime = {
+    ...mergeControlPlane(DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime, merged.runtime),
+    executionMode: normalizeChoice(merged?.runtime?.executionMode, ['agent'], 'agent'),
+    runtimeBackend: String(merged?.runtime?.runtimeBackend || DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime.runtimeBackend).trim().toLowerCase() || DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime.runtimeBackend,
+    policyMode: String(merged?.runtime?.policyMode || DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime.policyMode).trim().toLowerCase() || DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime.policyMode,
+    policyProfile: String(merged?.runtime?.policyProfile || DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime.policyProfile).trim().toLowerCase() || DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime.policyProfile,
+    workerPoolSize: normalizePositiveInteger(merged?.runtime?.workerPoolSize, DEFAULT_OWNED_IDE_CONTROL_PLANE.runtime.workerPoolSize),
+  };
+  normalized.provider = {
+    ...mergeControlPlane(DEFAULT_OWNED_IDE_CONTROL_PLANE.provider, merged.provider),
+    activeProvider: String(merged?.provider?.activeProvider || DEFAULT_OWNED_IDE_CONTROL_PLANE.provider.activeProvider).trim().toLowerCase() || DEFAULT_OWNED_IDE_CONTROL_PLANE.provider.activeProvider,
+    activeModel: String(merged?.provider?.activeModel || '').trim(),
+    authProfile: String(merged?.provider?.authProfile || DEFAULT_OWNED_IDE_CONTROL_PLANE.provider.authProfile).trim() || DEFAULT_OWNED_IDE_CONTROL_PLANE.provider.authProfile,
+    providerSelections: normalizeSelectionMap(merged?.provider?.providerSelections),
+    fallbackProviders: normalizeFallbackProviders(merged?.provider?.fallbackProviders),
+  };
+  normalized.memory = {
+    ...mergeControlPlane(DEFAULT_OWNED_IDE_CONTROL_PLANE.memory, merged.memory),
+    persistence: String(merged?.memory?.persistence || DEFAULT_OWNED_IDE_CONTROL_PLANE.memory.persistence).trim().toLowerCase() || DEFAULT_OWNED_IDE_CONTROL_PLANE.memory.persistence,
+    contextBudgeting: String(merged?.memory?.contextBudgeting || DEFAULT_OWNED_IDE_CONTROL_PLANE.memory.contextBudgeting).trim().toLowerCase() || DEFAULT_OWNED_IDE_CONTROL_PLANE.memory.contextBudgeting,
+    subagents: String(merged?.memory?.subagents || DEFAULT_OWNED_IDE_CONTROL_PLANE.memory.subagents).trim().toLowerCase() || DEFAULT_OWNED_IDE_CONTROL_PLANE.memory.subagents,
+  };
+
+  return normalized;
 }
 
 function resolveOwnedIdeProfileRoot(options = {}) {
@@ -104,20 +220,20 @@ function readOwnedIdeControlPlane(options = {}) {
     return {
       profileRoot,
       controlPlanePath,
-      config: cloneDefaultControlPlane(),
+      config: normalizeOwnedIdeControlPlane(cloneDefaultControlPlane()),
     };
   }
   return {
     profileRoot,
     controlPlanePath,
-    config: mergeControlPlane(cloneDefaultControlPlane(), parsed),
+    config: normalizeOwnedIdeControlPlane(parsed),
   };
 }
 
 function writeOwnedIdeControlPlane(nextConfig, options = {}) {
   const profileRoot = resolveOwnedIdeProfileRoot(options);
   const controlPlanePath = resolveOwnedIdeControlPlanePath({ ...options, profileRoot });
-  const config = mergeControlPlane(cloneDefaultControlPlane(), nextConfig);
+  const config = normalizeOwnedIdeControlPlane(nextConfig);
   if (!controlPlanePath) {
     return {
       profileRoot,

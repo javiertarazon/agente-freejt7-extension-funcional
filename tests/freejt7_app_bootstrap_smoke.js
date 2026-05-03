@@ -65,6 +65,16 @@ function main() {
   assert.equal(settings['freejt7.app.standaloneMode'], true);
   assert.equal(settings['workbench.startupEditor'], 'none');
   assert.equal(controlPlane.mode, 'freejt7-owned-ide');
+  assert.equal(controlPlane.schemaVersion, '2026-05-02-owned-ide-v2');
+  assert.equal(controlPlane.product.productMode, 'agent-first');
+  assert.equal(controlPlane.product.configAuthority, 'control-plane');
+  assert.equal(controlPlane.product.runtimeAuthority, 'freejt7');
+  assert.equal(controlPlane.product.hostIntegration, 'secondary');
+  assert.equal(controlPlane.shell.experience, 'agent-first');
+  assert.equal(controlPlane.shell.primarySurface, 'panel');
+  assert.equal(controlPlane.shell.settingsAuthority, 'control-plane');
+  assert.equal(controlPlane.shell.chatParticipantEnabled, false);
+  assert.equal(controlPlane.shell.quickActionsEnabled, true);
   assert.equal(controlPlane.ide.ownerMode, 'agent');
   assert.equal(controlPlane.ide.hostVisibility, 'minimal');
   assert.equal(controlPlane.ide.openOnStartup, true);

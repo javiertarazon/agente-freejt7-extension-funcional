@@ -477,3 +477,12 @@
 {"ts":"2026-05-02T01:09:58.470Z","sessionId":"panel-01c19c5c","type":"task.started","payload":{"taskId":"task-ee946b61-b","workerId":1}}
 {"ts":"2026-05-02T01:10:24.989Z","sessionId":"panel-01c19c5c","type":"task.completed","payload":{"taskId":"task-ee946b61-b","provider":"ddeksee","model":"deepseek-reasoner"}}
 {"ts":"2026-05-02T01:10:25.009Z","sessionId":"panel-01c19c5c","type":"task.verified","payload":{"taskId":"task-ee946b61-b","verificationStatus":"verified","evidenceCount":5,"warnings":[]}}
+{"ts":"2026-05-02T04:09:38.174Z","sessionId":"panel-6ac419f8","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T04:09:38.253Z","sessionId":"panel-6ac419f8","type":"task.enqueued","payload":{"taskId":"task-d4b8e4bd-a","risk":"medium"}}
+{"ts":"2026-05-02T04:09:38.368Z","sessionId":"panel-6ac419f8","type":"task.started","payload":{"taskId":"task-d4b8e4bd-a","workerId":1}}
+{"ts":"2026-05-02T04:09:39.791Z","sessionId":"panel-6ac419f8","type":"task.failed","payload":{"taskId":"task-d4b8e4bd-a","retries":1,"error":"Free JT7 router fallback exhausted: Free JT7 (openrouter): error HTTP 400. deepseek-reasoner is not a valid model ID"}}
+{"ts":"2026-05-02T04:11:11.536Z","sessionId":"panel-aaa828e9","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T04:11:11.635Z","sessionId":"panel-aaa828e9","type":"task.enqueued","payload":{"taskId":"task-aa530712-2","risk":"medium"}}
+{"ts":"2026-05-02T04:11:11.717Z","sessionId":"panel-aaa828e9","type":"task.started","payload":{"taskId":"task-aa530712-2","workerId":1}}
+{"ts":"2026-05-02T04:11:18.496Z","sessionId":"panel-aaa828e9","type":"task.completed","payload":{"taskId":"task-aa530712-2","provider":"openrouter","model":"openai/gpt-oss-20b:free"}}
+{"ts":"2026-05-02T04:11:18.508Z","sessionId":"panel-aaa828e9","type":"task.verified","payload":{"taskId":"task-aa530712-2","verificationStatus":"verified","evidenceCount":2,"warnings":[]}}

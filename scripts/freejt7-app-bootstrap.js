@@ -337,6 +337,19 @@ function runBootstrap(inputOptions = {}) {
   const providerSelections = activeModel ? { [activeProvider]: activeModel } : {};
   const controlPlane = patchOwnedIdeControlPlane({
     mode: 'freejt7-owned-ide',
+    product: {
+      productMode: 'agent-first',
+      configAuthority: 'control-plane',
+      runtimeAuthority: 'freejt7',
+      hostIntegration: 'secondary',
+    },
+    shell: {
+      experience: 'agent-first',
+      primarySurface: 'panel',
+      settingsAuthority: 'control-plane',
+      chatParticipantEnabled: nextSettings['freejt7.panel.chatParticipant.enabled'] === true,
+      quickActionsEnabled: true,
+    },
     ide: {
       ownerMode: String(nextSettings['freejt7.ide.ownerMode'] || 'agent').trim().toLowerCase() || 'agent',
       hostVisibility: String(nextSettings['freejt7.ide.hostVisibility'] || 'minimal').trim().toLowerCase() || 'minimal',

@@ -78,6 +78,9 @@
 {"ts": "2026-04-27T16:34:00Z", "action": "verification", "detail": "20260427-own-ide-panel-state-regression:estado persistido detectado en own-ide -> executionMode=agent, runtimeBackend=local, provider=clod con modelo heredado; panel visible pero sin logs de extension, hipotesis local: reabre en modo limitado/estado stale"}
 {"ts": "2026-04-27T16:38:00Z", "action": "implementation", "detail": "20260427-own-ide-panel-state-regression:control-panel ahora sanea estado persistido en standalone/own-ide, normaliza provider/model/runtimeBackend y crea una sesion inicial si no existe ninguna"}
 {"ts": "2026-04-27T16:39:30Z", "action": "verification", "detail": "20260427-own-ide-panel-state-regression:control_panel_state_regression_smoke OK + control_panel_ui_smoke OK + panel_execution_mode_smoke OK"}
+{"ts": "2026-05-02T03:10:00Z", "action": "task-open", "detail": "20260502-vnext-architecture-approval-docs:documento formal de arquitectura, backlog ejecutable Hito 1 y propuesta de corte limpio alineados a Free JT7 agent-first"}
+{"ts": "2026-05-02T03:10:01Z", "action": "skill-resolution", "detail": "20260502-vnext-architecture-approval-docs:skills aplicables leidas -> architecture, documentation, plan-writing"}
+{"ts": "2026-05-02T03:10:02Z", "action": "delegation-decision", "detail": "20260502-vnext-architecture-approval-docs:no-delegado porque la comparativa ampliada, la arquitectura formal, el backlog y el corte limpio comparten el mismo marco de decisiones y deben aterrizarse de forma coherente sobre el repo actual"}
 {"ts": "2026-04-27T16:41:20Z", "action": "verification", "detail": "20260427-own-ide-panel-state-regression:package:local OK + app:own-ide:setup OK + installed_extension_smoke OK; proceso own-ide ya activo, requiere reload/reopen para tomar runtime nuevo sin matar ventana del usuario"}
 {"ts": "2026-04-27T16:42:00Z", "action": "task-close", "detail": "20260427-own-ide-panel-state-regression:succeeded persisted-panel-state-healed+default-session-seeded+own-ide-reinstalled"}
 {"ts": "2026-04-27T17:10:00Z", "action": "task-open", "detail": "20260427-deep-audit-ui-runtime-autonomy-plan:auditoria integral de interfaz/runtime/providers/own-ide/autonomia con comparativa OpenClaw/OpenCode/Claurst"}
@@ -226,6 +229,9 @@
 {"ts": "2026-05-02T02:31:00Z", "action": "task-close", "detail": "20260501-corev2-skill-intent-context-fix:succeeded chat-context-routing+skill-creator-hardening+zorin-gui-skill+prompt-probe"}
 {"ts": "2026-05-02T02:35:00Z", "action": "pr-open", "detail": "20260502-own-ide-native-product-publication-pr:PR #3 abierta -> release: own-ide native-product and core-v2 hardening"}
 {"ts": "2026-05-02T02:36:00Z", "action": "task-close", "detail": "20260502-own-ide-native-product-publication-pr:succeeded branch+commits+push+pr-3"}
+{"ts": "2026-05-02T03:05:00Z", "action": "task-open", "detail": "20260502-own-ide-clean-reinstall-live-verification-git-sync:reinstalacion limpia de own-ide + validacion funcional real + auditoria/sincronizacion Git"}
+{"ts": "2026-05-02T03:05:01Z", "action": "skill-resolution", "detail": "20260502-own-ide-clean-reinstall-live-verification-git-sync:skills aplicables leidas -> verification-before-completion, free-jt7-global-runtime-audit, make-repo-contribution, git-pushing"}
+{"ts": "2026-05-02T03:05:02Z", "action": "delegation-decision", "detail": "20260502-own-ide-clean-reinstall-live-verification-git-sync:no-delegado porque la reinstalacion limpia, la verificacion del panel/agente y la reconciliacion Git comparten el mismo slice operativo y la misma evidencia final"}
 {"ts": "2026-04-30T23:48:00Z", "action": "task-open", "detail": "20260430-rpm-buildid-justification-tree-validation:confirmar origen de Missing build-id, justificarlo en el spec RPM y fijar regla de validacion de arbol sin artefactos dist-*"}
 {"ts": "2026-04-30T23:49:00Z", "action": "skill-resolution", "detail": "20260430-rpm-buildid-justification-tree-validation:skills aplicables leidas -> verification-before-completion, free-jt7-global-runtime-audit"}
 {"ts": "2026-04-30T23:53:00Z", "action": "verification", "detail": "20260430-rpm-buildid-justification-tree-validation:package:rpm fresco confirma warnings solo en runtime/vscodium/current/resources/app/node_modules/**; build OK"}
@@ -252,6 +258,17 @@
 {"ts": "2026-04-17T17:28:22Z", "action": "sync-claude", "detail": "15 activas de 964"}
 {"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-02T04:10:00Z", "action": "task-open", "detail": "20260502-h1-01-owned-control-plane-authority:ejecutar H1-01 endureciendo el control-plane app-owned como autoridad explicita de producto y shell"}
+{"ts": "2026-05-02T04:10:01Z", "action": "skill-resolution", "detail": "20260502-h1-01-owned-control-plane-authority:skills aplicables leidas -> software-architecture, verification-before-completion"}
+{"ts": "2026-05-02T04:10:02Z", "action": "delegation-decision", "detail": "20260502-h1-01-owned-control-plane-authority:no-delegado porque el cambio cruza el mismo contrato entre control-plane, bootstrap del perfil, panel y runtime de autoridad efectiva"}
+{"ts": "2026-05-02T04:14:00Z", "action": "implementation", "detail": "20260502-h1-01-owned-control-plane-authority:control-plane app-owned endurecido con bloques explicitos product/shell; bootstrap, panel y runtime alineados a esa autoridad"}
+{"ts": "2026-05-02T04:15:00Z", "action": "verification", "detail": "20260502-h1-01-owned-control-plane-authority:node tests/freejt7_app_bootstrap_smoke.js OK + node tests/freejt7_own_ide_bootstrap_smoke.js OK + get_errors en control-plane/bootstrap/panel/runtime OK"}
+{"ts": "2026-05-02T04:17:00Z", "action": "verification", "detail": "20260502-h1-01-owned-control-plane-authority:re-run final -> node tests/freejt7_app_bootstrap_smoke.js OK + node tests/freejt7_own_ide_bootstrap_smoke.js OK"}
+{"ts": "2026-05-02T04:18:00Z", "action": "task-close", "detail": "20260502-h1-01-owned-control-plane-authority:succeeded control-plane-product-shell-authority+bootstrap-seeding+panel-runtime-authority-summary"}
+{"ts": "2026-05-02T04:30:00Z", "action": "task-open", "detail": "20260502-h1-02-host-adapter-cut:ejecutar H1-02 para reducir el host a adaptador secundario mientras sigue en paralelo la validacion live own-ide"}
+{"ts": "2026-05-02T04:30:01Z", "action": "skill-resolution", "detail": "20260502-h1-02-host-adapter-cut:skills aplicables leidas -> software-architecture, agent-orchestration, verification-before-completion"}
+{"ts": "2026-05-02T04:30:02Z", "action": "delegation-decision", "detail": "20260502-h1-02-host-adapter-cut:delegacion parcial; se paraleliza la inspeccion/corroboracion del host con la auditoria live own-ide, pero la integracion final del slice queda en una sola mano para preservar compatibilidad"}
+{"ts": "2026-05-02T04:30:03Z", "action": "parallel-execution", "detail": "20260502-h1-02-host-adapter-cut + 20260502-own-ide-clean-reinstall-live-verification-git-sync:arranque paralelo solicitado por el usuario; H1-02 avanza en codigo mientras own-ide live se audita/reinstala/verifica"}
 {"ts": "2026-04-18T00:50:00Z", "action": "task-open", "detail": "20260418-free-model-catalog-sync:sincronizar catalogo visible de modelos gratis para openrouter hf y zai"}
 {"ts": "2026-04-18T01:00:00Z", "action": "task-close", "detail": "20260418-free-model-catalog-sync:succeeded unified-catalog-build-bundle-validated"}
 {"ts": "2026-04-18T00:20:00Z", "action": "task-open", "detail": "20260418-agent-compliance-hardening:endurecer intake, checklist, skill resolution y trazabilidad del agente"}
@@ -751,3 +768,11 @@
 {"ts": "2026-05-01T19:39:10Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
 {"ts": "2026-05-02T02:19:15Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-05-02T02:20:14Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-02T04:06:33Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T04:40:17Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T12:40:17Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T13:05:00Z", "action": "documentation", "detail": "20260502-vnext-architecture-approval-docs:creados docs/24-ARQUITECTURA-FORMAL-FREEJT7-VNEXT.md, docs/25-HITO1-BACKLOG-EJECUTABLE-POR-MODULOS.md y docs/26-PROPUESTA-CORTE-LIMPIO-MAPA-ARCHIVOS.md sobre el repo real"}
+{"ts": "2026-05-02T13:06:00Z", "action": "verification", "detail": "20260502-vnext-architecture-approval-docs:get_errors limpio en los tres documentos nuevos y secciones clave verificadas (arquitectura objetivo, secuencia ejecutable, clasificacion conservar/congelar/reemplazar)"}
+{"ts": "2026-05-02T13:07:00Z", "action": "task-close", "detail": "20260502-vnext-architecture-approval-docs:succeeded formal-architecture+executable-h1-backlog+clean-cut-file-map"}
+{"ts": "2026-05-02T15:50:44Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T16:29:52Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}

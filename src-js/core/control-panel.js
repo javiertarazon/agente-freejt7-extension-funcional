@@ -2486,6 +2486,14 @@ function createControlPanel(context, output, options = {}) {
     return getOwnedIdeControlPlaneState()?.runtime || null;
   }
 
+  function getOwnedIdeProductState() {
+    return getOwnedIdeControlPlaneState()?.product || null;
+  }
+
+  function getOwnedIdeShellState() {
+    return getOwnedIdeControlPlaneState()?.shell || null;
+  }
+
   function getOwnedIdeUiState() {
     return getOwnedIdeControlPlaneState()?.ide || null;
   }
@@ -2681,6 +2689,19 @@ function createControlPanel(context, output, options = {}) {
 
     if (standaloneMode) {
       patchOwnedIdeControlPlane({
+        product: {
+          productMode: 'agent-first',
+          configAuthority: 'control-plane',
+          runtimeAuthority: 'freejt7',
+          hostIntegration: 'secondary',
+        },
+        shell: {
+          experience: 'agent-first',
+          primarySurface: 'panel',
+          settingsAuthority: 'control-plane',
+          chatParticipantEnabled: false,
+          quickActionsEnabled: true,
+        },
         ide: {
           ownerMode: getConfiguredOwnerMode(),
           hostVisibility: getConfiguredHostVisibility(),
@@ -2758,6 +2779,19 @@ function createControlPanel(context, output, options = {}) {
       await context.globalState?.update?.(PANEL_ACTIVE_PROVIDER_KEY, sanitized.provider);
       if (standaloneMode) {
         patchOwnedIdeControlPlane({
+          product: {
+            productMode: 'agent-first',
+            configAuthority: 'control-plane',
+            runtimeAuthority: 'freejt7',
+            hostIntegration: 'secondary',
+          },
+          shell: {
+            experience: 'agent-first',
+            primarySurface: 'panel',
+            settingsAuthority: 'control-plane',
+            chatParticipantEnabled: false,
+            quickActionsEnabled: true,
+          },
           runtime: {
             executionMode: sanitized.executionMode,
             runtimeBackend: sanitized.runtimeBackend,
@@ -2815,6 +2849,53 @@ function createControlPanel(context, output, options = {}) {
       version: '1.0.0',
       title: 'Free JT7 Panel Control Plane',
       properties: {
+        productMode: {
+          type: 'string',
+          enum: ['agent-first'],
+          default: 'agent-first',
+          readOnly: true,
+        },
+        configAuthority: {
+          type: 'string',
+          enum: ['control-plane'],
+          default: 'control-plane',
+          readOnly: true,
+        },
+        runtimeAuthority: {
+          type: 'string',
+          enum: ['freejt7', 'host-adapter'],
+          default: 'freejt7',
+          readOnly: true,
+        },
+        hostIntegration: {
+          type: 'string',
+          enum: ['secondary', 'legacy-adapter', 'hidden'],
+          default: 'secondary',
+          readOnly: true,
+        },
+        shellExperience: {
+          type: 'string',
+          enum: ['agent-first'],
+          default: 'agent-first',
+          readOnly: true,
+        },
+        primarySurface: {
+          type: 'string',
+          enum: ['panel', 'agent-shell', 'headless'],
+          default: 'panel',
+          readOnly: true,
+        },
+        settingsAuthority: {
+          type: 'string',
+          enum: ['control-plane'],
+          default: 'control-plane',
+          readOnly: true,
+        },
+        chatParticipantEnabled: {
+          type: 'boolean',
+          default: false,
+          readOnly: true,
+        },
         runtimeBackend: {
           type: 'string',
           enum: ['auto', 'freejt7-v2', 'freejt7', 'openclaw', 'local', 'acp:codex', 'acp:claude-code', 'acp:opencode'],
@@ -2846,6 +2927,8 @@ function createControlPanel(context, output, options = {}) {
     const bridgeSnapshot = remoteBridge && typeof remoteBridge.getSnapshot === 'function'
       ? remoteBridge.getSnapshot()
       : null;
+    const productState = getOwnedIdeProductState();
+    const shellState = getOwnedIdeShellState();
     return {
       ok: true,
       checkedAt: new Date().toISOString(),
@@ -2854,6 +2937,19 @@ function createControlPanel(context, output, options = {}) {
       engineRunning: Boolean(engineState.running),
       router: routerHealth,
       bridge: bridgeSnapshot,
+      authority: standaloneMode
+        ? {
+            schemaVersion: String(getOwnedIdeControlPlaneState()?.schemaVersion || 'unknown'),
+            productMode: String(productState?.productMode || 'agent-first'),
+            configAuthority: String(productState?.configAuthority || 'control-plane'),
+            runtimeAuthority: String(productState?.runtimeAuthority || 'freejt7'),
+            hostIntegration: String(productState?.hostIntegration || 'secondary'),
+            shellExperience: String(shellState?.experience || 'agent-first'),
+            primarySurface: String(shellState?.primarySurface || 'panel'),
+            settingsAuthority: String(shellState?.settingsAuthority || 'control-plane'),
+            chatParticipantEnabled: Boolean(shellState?.chatParticipantEnabled),
+          }
+        : null,
     };
   }
 
