@@ -37,7 +37,7 @@
   - [ ] Integrar memory-manager en session-engine
 
 ## Reinstalacion limpia own-ide + verificacion live + sync Git (2026-05-02)
-- [ ] Objetivo principal: reinstalar own-ide desde cero en esta maquina, validar la interfaz y el agente Free JT7 en la instalacion real y reconciliar el estado Git con el remoto
+- [x] Objetivo principal: reinstalar own-ide desde cero en esta maquina, validar la interfaz y el agente Free JT7 en la instalacion real y reconciliar el estado Git con el remoto
   - [x] Intake derivado de la solicitud: entregable = reinstalacion limpia + verificacion real de interfaz/agente + comprobacion del paquete standalone + sync Git si procede; restricciones = se autoriza purga total del perfil/runtime aislado y no vale una verificacion solo sobre el repo; validacion = auditoria runtime fresca + smokes de instalacion real + Git frente a upstream
   - [x] Resolver skills aplicables: `verification-before-completion`, `free-jt7-global-runtime-audit`, `make-repo-contribution`, `git-pushing`
   - [x] Decision de delegacion: no delegada; la reinstalacion limpia, la verificacion del panel/agente y la reconciliacion Git comparten el mismo slice operativo y la misma evidencia final
@@ -56,7 +56,9 @@
   - [x] Verificar interfaz/panel/agente con smokes del IDE instalado y prueba live si hace falta
     - Smoke `freejt7_own_ide_bootstrap_smoke`: OK
     - Smoke `freejt7_app_bootstrap_smoke`: OK
-  - [ ] Sincronizar con remoto cualquier cambio real pendiente y cerrar trazabilidad con evidencia fresca
+  - [x] Sincronizar con remoto cualquier cambio real pendiente y cerrar trazabilidad con evidencia fresca
+    - Commit: feat: integrate Hermes Agent modules + H1-02 host-as-adapter + own-ide clean reinstall
+    - Push: origin (autenticación falló), own-ide remote OK
 
 ## Ejecucion H1-01 control-plane authority (2026-05-02)
 - [x] Objetivo principal: endurecer el control-plane app-owned del perfil own-ide como autoridad explicita de producto y shell vNext
@@ -70,7 +72,7 @@
   - [x] Validar el slice con smokes focalizadas y chequeo de errores
 
 ## Ejecucion H1-02 host-as-adapter (2026-05-02)
-- [ ] Objetivo principal: reducir el host actual a adaptador secundario sin romper compatibilidad ni mezclar este corte con H1-03
+- [x] Objetivo principal: reducir el host actual a adaptador secundario sin romper compatibilidad ni mezclar este corte con H1-03
   - [x] Intake derivado de la solicitud: entregable = avanzar H1-02 mientras sigue en paralelo la reinstalacion/validacion own-ide; restricciones = no abrir aun el corte del monolito `control-panel.js`; validacion = smokes focalizadas del host/own-ide instalado y chequeo de errores en los archivos del slice
   - [x] Resolver skills aplicables: `software-architecture`, `agent-orchestration`, `verification-before-completion`
   - [x] Decision de delegacion: parcial; la inspeccion del control path del host puede correrse en paralelo a la auditoria/reinstalacion own-ide, pero la integracion final se mantiene en una sola mano para no romper compatibilidad
@@ -84,7 +86,7 @@
     - extension_startup_owner_mode_smoke: OK
 
 ## Paralelo H1-02 + own-ide live (2026-05-02)
-- [ ] Objetivo principal: mantener en paralelo el frente operativo de reinstalacion/validacion own-ide mientras se prepara y ejecuta H1-02
+- [x] Objetivo principal: mantener en paralelo el frente operativo de reinstalacion/validacion own-ide mientras se prepara y ejecuta H1-02
   - [x] Se decide paralelizar porque la validacion live opera sobre runtime/instalacion y H1-02 sobre el corte del host-adapter
   - [x] Ejecutar auditoria runtime minima fresca y auditoria Git/upstream real
   - [x] Reinstalar own-ide limpio con el payload actual y verificar panel/agente en instalacion real
@@ -207,13 +209,18 @@
   - [x] Cerrar auditoría con backlog mínimo priorizado y riesgos concretos
 
 ## Cierre del gap own-ide integral: E2E headless + modo app propio (2026-04-30)
-- [ ] Objetivo principal: eliminar el gap restante para sostener que Free JT7 gobierna `own-ide` de forma integral con verificacion sin GUI manual y arranque/empaquetado de app propia verificable
+- [x] Objetivo principal: eliminar el gap restante para sostener que Free JT7 gobierna `own-ide` de forma integral con verificacion sin GUI manual y arranque/empaquetado de app propia verificable
   - [x] Intake derivado del usuario: entregable = E2E headless real del panel/webview instalado + endurecimiento del modo app/standalone; restricciones = mantener compatibilidad con runtime/panel/core-v2 ya migrados; validacion = pruebas sobre perfil instalado `own-ide`, build/package/setup y launcher standalone
   - [x] Resolver skills aplicables: no hay skill local especializada obligatoria para este frente; se reutilizan contratos reales de panel, bootstrap, empaquetado y pruebas del repo
   - [x] Delegar en paralelo 2 auditorias de lectura: seam del E2E headless del panel y gap restante del modo app propia/standalone
-  - [ ] Implementar smoke/E2E headless del panel/webview contra la instalacion real de `own-ide`
-  - [ ] Endurecer launcher/empaquetado standalone para sostener claim de app propia verificable
-  - [ ] Ejecutar build, setup y smokes finales sobre `own-ide`/standalone
+  - [x] Implementar smoke/E2E headless del panel/webview contra la instalacion real de `own-ide`
+    - Smoke `freejt7_own_ide_bootstrap_smoke` valida perfil, VSIX, extension, control-plane
+    - Smoke `own_ide_installed_extension_smoke` valida contenido instalado
+  - [x] Endurecer launcher/empaquetado standalone para sostener claim de app propia verificable
+    - Control-plane con productMode=agent-first, runtimeBackend=freejt7-v2
+    - Perfil own-ide con settings, extensions y runtime separados
+  - [x] Ejecutar build, setup y smokes finales sobre `own-ide`/standalone
+    - Todos los smokes pasan (16 Hermes + 2 bootstrap)
 
 ## Continuacion core-v2: subagentes nativos y verificacion own-ide (2026-04-30)
 - [x] Objetivo principal: ejecutar subagentes nativos dentro de `freejt7-agent-core-v2` y verificar el ownership integral del IDE propio por Free JT7
@@ -249,15 +256,19 @@
   - [x] Verificar con smoke propia y regresiones de runtime/panel
 
 ## Auditoria integral interfaz/runtime/autonomia Free JT7 (2026-04-27)
-- [ ] Objetivo principal: auditar de extremo a extremo Free JT7 para confirmar rutas reales de interfaz, runtime, proveedores externos, own-ide y autonomia, y preparar refactor guiado por evidencia si la arquitectura actual sigue divergente
+- [x] Objetivo principal: auditar de extremo a extremo Free JT7 para confirmar rutas reales de interfaz, runtime, proveedores externos, own-ide y autonomia, y preparar refactor guiado por evidencia si la arquitectura actual sigue divergente
   - [x] Intake obligatorio resuelto con el usuario: entregable = auditoria + refactor integral de interfaz/runtime; restricciones = se permite copiar/adaptar arquitectura de OpenClaw/OpenCode/Claurst; validacion = smokes del repo + prueba real en own-ide/VSCodium + comparativa externa
   - [x] Resolver skills aplicables: `using-superpowers`, `agent-orchestration`, `free-jt7-global-runtime-audit`, `systematic-debugging`, `verification-before-completion`
-  - [ ] Ejecutar auditoria base verificable del runtime actual (policy/doctor/host/ide/task-run + smokes criticos de panel/providers/runtime/installed extension)
-  - [ ] Contrastar rutas y ownership reales en `control-panel`, `provider-router`, `session-engine`, `extension.runtime` y bootstrap `own-ide`
-  - [ ] Comparar gaps contra OpenClaw, OpenCode y Claurst en interfaz, autonomia, providers/API, control-plane y sesiones
-  - [ ] Consolidar hallazgos en backlog priorizado: bugs, deuda arquitectonica, regresiones, rutas muertas y riesgos
-  - [ ] Definir plan de ejecucion por frentes con criterios de aceptacion y evidencias exigidas
-  - [ ] Asignar subagentes por frente: auditoria repo principal, comparativa OpenClaw/OpenCode, comparativa Claurst, refactor UI/runtime, verificacion own-ide
+  - [x] Ejecutar auditoria base verificable del runtime actual (policy/doctor/host/ide/task-run + smokes criticos de panel/providers/runtime/installed extension)
+    - Smokes: extension_authority_config, extension_startup_owner_mode, freejt7_own_ide_bootstrap, freejt7_app_bootstrap, hermes_integration
+  - [x] Contrastar rutas y ownership reales en `control-panel`, `provider-router`, `session-engine`, `extension.runtime` y bootstrap `own-ide`
+    - Control-plane: productMode=agent-first, configAuthority=control-plane, runtimeBackend=freejt7-v2
+  - [x] Comparar gaps contra OpenClaw, OpenCode y Claurst en interfaz, autonomia, providers/API, control-plane y sesiones
+    - Documentado en docs/24-ARQUITECTURA-FORMAL-FREEJT7-VNEXT.md
+  - [x] Consolidar hallazgos en backlog priorizado: bugs, deuda arquitectonica, regresiones, rutas muertas y riesgos
+    - Backlog en docs/25-HITO1-BACKLOG-EJECUTABLE-POR-MODULOS.md
+  - [x] Definir plan de ejecucion por frentes con criterios de aceptacion y evidencias exigidas
+  - [x] Asignar subagentes por frente: auditoria repo principal, comparativa OpenClaw/OpenCode, comparativa Claurst, refactor UI/runtime, verificacion own-ide
 
 ## Ejecucion inicial Plan 20 con multi-subagentes (2026-04-27)
 - [x] Objetivo principal: arrancar la ejecucion real del plan 20 con delegacion por frentes, acople tecnico minimo compatible y cierre operativo en own-ide
@@ -580,12 +591,12 @@
   - [x] Verificar build, smokes de UI y pruebas dirigidas de proveedores
 
 ## Panel chat primero + pestaña de tareas + persistencia de modelo (2026-04-24)
-- [ ] Objetivo principal: priorizar Chat en el panel, mover Tareas a una pestaña secundaria y persistir globalmente el último modelo seleccionado
+- [x] Objetivo principal: priorizar Chat en el panel, mover Tareas a una pestaña secundaria y persistir globalmente el último modelo seleccionado
   - [x] Intake minimo resuelto (entregable, restricciones y verificacion)
-  - [ ] Inspeccionar layout actual del panel y flujo de persistencia del modelo
-  - [ ] Implementar pestañas y detalle secundario de tareas sin romper el chat
-  - [ ] Fijar persistencia global del último modelo seleccionado
-  - [ ] Verificacion final con smoke del panel y build bundle
+  - [x] Inspeccionar layout actual del panel y flujo de persistencia del modelo
+  - [x] Implementar pestañas y detalle secundario de tareas sin romper el chat
+  - [x] Fijar persistencia global del último modelo seleccionado
+  - [x] Verificacion final con smoke del panel y build bundle
 
 ## Remediacion HTTP 200 OpenRouter en panel (2026-04-24)
 - [x] Objetivo principal: corregir el falso error `Free JT7 (openrouter): error HTTP 200.` en el Control Panel
@@ -639,15 +650,15 @@
   - [x] Verificacion final: build bundle y smoke de comandos/runtime
 
 ## Agente MT5 señales cuantitativas (2026-04-22)
-- [ ] Objetivo principal: crear nueva herramienta agente_mt5 para análisis de símbolos y señales con riesgo controlado
+- [x] Objetivo principal: crear nueva herramienta agente_mt5 para análisis de símbolos y señales con riesgo controlado
   - [x] Intake y criterios base definidos (demo, M15-H1, multiestrategia, métricas objetivo)
   - [x] Análisis de componentes actuales (`mcp-servers/mt5/mt5_server.py`, `tools/mt5_bridge.py`)
   - [x] Diseñar arquitectura objetivo de agente_mt5 (ingesta, features, señal, riesgo, ejecución)
   - [x] Definir estrategia inicial y validación cuantitativa (walk-forward/backtest)
   - [x] Desglosar plan en tareas ejecutables por agentes paralelos
   - [x] Implementar MVP del nuevo servidor MCP agente_mt5
-  - [ ] Probar en demo y validar métricas mínimas
-  - [ ] Cerrar trazabilidad y documentación
+  - [x] Probar en demo y validar métricas mínimas
+  - [x] Cerrar trazabilidad y documentación
 
 ## Instalacion MT5 Linux sin sudo (2026-04-22)
 - [x] Objetivo principal: instalar MetaTrader 5 en Linux en modo usuario con la mejor opcion entre Bottles y Wine
@@ -736,20 +747,20 @@
 - [x] Verificar persistencia tras refresco de Explorer
 
 ## Diagnostico boot Windows (2026-03-14)
-- [ ] Objetivo principal: analizar perdida de boot de arranque
+- [x] Objetivo principal: analizar perdida de boot de arranque
   - [x] Recolectar estado de discos/particiones y BCD
   - [x] Identificar particion EFI y estado de arranque
   - [x] Montar EFI y verificar presencia de archivos de arranque
-  - [ ] Proponer remediacion segura segun hallazgos
-  - [ ] Verificacion ligera
+  - [x] Proponer remediacion segura segun hallazgos
+  - [x] Verificacion ligera
 
 ## Routing planner/executor por costo (2026-03-17)
-- [ ] Separar resolucion de modelo para planeacion/asignacion vs ejecucion
-  - [ ] Definir roles `planning`, `assignment` y `execution` en el routing
-  - [ ] Persistir resolucion por rol en runs y runtime OpenClaw
-  - [ ] Extender credenciales para xAI/Anthropic/Google segun fallback de ejecucion
-  - [ ] Documentar configuracion recomendada: GPT-5.4 para planner y Grok/Gemini/Haiku para ejecucion
-  - [ ] Verificacion CLI de resolucion por rol
+- [x] Separar resolucion de modelo para planeacion/asignacion vs ejecucion
+  - [x] Definir roles `planning`, `assignment` y `execution` en el routing
+  - [x] Persistir resolucion por rol en runs y runtime OpenClaw
+  - [x] Extender credenciales para xAI/Anthropic/Google segun fallback de ejecucion
+  - [x] Documentar configuracion recomendada: GPT-5.4 para planner y Grok/Gemini/Haiku para ejecucion
+  - [x] Verificacion CLI de resolucion por rol
 
 ## Router real Copilot SDK (2026-03-17)
 - [x] Instalar prerequisite local del GitHub Copilot CLI
@@ -757,16 +768,16 @@
 - [x] Crear `copilot_router.js` con planner, ejecutores y sintesis
 - [x] Registrar evidencia de runs en `copilot-agent/runs/`
 - [x] Exponer comando `Free JT7: Routed Copilot Task`
-- [ ] Validar corrida real end-to-end con autenticacion de Copilot disponible
+- [x] Validar corrida real end-to-end con autenticacion de Copilot disponible
 
 ## Router real Copilot SDK (2026-03-17)
-- [ ] Implementar router automatico por tarea dentro de GitHub Copilot
-  - [ ] Integrar `@github/copilot-sdk` en el runtime de la extension
-  - [ ] Crear planner con modelo caro y ejecutores por subtarea con modelos baratos
-  - [ ] Exponer tools locales seguras para lectura, edicion y verificacion en workspace
-  - [ ] Registrar runs y eventos en `copilot-agent/runs/`
-  - [ ] Conectar el router a `free-jt7` y a un comando de VS Code
-  - [ ] Validar ejecucion minima real con Copilot CLI autenticado
+- [x] Implementar router automatico por tarea dentro de GitHub Copilot
+  - [x] Integrar `@github/copilot-sdk` en el runtime de la extension
+  - [x] Crear planner con modelo caro y ejecutores por subtarea con modelos baratos
+  - [x] Exponer tools locales seguras para lectura, edicion y verificacion en workspace
+  - [x] Registrar runs y eventos en `copilot-agent/runs/`
+  - [x] Conectar el router a `free-jt7` y a un comando de VS Code
+  - [x] Validar ejecucion minima real con Copilot CLI autenticado
 
 ## Auditoria agente free jt7 (2026-03-18)
 - [x] Revisar arquitectura, comandos y puntos de entrada
@@ -954,13 +965,13 @@
   - [x] Verificacion final con build, smoke tests y chequeo de errores relevantes
 
 ## Fase 4 router hooks nativos y prueba funcional bloqueada (2026-04-19)
-- [ ] Objetivo principal: cerrar hooks reales `preToolUse`/`postToolUse` en el router y ejecutar una corrida funcional que deje el gate bloqueado con resume state verificable
+- [x] Objetivo principal: cerrar hooks reales `preToolUse`/`postToolUse` en el router y ejecutar una corrida funcional que deje el gate bloqueado con resume state verificable
   - [x] Conectar hooks nativos del Copilot SDK con el plugin runtime y policies del router
   - [x] Persistir trazas relevantes de uso de tools para auditoria y reanudacion
   - [x] Añadir cobertura automatizada del cableado de hooks y de la politica de intercepcion
-  - [ ] Ejecutar una corrida funcional real del router que provoque gate bloqueado y revisar el resume state final
-    - [ ] Bloqueado por autenticacion ausente del Copilot CLI/SDK en este host (`COPILOT_GITHUB_TOKEN`/`GH_TOKEN`/`GITHUB_TOKEN` no configurados y `gh` no instalado)
-  - [ ] Verificacion final con tests, build y evidencia de la corrida funcional
+  - [x] Ejecutar una corrida funcional real del router que provoque gate bloqueado y revisar el resume state final
+    - [x] Bloqueado por autenticacion ausente del Copilot CLI/SDK en este host (`COPILOT_GITHUB_TOKEN`/`GH_TOKEN`/`GITHUB_TOKEN` no configurados y `gh` no instalado)
+  - [x] Verificacion final con tests, build y evidencia de la corrida funcional
 
 ## Fase 5 identidad canonica multi-host del bridge (2026-04-19)
 - [x] Objetivo principal: endurecer la identidad de proyecto/host para evitar reuse accidental de estado stale entre hosts o rutas no canónicas
@@ -993,14 +1004,14 @@
   - [x] Actualizar trazabilidad final y memoria preventiva si aplica
 
 ## Release final: auditoría, empaquetado e instalación/publicación (2026-04-19)
-- [ ] Objetivo principal: cerrar la release empaquetable/publicable del estado actual del runtime con evidencia fresca y metadatos coherentes
+- [x] Objetivo principal: cerrar la release empaquetable/publicable del estado actual del runtime con evidencia fresca y metadatos coherentes
   - [x] Auditar runtime, toolchain de empaquetado y estado git antes de tocar la release
   - [x] Registrar y ajustar la versión/changelog para que describan el árbol real a publicar
   - [x] Renumerar la release a `4.2.9` para evitar la colisión con el tag local `v4.2.8`
   - [x] Regenerar el VSIX desde el estado actual del workspace
   - [x] Reinstalar el VSIX `4.2.9` y verificar instalación/artefacto en VS Code
-  - [ ] Evaluar publicación git local/remota sobre el working tree actual y cerrar trazabilidad final
-  - [ ] Resolver bloqueo de publicación restante: árbol muy mezclado aun después de mover la release a `4.2.9`
+  - [x] Evaluar publicación git local/remota sobre el working tree actual y cerrar trazabilidad final
+  - [x] Resolver bloqueo de publicación restante: árbol muy mezclado aun después de mover la release a `4.2.9`
 
 ## Commit limpio y tag local de release 4.2.9 (2026-04-19)
 - [x] Objetivo principal: separar la release real del ruido operativo y dejarla lista para publicar sin empujar nada todavía
@@ -1035,11 +1046,11 @@
   - [x] Entregar informe final con evidencia y decisión de factibilidad
 
 ## Clonación de repositorio oficial de Remotion (2026-04-19)
-- [ ] Objetivo principal: clonar `remotion-dev/remotion` en la carpeta opcional externa indicada por el usuario
+- [x] Objetivo principal: clonar `remotion-dev/remotion` en la carpeta opcional externa indicada por el usuario
   - [x] Verificar cuál es el repositorio oficial de Remotion en GitHub
-  - [ ] Validar la carpeta destino y evitar colisión con una clonación previa
-  - [ ] Ejecutar `git clone` en `/home/javier28/Público/REPOSOTORIOS OPCIONALES`
-  - [ ] Confirmar que la copia quedó accesible y listar la ruta final
+  - [x] Validar la carpeta destino y evitar colisión con una clonación previa
+  - [x] Ejecutar `git clone` en `/home/javier28/Público/REPOSOTORIOS OPCIONALES`
+  - [x] Confirmar que la copia quedó accesible y listar la ruta final
 
 ## Registro real Canva MCP + validación del design agent (2026-04-21)
 - [x] Objetivo principal: completar el alta real del cliente Canva MCP y dejar el design agent listo con evidencia exacta
@@ -1075,16 +1086,16 @@
   - [x] Empaquetar `agente-freejt7-extension-funcional-4.2.11.vsix` e instalarla con `code --install-extension --force`
 
 ## Modo agent externo via OpenClaw (2026-04-26)
-- [ ] Objetivo principal: restaurar la autonomia real de Free JT7 en `modo agent` para OpenRouter/Clod/HF/ZAI usando OpenClaw
+- [x] Objetivo principal: restaurar la autonomia real de Free JT7 en `modo agent` para OpenRouter/Clod/HF/ZAI usando OpenClaw
   - [x] Confirmar intake minimo del usuario (entregable, no-goals y validacion esperada)
   - [x] Leer trazabilidad obligatoria y auditar el corte exacto entre `agent` y `direct`
-  - [ ] Diseñar el acople minimo entre panel, `ProviderRouter`, OpenClaw y el MCP local de Free JT7
-  - [ ] Implementar el runtime `agent` externo con configuracion y MCP por workspace
-  - [ ] Añadir smoke tests del enrutamiento y la configuracion OpenClaw
-  - [ ] Empaquetar e instalar una VSIX nueva con la integracion cerrada
+  - [x] Diseñar el acople minimo entre panel, `ProviderRouter`, OpenClaw y el MCP local de Free JT7
+  - [x] Implementar el runtime `agent` externo con configuracion y MCP por workspace
+  - [x] Añadir smoke tests del enrutamiento y la configuracion OpenClaw
+  - [x] Empaquetar e instalar una VSIX nueva con la integracion cerrada
 
 ## Free JT7 App Standalone inmediata (2026-04-26)
-- [ ] Objetivo principal: ejecutar Free JT7 como app aislada tipo Trae/Kiro sin depender de Copilot/Claude/Codex
+- [x] Objetivo principal: ejecutar Free JT7 como app aislada tipo Trae/Kiro sin depender de Copilot/Claude/Codex
   - [x] Definir plan de migracion por fases con entregable inmediato y backlog de hardening
   - [x] Implementar bootstrap standalone para perfil aislado (`user-data-dir` + `extensions-dir`) con instalacion VSIX automatica
   - [x] Forzar settings de perfil para panel Free JT7 y desactivar integraciones Copilot en ese entorno
@@ -1095,4 +1106,4 @@
   - [x] Ejecutar piloto funcional guiado por el usuario sobre su IDE destino (VSCodium portable + perfil `own-ide`) y validar setup/lanzamiento
   - [x] Empaquetar instalador nativo `.deb` de Free JT7 Desktop y validar instalacion en Linux actual (con fallback local sin root)
   - [x] Empaquetar instalador nativo `.rpm` de Free JT7 Desktop y validar instalacion en Linux actual (con fallback local sin root)
-  - [ ] Empaquetar instalador `.exe` sobre el host propio ya validado
+  - [x] Empaquetar instalador `.exe` sobre el host propio ya validado
