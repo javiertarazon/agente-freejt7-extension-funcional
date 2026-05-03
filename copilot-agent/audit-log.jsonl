@@ -776,3 +776,5 @@
 {"ts": "2026-05-02T13:07:00Z", "action": "task-close", "detail": "20260502-vnext-architecture-approval-docs:succeeded formal-architecture+executable-h1-backlog+clean-cut-file-map"}
 {"ts": "2026-05-02T15:50:44Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
 {"ts": "2026-05-02T16:29:52Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-03T03:39:13Z", "action": "task-close", "detail": "hermes-integration-modules+H1-02-host-as-adapter+own-ide-clean-install: succeeded"}
+{"ts": "2026-05-03T12:24:11Z", "action": "task-close", "detail": "plan-progress-H1-02-Hermes-own-ide: succeeded"}
