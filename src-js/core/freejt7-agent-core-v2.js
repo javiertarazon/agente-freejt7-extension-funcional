@@ -237,6 +237,12 @@ function normalizeAction(action) {
   if (Array.isArray(action.args)) {
     out.args = action.args.map((item) => String(item));
   }
+  if (type === 'inspect_path') {
+    const candidatePath = [out.path, out.filePath, out.dirPath, out.targetPath, out.rootPath]
+      .map((item) => String(item || '').trim())
+      .find(Boolean);
+    out.path = candidatePath || '.';
+  }
   return out;
 }
 
@@ -247,8 +253,26 @@ function normalizeActions(actions, maxActions = DEFAULT_MAX_ACTIONS) {
     .slice(0, maxActions);
 }
 
+function extractFocusedGoal(goal) {
+  const source = String(goal || '').trim();
+  if (!source) return '';
+  const markers = [
+    /(?:^|\n)\s*Solicitud actual:\s*/gi,
+    /(?:^|\n)\s*Solicitud base:\s*/gi,
+  ];
+  for (const pattern of markers) {
+    const matches = [...source.matchAll(pattern)];
+    if (!matches.length) continue;
+    const last = matches[matches.length - 1];
+    const start = Number(last.index || 0) + String(last[0] || '').length;
+    const tail = source.slice(start).trim();
+    if (tail) return tail;
+  }
+  return source;
+}
+
 function operationalGoal(goal) {
-  return /\b(crea|crear|modifica|modificar|edita|editar|escribe|write|borra|elimina|delete|ejecuta|exec|instala|install|verifica|test|build|configura|settings|ajustes|arregla|corrige|fix)\b/i.test(String(goal || ''));
+  return /\b(crea|crear|modifica|modificar|edita|editar|escribe|write|borra|elimina|delete|ejecuta|exec|instala|install|verifica|test|build|configura|settings|ajustes|arregla|corrige|fix)\b/i.test(extractFocusedGoal(goal));
 }
 
 function buildToolCatalog() {
@@ -548,6 +572,19 @@ function loadLocalMcpPolicy(workspacePath) {
   };
 }
 
+function extendPolicyWithExplicitAbsolutePaths(policy, args = {}) {
+  const nextRoots = new Set(Array.isArray(policy.allowedFileRoots) ? policy.allowedFileRoots : []);
+  for (const key of ['targetPath', 'dirPath', 'filePath', 'rootPath', 'cwd']) {
+    const value = String(args[key] || '').trim();
+    if (!value || !path.isAbsolute(value)) continue;
+    nextRoots.add(path.resolve(value));
+  }
+  return {
+    ...policy,
+    allowedFileRoots: Array.from(nextRoots),
+  };
+}
+
 async function getLocalMcpRuntime() {
   if (!localMcpRuntimePromise) {
     localMcpRuntimePromise = (async () => {
@@ -689,6 +726,7 @@ async function executeSubagentRun(context, output, workspacePath, action = {}, o
 function resolveActionPath(workspacePath, rawPath, fallback = '') {
   const candidate = String(rawPath || fallback || '').trim();
   if (!candidate) return '';
+  if (/^[A-Za-z]:[\\/]/.test(candidate)) return path.resolve(candidate);
   if (path.isAbsolute(candidate)) return path.resolve(candidate);
   return path.resolve(workspacePath, candidate);
 }
@@ -779,8 +817,8 @@ async function executeMcpCall(workspacePath, capabilityContext, action = {}) {
   if (!spec) {
     throw new Error(`Tool MCP no soportada nativamente: ${toolName}`);
   }
-  const policy = loadLocalMcpPolicy(workspacePath);
   const args = deriveMcpArguments(workspacePath, toolName, action);
+  const policy = extendPolicyWithExplicitAbsolutePaths(loadLocalMcpPolicy(workspacePath), args);
   const result = await spec.run(args, policy);
   return {
     serverId,
@@ -979,6 +1017,49 @@ function hasCompletionEvidence({ steps = [], changedFiles = new Set(), requiresT
   return !requiresTools;
 }
 
+function isLikelySkillCreationGoal(goal) {
+  const text = String(goal || '').trim();
+  if (!text) return false;
+  return /\bskill\b/i.test(text)
+    && /(?:\bq(?:uiero|iero|iuero)\b|\bnecesit(?:o|a)\b|\bcrear\b|\bcrea\b|\bcreame\b|\bgenera\b|\bhaz\b|\bhacer\b|\bmake\b|\bscaffold\b|\bnueva\b|\bnuevo\b)/i.test(text);
+}
+
+function fallbackUserFacingSummary(goal, status) {
+  if (isLikelySkillCreationGoal(goal)) {
+    return status === 'failed'
+      ? 'No pude completar automaticamente la creacion de la skill en esta iteracion.'
+      : 'He procesado la solicitud de la skill.';
+  }
+  return status === 'failed'
+    ? 'No pude completar la solicitud de forma automatica en esta iteracion.'
+    : 'He procesado la solicitud.';
+}
+
+function sanitizeUserFacingSummary(summary, goal, status) {
+  const source = String(summary || '').trim();
+  if (!source) {
+    return fallbackUserFacingSummary(goal, status);
+  }
+
+  const cleaned = source
+    .split(/\n+/)
+    .map((line) => String(line || '').trim())
+    .filter(Boolean)
+    .filter((line) => !/^Traza:/i.test(line))
+    .filter((line) => !/^Iteraciones core-v2:/i.test(line))
+    .filter((line) => !/^Subagentes:/i.test(line))
+    .filter((line) => !/^Cambios:/i.test(line))
+    .join('\n\n')
+    .replace(/El planner no devolvio JSON valido; core-v2 ejecutara acciones deterministas y reintentara\.?/gi, '')
+    .replace(/Core-v2 no pudo demostrar trabajo ejecutable ni evidencia verificable para cerrar la tarea\.?/gi, 'No pude completar la solicitud de forma automatica en esta iteracion.')
+    .replace(/Core-v2 no encontro acciones adicionales ejecutables\.?/gi, 'No encontre una accion automatica segura para continuar en esta iteracion.')
+    .replace(/Core-v2 alcanzo el limite de iteraciones con acciones ejecutadas\.?/gi, 'La solicitud necesita una nueva iteracion para completarse.')
+    .replace(/Core-v2 rechazo el cierre porque no encontro evidencia accionable suficiente para sostener la respuesta\.?/gi, 'No pude confirmar un resultado suficiente para dar la solicitud por completada.')
+    .trim();
+
+  return cleaned || fallbackUserFacingSummary(goal, status);
+}
+
 function createFreeJt7AgentCoreV2(options = {}) {
   const callProvider = options.callProvider;
   if (typeof callProvider !== 'function') {
@@ -1162,20 +1243,22 @@ function createFreeJt7AgentCoreV2(options = {}) {
       finalStatus = 'failed';
       finalSummary = 'Core-v2 rechazo el cierre porque no encontro evidencia accionable suficiente para sostener la respuesta.';
     }
-    const summary = [
+    const technicalSummary = [
       finalSummary,
       steps.length ? `Iteraciones core-v2: ${steps.length}.` : '',
       collectSubagentRuns(steps).length ? `Subagentes: ${collectSubagentRuns(steps).length}.` : '',
       changedFiles.size ? `Cambios: ${Array.from(changedFiles).join(', ')}.` : '',
       `Traza: ${tracePath}.`,
     ].filter(Boolean).join('\n\n');
+    const publicSummary = sanitizeUserFacingSummary(technicalSummary, goal, finalStatus);
     appendJsonl(tracePath, {
       ts: nowIso(),
       event: 'run.end',
       runId,
       status: finalStatus,
       changedFiles: Array.from(changedFiles),
-      summary,
+      summary: technicalSummary,
+      publicSummary,
     });
 
     return {
@@ -1192,16 +1275,17 @@ function createFreeJt7AgentCoreV2(options = {}) {
         subagents: collectSubagentRuns(steps),
         toolRegistry: buildToolCatalog(),
         capabilities: capabilityContext,
+        technicalSummary,
       },
       run: {
         status: finalStatus,
-        summary,
+        summary: publicSummary,
         provider,
         model,
       },
       final: {
         status: finalStatus,
-        summary,
+        summary: publicSummary,
         changedFiles: Array.from(changedFiles),
         verification,
         residualRisks: [],

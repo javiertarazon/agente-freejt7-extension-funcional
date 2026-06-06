@@ -1,10 +1,18 @@
 'use strict';
 
 const assert = require('assert');
+const { __testing: extensionTesting } = require('../src-js/core/extension.runtime');
 
 const { __testing } = require('../src-js/core/control-panel.js');
 
 async function testCancelsWithoutEnqueueWhenPrepareTaskReturnsNull() {
+  const implicitIntake = extensionTesting.deriveImplicitPanelIntake('corrige el flujo del chat del panel');
+  assert.deepStrictEqual(implicitIntake, {
+    deliverable: 'corrige el flujo del chat del panel',
+    constraints: 'Cambios minimos, compatibles hacia atras y sin sacar preguntas del flujo del chat del panel.',
+    verification: 'Validacion ligera con evidencia breve en chat o trazabilidad.',
+  });
+
   let enqueued = 0;
   let persistedSessionId = '';
   let postStateCalls = 0;

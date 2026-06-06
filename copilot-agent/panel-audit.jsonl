@@ -314,3 +314,175 @@
 {"ts":"2026-04-28T13:55:45.654Z","sessionId":"panel-30582836","type":"task.started","payload":{"taskId":"task-57c18f8e-3","workerId":1}}
 {"ts":"2026-04-28T13:55:46.103Z","sessionId":"panel-30582836","type":"task.completed","payload":{"taskId":"task-57c18f8e-3","provider":"local","model":"freejt7-local-tools"}}
 {"ts":"2026-04-28T13:55:46.109Z","sessionId":"panel-30582836","type":"task.verified","payload":{"taskId":"task-57c18f8e-3","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-04-28T23:26:47.999Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-4fc45900-6","risk":"medium"}}
+{"ts":"2026-04-28T23:26:48.187Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-4fc45900-6","workerId":1}}
+{"ts":"2026-04-28T23:28:03.687Z","sessionId":"panel-6a62ee38","type":"task.completed","payload":{"taskId":"task-4fc45900-6","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-28T23:28:03.700Z","sessionId":"panel-6a62ee38","type":"task.verified","payload":{"taskId":"task-4fc45900-6","verificationStatus":"verified","evidenceCount":1,"warnings":[]}}
+{"ts":"2026-04-28T23:29:26.836Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-de1ebb22-8","risk":"medium"}}
+{"ts":"2026-04-28T23:29:27.058Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-de1ebb22-8","workerId":1}}
+{"ts":"2026-04-28T23:30:31.763Z","sessionId":"panel-6a62ee38","type":"task.completed","payload":{"taskId":"task-de1ebb22-8","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-28T23:30:31.778Z","sessionId":"panel-6a62ee38","type":"task.verified","payload":{"taskId":"task-de1ebb22-8","verificationStatus":"verified","evidenceCount":1,"warnings":[]}}
+{"ts":"2026-04-28T23:34:49.777Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-7251622b-9","risk":"medium"}}
+{"ts":"2026-04-28T23:34:49.945Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-7251622b-9","workerId":1}}
+{"ts":"2026-04-28T23:36:50.076Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-7251622b-9","retries":1,"error":"Tiempo de ejecucion excedido (120000ms)."}}
+{"ts":"2026-04-29T00:03:18.307Z","sessionId":"panel-6a62ee38","type":"task.retry.enqueued","payload":{"taskId":"task-7251622b-9","retries":1}}
+{"ts":"2026-04-29T00:03:18.484Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-7251622b-9","workerId":1}}
+{"ts":"2026-04-29T00:05:18.593Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-7251622b-9","retries":2,"error":"Tiempo de ejecucion excedido (120000ms)."}}
+{"ts":"2026-04-29T00:17:22.022Z","sessionId":"panel-6a62ee38","type":"task.enqueued","payload":{"taskId":"task-aec63d11-9","risk":"medium"}}
+{"ts":"2026-04-29T00:17:22.234Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-aec63d11-9","workerId":1}}
+{"ts":"2026-04-29T00:17:55.494Z","sessionId":"panel-6a62ee38","type":"task.retry.scheduled","payload":{"taskId":"task-aec63d11-9","retries":1,"maxRetries":2,"error":"Free JT7 router fallback exhausted: Free JT7 (openrouter/OpenClaw agent): ⚠️ Agent couldn't generate a response. Please try again."}}
+{"ts":"2026-04-29T00:17:55.635Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-aec63d11-9","workerId":1}}
+{"ts":"2026-04-29T00:18:28.058Z","sessionId":"panel-6a62ee38","type":"task.retry.scheduled","payload":{"taskId":"task-aec63d11-9","retries":2,"maxRetries":2,"error":"Free JT7 router fallback exhausted: Free JT7 (openrouter/OpenClaw agent): ⚠️ Agent couldn't generate a response. Please try again."}}
+{"ts":"2026-04-29T00:18:28.217Z","sessionId":"panel-6a62ee38","type":"task.started","payload":{"taskId":"task-aec63d11-9","workerId":1}}
+{"ts":"2026-04-29T00:18:57.551Z","sessionId":"panel-6a62ee38","type":"task.failed","payload":{"taskId":"task-aec63d11-9","retries":3,"error":"Free JT7 router fallback exhausted: Free JT7 (openrouter/OpenClaw agent): ⚠️ Agent couldn't generate a response. Please try again."}}
+{"ts":"2026-04-29T11:44:11.227Z","sessionId":"panel-1da3423d","type":"session.created","payload":{"title":"Sesion inicial Free JT7"}}
+{"ts":"2026-04-29T11:45:33.427Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-4f394df4-a","risk":"medium"}}
+{"ts":"2026-04-29T11:45:33.513Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-4f394df4-a","workerId":1}}
+{"ts":"2026-04-29T11:46:10.104Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-4f394df4-a","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T11:46:10.122Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-4f394df4-a","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T12:23:10.368Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-7ec2e037-4","risk":"medium"}}
+{"ts":"2026-04-29T12:23:10.447Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-7ec2e037-4","workerId":1}}
+{"ts":"2026-04-29T12:24:05.022Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-7ec2e037-4","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T12:24:05.031Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-7ec2e037-4","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T12:27:42.277Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-5bc021b6-e","risk":"medium"}}
+{"ts":"2026-04-29T12:27:42.457Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-5bc021b6-e","workerId":1}}
+{"ts":"2026-04-29T12:28:37.380Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-5bc021b6-e","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T12:28:37.393Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-5bc021b6-e","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T12:32:01.333Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-e9379dfa-1","risk":"medium"}}
+{"ts":"2026-04-29T12:32:01.379Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-e9379dfa-1","workerId":1}}
+{"ts":"2026-04-29T12:32:56.930Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-e9379dfa-1","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T12:32:56.937Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-e9379dfa-1","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T12:45:52.000Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-e62fef9e-d","risk":"medium"}}
+{"ts":"2026-04-29T12:45:52.080Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-e62fef9e-d","workerId":1}}
+{"ts":"2026-04-29T12:47:35.879Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-e62fef9e-d","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T12:47:35.885Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-e62fef9e-d","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T12:48:58.263Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-5a0e33e8-5","risk":"medium"}}
+{"ts":"2026-04-29T12:48:58.477Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-5a0e33e8-5","workerId":1}}
+{"ts":"2026-04-29T12:50:18.971Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-5a0e33e8-5","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T12:50:18.977Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-5a0e33e8-5","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T12:57:55.001Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-4246b312-8","risk":"medium"}}
+{"ts":"2026-04-29T12:57:55.121Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-4246b312-8","workerId":1}}
+{"ts":"2026-04-29T12:59:55.169Z","sessionId":"panel-1da3423d","type":"task.failed","payload":{"taskId":"task-4246b312-8","retries":1,"error":"Tiempo de ejecucion excedido (120000ms)."}}
+{"ts":"2026-04-29T13:01:06.278Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-423d90e3-a","risk":"medium"}}
+{"ts":"2026-04-29T13:01:06.387Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-423d90e3-a","workerId":1}}
+{"ts":"2026-04-29T13:03:06.448Z","sessionId":"panel-1da3423d","type":"task.failed","payload":{"taskId":"task-423d90e3-a","retries":1,"error":"Tiempo de ejecucion excedido (120000ms)."}}
+{"ts":"2026-04-29T13:12:51.768Z","sessionId":"panel-1da3423d","type":"task.retry.enqueued","payload":{"taskId":"task-423d90e3-a","retries":1}}
+{"ts":"2026-04-29T13:12:51.980Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-423d90e3-a","workerId":1}}
+{"ts":"2026-04-29T13:13:39.452Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-423d90e3-a","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T13:13:39.458Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-423d90e3-a","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T13:22:12.365Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-15bec781-6","risk":"medium"}}
+{"ts":"2026-04-29T13:22:12.473Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-15bec781-6","workerId":1}}
+{"ts":"2026-04-29T13:23:33.390Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-15bec781-6","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T13:23:33.397Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-15bec781-6","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T13:28:27.480Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-b2ff686c-0","risk":"medium"}}
+{"ts":"2026-04-29T13:28:27.558Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-b2ff686c-0","workerId":1}}
+{"ts":"2026-04-29T13:29:10.719Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-b2ff686c-0","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T13:29:10.724Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-b2ff686c-0","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T13:32:48.575Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-af468e10-e","risk":"medium"}}
+{"ts":"2026-04-29T13:32:48.646Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-af468e10-e","workerId":1}}
+{"ts":"2026-04-29T13:33:34.098Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-af468e10-e","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T13:33:34.104Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-af468e10-e","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T13:38:12.561Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-873dce90-a","risk":"medium"}}
+{"ts":"2026-04-29T13:38:12.685Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-873dce90-a","workerId":1}}
+{"ts":"2026-04-29T13:38:58.559Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-873dce90-a","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T13:38:58.564Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-873dce90-a","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T13:41:20.780Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-91ca2c2f-7","risk":"medium"}}
+{"ts":"2026-04-29T13:41:21.004Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-91ca2c2f-7","workerId":1}}
+{"ts":"2026-04-29T13:42:05.547Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-91ca2c2f-7","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T13:42:05.560Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-91ca2c2f-7","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T18:47:02.625Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-a037ece0-5","risk":"medium"}}
+{"ts":"2026-04-29T18:47:02.744Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-a037ece0-5","workerId":1}}
+{"ts":"2026-04-29T18:47:03.341Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-a037ece0-5","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T18:47:03.351Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-a037ece0-5","verificationStatus":"verified","evidenceCount":10,"warnings":[]}}
+{"ts":"2026-04-29T18:48:04.517Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-af0f3b89-6","risk":"medium"}}
+{"ts":"2026-04-29T18:48:04.740Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-af0f3b89-6","workerId":1}}
+{"ts":"2026-04-29T18:48:04.949Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-af0f3b89-6","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T18:48:04.958Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-af0f3b89-6","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T18:48:56.592Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-fc328f95-d","risk":"medium"}}
+{"ts":"2026-04-29T18:48:56.806Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-fc328f95-d","workerId":1}}
+{"ts":"2026-04-29T18:48:57.019Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-fc328f95-d","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T18:48:57.028Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-fc328f95-d","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-29T22:35:49.423Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-54a66ce9-2","risk":"medium"}}
+{"ts":"2026-04-29T22:35:49.575Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-54a66ce9-2","workerId":1}}
+{"ts":"2026-04-29T22:35:49.933Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-54a66ce9-2","provider":"freejt7-agent","model":"freejt7-runtime"}}
+{"ts":"2026-04-29T22:35:49.940Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-54a66ce9-2","verificationStatus":"verified","evidenceCount":10,"warnings":[]}}
+{"ts":"2026-04-29T23:32:02.378Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-273cbdb2-9","risk":"medium"}}
+{"ts":"2026-04-29T23:32:02.620Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-273cbdb2-9","workerId":1}}
+{"ts":"2026-04-29T23:32:03.715Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-273cbdb2-9","provider":"local","model":"freejt7-local-tools"}}
+{"ts":"2026-04-29T23:32:03.723Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-273cbdb2-9","verificationStatus":"verified","evidenceCount":10,"warnings":[]}}
+{"ts":"2026-04-30T01:00:46.920Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-06725f03-e","risk":"medium"}}
+{"ts":"2026-04-30T01:00:47.210Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-06725f03-e","workerId":1}}
+{"ts":"2026-04-30T01:00:47.464Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-06725f03-e","provider":"local","model":"freejt7-local-tools"}}
+{"ts":"2026-04-30T01:00:47.480Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-06725f03-e","verificationStatus":"verified","evidenceCount":10,"warnings":[]}}
+{"ts":"2026-04-30T01:23:21.902Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-a9368a97-f","risk":"medium"}}
+{"ts":"2026-04-30T01:23:22.214Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-a9368a97-f","workerId":1}}
+{"ts":"2026-04-30T01:23:22.401Z","sessionId":"panel-1da3423d","type":"task.failed","payload":{"taskId":"task-a9368a97-f","retries":1,"error":"Free JT7 router fallback exhausted: Free JT7: No hay API Key para \"nvidia\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-30T01:24:19.122Z","sessionId":"panel-1da3423d","type":"task.retry.enqueued","payload":{"taskId":"task-a9368a97-f","retries":1}}
+{"ts":"2026-04-30T01:24:19.469Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-a9368a97-f","workerId":1}}
+{"ts":"2026-04-30T01:24:19.695Z","sessionId":"panel-1da3423d","type":"task.failed","payload":{"taskId":"task-a9368a97-f","retries":2,"error":"Free JT7 router fallback exhausted: Free JT7: No hay API Key para \"nvidia\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-30T01:24:26.373Z","sessionId":"panel-1da3423d","type":"task.retry.enqueued","payload":{"taskId":"task-a9368a97-f","retries":2}}
+{"ts":"2026-04-30T01:24:26.633Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-a9368a97-f","workerId":1}}
+{"ts":"2026-04-30T01:24:26.985Z","sessionId":"panel-1da3423d","type":"task.failed","payload":{"taskId":"task-a9368a97-f","retries":3,"error":"Free JT7 router fallback exhausted: Free JT7: No hay API Key para \"nvidia\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."}}
+{"ts":"2026-04-30T01:29:17.483Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-798715bb-a","risk":"medium"}}
+{"ts":"2026-04-30T01:29:17.896Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-798715bb-a","workerId":1}}
+{"ts":"2026-04-30T01:30:11.170Z","sessionId":"panel-1da3423d","type":"task.failed","payload":{"taskId":"task-798715bb-a","retries":1,"error":"Free JT7 router fallback exhausted: buildSubordinateBackendDescriptor is not defined"}}
+{"ts":"2026-04-30T01:34:04.607Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-913a667d-4","risk":"medium"}}
+{"ts":"2026-04-30T01:34:04.922Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-913a667d-4","workerId":1}}
+{"ts":"2026-04-30T01:34:38.240Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-913a667d-4","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-04-30T01:34:38.255Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-913a667d-4","verificationStatus":"verified","evidenceCount":7,"warnings":[]}}
+{"ts":"2026-04-30T12:21:20.647Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-7e76e9b9-0","risk":"medium"}}
+{"ts":"2026-04-30T12:21:20.964Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-7e76e9b9-0","workerId":1}}
+{"ts":"2026-04-30T12:21:50.953Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-7e76e9b9-0","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-04-30T12:21:50.961Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-7e76e9b9-0","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-30T12:24:42.565Z","sessionId":"panel-1da3423d","type":"task.enqueued","payload":{"taskId":"task-de14c190-9","risk":"medium"}}
+{"ts":"2026-04-30T12:24:42.848Z","sessionId":"panel-1da3423d","type":"task.started","payload":{"taskId":"task-de14c190-9","workerId":1}}
+{"ts":"2026-04-30T12:25:14.307Z","sessionId":"panel-1da3423d","type":"task.completed","payload":{"taskId":"task-de14c190-9","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-04-30T12:25:14.319Z","sessionId":"panel-1da3423d","type":"task.verified","payload":{"taskId":"task-de14c190-9","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-04-30T23:28:39.571Z","sessionId":"panel-b29b71f2","type":"session.created","payload":{"title":"Sesión mejoa de ide"}}
+{"ts":"2026-04-30T23:29:00.881Z","sessionId":"panel-b29b71f2","type":"task.enqueued","payload":{"taskId":"task-be9c1b73-b","risk":"medium"}}
+{"ts":"2026-04-30T23:29:01.260Z","sessionId":"panel-b29b71f2","type":"task.started","payload":{"taskId":"task-be9c1b73-b","workerId":1}}
+{"ts":"2026-04-30T23:29:11.284Z","sessionId":"panel-b29b71f2","type":"task.completed","payload":{"taskId":"task-be9c1b73-b","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-04-30T23:29:11.310Z","sessionId":"panel-b29b71f2","type":"task.verified","payload":{"taskId":"task-be9c1b73-b","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-05-01T02:27:52.026Z","sessionId":"panel-b29b71f2","type":"task.enqueued","payload":{"taskId":"task-ae8f7f6f-d","risk":"medium"}}
+{"ts":"2026-05-01T02:27:52.417Z","sessionId":"panel-b29b71f2","type":"task.started","payload":{"taskId":"task-ae8f7f6f-d","workerId":1}}
+{"ts":"2026-05-01T02:28:01.842Z","sessionId":"panel-b29b71f2","type":"task.completed","payload":{"taskId":"task-ae8f7f6f-d","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-05-01T02:28:01.865Z","sessionId":"panel-b29b71f2","type":"task.verified","payload":{"taskId":"task-ae8f7f6f-d","verificationStatus":"verified","evidenceCount":3,"warnings":[]}}
+{"ts":"2026-05-01T02:30:15.686Z","sessionId":"panel-b29b71f2","type":"task.enqueued","payload":{"taskId":"task-475248ec-9","risk":"medium"}}
+{"ts":"2026-05-01T02:30:16.040Z","sessionId":"panel-b29b71f2","type":"task.started","payload":{"taskId":"task-475248ec-9","workerId":1}}
+{"ts":"2026-05-01T02:30:43.418Z","sessionId":"panel-b29b71f2","type":"task.completed","payload":{"taskId":"task-475248ec-9","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-05-01T02:30:43.438Z","sessionId":"panel-b29b71f2","type":"task.verified","payload":{"taskId":"task-475248ec-9","verificationStatus":"verified","evidenceCount":8,"warnings":[]}}
+{"ts":"2026-05-01T02:33:53.496Z","sessionId":"panel-b29b71f2","type":"task.enqueued","payload":{"taskId":"task-8b3d39e7-a","risk":"medium"}}
+{"ts":"2026-05-01T02:33:53.809Z","sessionId":"panel-b29b71f2","type":"task.started","payload":{"taskId":"task-8b3d39e7-a","workerId":1}}
+{"ts":"2026-05-01T02:34:19.374Z","sessionId":"panel-b29b71f2","type":"task.completed","payload":{"taskId":"task-8b3d39e7-a","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-05-01T02:34:19.394Z","sessionId":"panel-b29b71f2","type":"task.verified","payload":{"taskId":"task-8b3d39e7-a","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-05-01T11:41:56.113Z","sessionId":"panel-b29b71f2","type":"task.enqueued","payload":{"taskId":"task-eaee6146-1","risk":"medium"}}
+{"ts":"2026-05-01T11:41:56.426Z","sessionId":"panel-b29b71f2","type":"task.started","payload":{"taskId":"task-eaee6146-1","workerId":1}}
+{"ts":"2026-05-01T11:42:30.590Z","sessionId":"panel-b29b71f2","type":"task.completed","payload":{"taskId":"task-eaee6146-1","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-05-01T11:42:30.598Z","sessionId":"panel-b29b71f2","type":"task.verified","payload":{"taskId":"task-eaee6146-1","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-05-02T00:54:48.620Z","sessionId":"panel-bad643e8","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T00:54:48.712Z","sessionId":"panel-bad643e8","type":"task.enqueued","payload":{"taskId":"task-bcac0e8d-b","risk":"medium"}}
+{"ts":"2026-05-02T00:54:48.825Z","sessionId":"panel-bad643e8","type":"task.started","payload":{"taskId":"task-bcac0e8d-b","workerId":1}}
+{"ts":"2026-05-02T00:54:48.868Z","sessionId":"panel-bad643e8","type":"task.failed","payload":{"taskId":"task-bcac0e8d-b","retries":1,"error":"Free JT7 router fallback exhausted: Free JT7 Agent Runtime no esta configurado correctamente."}}
+{"ts":"2026-05-02T00:59:45.818Z","sessionId":"panel-329b51a0","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T00:59:45.913Z","sessionId":"panel-329b51a0","type":"task.enqueued","payload":{"taskId":"task-18710788-a","risk":"medium"}}
+{"ts":"2026-05-02T00:59:46.024Z","sessionId":"panel-329b51a0","type":"task.started","payload":{"taskId":"task-18710788-a","workerId":1}}
+{"ts":"2026-05-02T00:59:46.054Z","sessionId":"panel-329b51a0","type":"task.failed","payload":{"taskId":"task-18710788-a","retries":1,"error":"Free JT7 router fallback exhausted: Free JT7 Agent Runtime no esta configurado correctamente."}}
+{"ts":"2026-05-02T01:00:35.619Z","sessionId":"panel-1e2d929c","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T01:00:35.708Z","sessionId":"panel-1e2d929c","type":"task.enqueued","payload":{"taskId":"task-c5311c50-6","risk":"medium"}}
+{"ts":"2026-05-02T01:00:35.829Z","sessionId":"panel-1e2d929c","type":"task.started","payload":{"taskId":"task-c5311c50-6","workerId":1}}
+{"ts":"2026-05-02T01:01:03.277Z","sessionId":"panel-1e2d929c","type":"task.completed","payload":{"taskId":"task-c5311c50-6","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-05-02T01:01:03.300Z","sessionId":"panel-1e2d929c","type":"task.verified","payload":{"taskId":"task-c5311c50-6","verificationStatus":"verified","evidenceCount":4,"warnings":[]}}
+{"ts":"2026-05-02T01:09:58.267Z","sessionId":"panel-01c19c5c","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T01:09:58.347Z","sessionId":"panel-01c19c5c","type":"task.enqueued","payload":{"taskId":"task-ee946b61-b","risk":"medium"}}
+{"ts":"2026-05-02T01:09:58.470Z","sessionId":"panel-01c19c5c","type":"task.started","payload":{"taskId":"task-ee946b61-b","workerId":1}}
+{"ts":"2026-05-02T01:10:24.989Z","sessionId":"panel-01c19c5c","type":"task.completed","payload":{"taskId":"task-ee946b61-b","provider":"ddeksee","model":"deepseek-reasoner"}}
+{"ts":"2026-05-02T01:10:25.009Z","sessionId":"panel-01c19c5c","type":"task.verified","payload":{"taskId":"task-ee946b61-b","verificationStatus":"verified","evidenceCount":5,"warnings":[]}}
+{"ts":"2026-05-02T04:09:38.174Z","sessionId":"panel-6ac419f8","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T04:09:38.253Z","sessionId":"panel-6ac419f8","type":"task.enqueued","payload":{"taskId":"task-d4b8e4bd-a","risk":"medium"}}
+{"ts":"2026-05-02T04:09:38.368Z","sessionId":"panel-6ac419f8","type":"task.started","payload":{"taskId":"task-d4b8e4bd-a","workerId":1}}
+{"ts":"2026-05-02T04:09:39.791Z","sessionId":"panel-6ac419f8","type":"task.failed","payload":{"taskId":"task-d4b8e4bd-a","retries":1,"error":"Free JT7 router fallback exhausted: Free JT7 (openrouter): error HTTP 400. deepseek-reasoner is not a valid model ID"}}
+{"ts":"2026-05-02T04:11:11.536Z","sessionId":"panel-aaa828e9","type":"session.created","payload":{"title":"Prueba dirigida own-ide"}}
+{"ts":"2026-05-02T04:11:11.635Z","sessionId":"panel-aaa828e9","type":"task.enqueued","payload":{"taskId":"task-aa530712-2","risk":"medium"}}
+{"ts":"2026-05-02T04:11:11.717Z","sessionId":"panel-aaa828e9","type":"task.started","payload":{"taskId":"task-aa530712-2","workerId":1}}
+{"ts":"2026-05-02T04:11:18.496Z","sessionId":"panel-aaa828e9","type":"task.completed","payload":{"taskId":"task-aa530712-2","provider":"openrouter","model":"openai/gpt-oss-20b:free"}}
+{"ts":"2026-05-02T04:11:18.508Z","sessionId":"panel-aaa828e9","type":"task.verified","payload":{"taskId":"task-aa530712-2","verificationStatus":"verified","evidenceCount":2,"warnings":[]}}

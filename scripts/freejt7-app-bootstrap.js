@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const cp = require('child_process');
+const { patchOwnedIdeControlPlane } = require('./freejt7-owned-control-plane');
 
 function parseArgs(argv) {
   const options = {
@@ -290,6 +291,7 @@ function buildPaths(appHome, profileName) {
     logsDir: path.join(profileRoot, 'logs'),
     profileMetaPath: path.join(profileRoot, 'freejt7-profile.json'),
     settingsPath: path.join(profileRoot, 'user-data', 'User', 'settings.json'),
+    controlPlanePath: path.join(profileRoot, 'freejt7-owned-ide.json'),
   };
 }
 
@@ -330,13 +332,58 @@ function runBootstrap(inputOptions = {}) {
   const currentSettings = readJsonSafe(paths.settingsPath, {});
   const nextSettings = mergeStandaloneSettings(currentSettings);
   writeJson(paths.settingsPath, nextSettings);
+  const activeProvider = String(nextSettings['freejt7.apiProvider'] || 'openrouter').trim() || 'openrouter';
+  const activeModel = String(nextSettings['freejt7.apiProviderModel'] || '').trim();
+  const providerSelections = activeModel ? { [activeProvider]: activeModel } : {};
+  const controlPlane = patchOwnedIdeControlPlane({
+    mode: 'freejt7-owned-ide',
+    product: {
+      productMode: 'agent-first',
+      configAuthority: 'control-plane',
+      runtimeAuthority: 'freejt7',
+      hostIntegration: 'secondary',
+    },
+    shell: {
+      experience: 'agent-first',
+      primarySurface: 'panel',
+      settingsAuthority: 'control-plane',
+      chatParticipantEnabled: nextSettings['freejt7.panel.chatParticipant.enabled'] === true,
+      quickActionsEnabled: true,
+    },
+    ide: {
+      ownerMode: String(nextSettings['freejt7.ide.ownerMode'] || 'agent').trim().toLowerCase() || 'agent',
+      hostVisibility: String(nextSettings['freejt7.ide.hostVisibility'] || 'minimal').trim().toLowerCase() || 'minimal',
+      openOnStartup: nextSettings['freejt7.panel.openOnStartup'] !== false,
+      panelEnabled: nextSettings['freejt7.panel.enabled'] !== false,
+    },
+    runtime: {
+      executionMode: 'agent',
+      runtimeBackend: String(nextSettings['freejt7.panel.runtimeBackend'] || 'freejt7-v2').trim().toLowerCase() || 'freejt7-v2',
+      policyMode: String(nextSettings['freejt7.panel.policy.mode'] || 'autonomous').trim().toLowerCase() || 'autonomous',
+      policyProfile: String(nextSettings['freejt7.panel.policyProfile'] || 'coding').trim().toLowerCase() || 'coding',
+      workerPoolSize: Number(nextSettings['freejt7.panel.workerPool.size'] || 3) || 3,
+    },
+    provider: {
+      activeProvider,
+      activeModel,
+      authProfile: String(nextSettings['freejt7.panel.authProfile'] || 'default').trim() || 'default',
+      providerSelections,
+      fallbackProviders: Array.isArray(nextSettings['freejt7.panel.fallbackProviders'])
+        ? nextSettings['freejt7.panel.fallbackProviders']
+        : [],
+    },
+  }, {
+    profileRoot: paths.profileRoot,
+    controlPlanePath: paths.controlPlanePath,
+  });
   writeJson(paths.profileMetaPath, {
     updatedAt: new Date().toISOString(),
-    mode: 'freejt7-standalone-app',
+    mode: 'freejt7-owned-ide',
     ideBin,
     workspacePath: options.workspacePath,
     vsixPath,
     profileName: options.profileName,
+    controlPlanePath: controlPlane.controlPlanePath,
   });
 
   const installArgs = [
@@ -374,6 +421,7 @@ function runBootstrap(inputOptions = {}) {
   process.stdout.write(`[freejt7-app] profile=${paths.profileRoot}\n`);
   process.stdout.write(`[freejt7-app] workspace=${options.workspacePath}\n`);
   process.stdout.write(`[freejt7-app] vsix=${vsixPath}\n`);
+  process.stdout.write(`[freejt7-app] control-plane=${controlPlane.controlPlanePath}\n`);
 
   if (!options.skipInstall) {
     if (options.dryRun) {
@@ -414,6 +462,7 @@ function runBootstrap(inputOptions = {}) {
           ...process.env,
           FREEJT7_APP_MODE: '1',
           FREEJT7_APP_PROFILE_ROOT: paths.profileRoot,
+          FREEJT7_PRODUCT_CONFIG_PATH: controlPlane.controlPlanePath,
         },
       });
     }
@@ -425,6 +474,7 @@ function runBootstrap(inputOptions = {}) {
     ideBin,
     vsixPath,
     paths,
+    controlPlane,
     installArgs,
     launchArgs,
   };

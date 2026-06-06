@@ -33,7 +33,7 @@ function testSanitizesStandalonePanelState() {
 
   assert.equal(sanitized.provider, 'clod');
   assert.equal(sanitized.executionMode, 'agent');
-  assert.equal(sanitized.runtimeBackend, 'auto', 'standalone no debe reabrir en local limitado por persistencia vieja');
+  assert.equal(sanitized.runtimeBackend, 'freejt7-v2', 'standalone debe reabrir en backend propio agent-first aunque exista persistencia vieja local/auto');
   assert.equal(sanitized.model, 'OpenAI/gpt-oss-20B', 'modelo stale fuera de catálogo debe volver al default del proveedor');
 }
 

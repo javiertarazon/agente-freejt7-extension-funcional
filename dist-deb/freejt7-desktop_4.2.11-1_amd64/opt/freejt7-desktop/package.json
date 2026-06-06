@@ -53,7 +53,7 @@
         "freejt7-panel": [
           {
             "id": "freejt7.controlPanelView",
-            "name": "Control Panel",
+            "name": "Agente Free JT7",
             "type": "webview"
           }
         ]
@@ -89,7 +89,7 @@
       },
       {
         "command": "freejt7.openControlPanel",
-        "title": "Free JT7: Abrir Control Panel"
+        "title": "Free JT7: Abrir Agente Free JT7"
       },
       {
         "command": "freejt7.launchDesignAgent",
@@ -237,6 +237,40 @@
           "default": false,
           "description": "Activa opcionalmente el chat participant de Free JT7. El panel propio queda como interfaz principal por defecto para no depender del chat host de GitHub Copilot."
         },
+        "freejt7.panel.openOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Abre automáticamente el panel principal de Free JT7 al iniciar `own-ide` o cuando el modo owner del agente está activo."
+        },
+        "freejt7.panel.runtimeBackend": {
+          "type": "string",
+          "enum": ["auto", "freejt7-v2", "freejt7", "openclaw", "local", "acp:codex", "acp:claude-code", "acp:opencode"],
+          "default": "freejt7-v2",
+          "description": "Backend preferido del panel propio de Free JT7. `freejt7-v2` usa el nuevo core profesional con tools, trazabilidad y verificacion; `freejt7` conserva el backend propio anterior."
+        },
+        "freejt7.panel.policyProfile": {
+          "type": "string",
+          "enum": ["coding", "messaging", "minimal"],
+          "default": "coding",
+          "description": "Perfil operativo del panel propio. Define el balance entre autonomia, tools y aprobaciones."
+        },
+        "freejt7.panel.authProfile": {
+          "type": "string",
+          "default": "default",
+          "description": "Perfil de autenticacion usado por el panel propio para providers y runtimes externos."
+        },
+        "freejt7.ide.ownerMode": {
+          "type": "string",
+          "enum": ["agent", "mixed"],
+          "default": "agent",
+          "description": "Cuando está en `agent`, Free JT7 toma la superficie principal del IDE propio y abre su panel al arranque."
+        },
+        "freejt7.ide.hostVisibility": {
+          "type": "string",
+          "enum": ["minimal", "full"],
+          "default": "minimal",
+          "description": "Controla cuánta superficie heredada del host queda visible en el IDE propio. `minimal` prioriza a Free JT7."
+        },
         "freejt7.copilotRouter.cliPath": {
           "type": "string",
           "default": "",
@@ -307,12 +341,14 @@
         },
         "freejt7.apiProvider": {
           "type": "string",
-          "enum": ["copilot", "openrouter", "hf", "zai", "clod"],
+          "enum": ["copilot", "openrouter", "hf", "zai", "nvidia", "ddeksee", "clod"],
           "enumDescriptions": [
             "GitHub Copilot",
             "OpenRouter (default)",
             "HuggingFace",
             "ZAI (ZhipuAI)",
+            "NVIDIA NIM / integrate.api.nvidia.com",
+            "DeepSeek",
             "CLŌD (OpenAI-compatible)"
           ],
           "default": "openrouter",
@@ -342,6 +378,12 @@
             "deepseek-ai/DeepSeek-R1",
             "glm-4.5-flash",
             "glm-4.7-flash",
+            "deepseek-ai/deepseek-v4-pro",
+            "z-ai/glm-5.1",
+            "qwen/qwen3-coder-480b-a35b-instruct",
+            "mistralai/mistral-large-3-675b-instruct-2512",
+            "deepseek-chat",
+            "deepseek-reasoner",
             "OpenAI/gpt-oss-20B",
             "google/gemma-4-31B-it",
             "Qwen/Qwen3-235B-A22B-Thinking-2507",
@@ -371,6 +413,12 @@
             "Hugging Face · DeepSeek R1",
             "ZAI · GLM-4.5-Flash",
             "ZAI · GLM-4.7-Flash",
+            "NVIDIA · DeepSeek V4 Pro",
+            "NVIDIA · GLM 5.1",
+            "NVIDIA · Qwen3 Coder 480B",
+            "NVIDIA · Mistral Large 675B",
+            "DeepSeek · DeepSeek Chat",
+            "DeepSeek · DeepSeek Reasoner",
             "CLŌD · GPT OSS 20B (OpenAI)",
             "CLŌD · Gemma 4 31B IT (Google)",
             "CLŌD · Qwen 3 235B Thinking",
@@ -379,7 +427,7 @@
             "CLŌD · Kimi K2.5 (Moonshot)"
           ],
           "default": "openai/gpt-oss-20b:free",
-          "description": "Modelo específico del proveedor seleccionado. La UI nativa de Settings expone un catálogo base; para CLŌD y modelos no listados, usa el panel propio o la selección manual."
+          "description": "Modelo específico del proveedor seleccionado. La UI nativa de Settings expone un catálogo base; para NVIDIA las API keys pueden resolverse por modelo, y para modelos no listados usa el panel propio o la selección manual."
         }
       }
     }
@@ -389,17 +437,28 @@
     "app:standalone": "node scripts/freejt7-app-bootstrap.js",
     "app:standalone:setup": "node scripts/freejt7-app-bootstrap.js --no-launch",
     "app:standalone:dry-run": "node scripts/freejt7-app-bootstrap.js --dry-run --no-launch",
+    "app:standalone:win": "node scripts/freejt7-windows-app.js --dry-run",
     "app:own-ide": "node scripts/freejt7-own-ide-bootstrap.js",
     "app:own-ide:setup": "node scripts/freejt7-own-ide-bootstrap.js --no-launch",
     "app:own-ide:dry-run": "node scripts/freejt7-own-ide-bootstrap.js --dry-run --no-launch",
     "package:deb": "bash scripts/build-freejt7-desktop-deb.sh",
     "install:deb": "bash scripts/install-freejt7-desktop-deb.sh",
+    "package:rpm": "bash scripts/build-freejt7-desktop-rpm.sh",
+    "install:rpm": "bash scripts/install-freejt7-desktop-rpm.sh",
+    "test:freejt7-agent-core-v2-smoke": "node tests/freejt7_agent_core_v2_smoke.js",
     "test:control-panel-ui-smoke": "node tests/control_panel_ui_smoke.js",
+    "test:control-panel-script-syntax-smoke": "node tests/control_panel_script_syntax_smoke.js",
     "test:panel-execution-mode-smoke": "node tests/panel_execution_mode_smoke.js",
     "test:provider-model-catalog-smoke": "node tests/provider_model_catalog_smoke.js",
+    "test:provider-router-failover-smoke": "node tests/provider_router_failover_smoke.js",
+    "test:policy-engine-profiles-smoke": "node tests/policy_engine_profiles_smoke.js",
+    "test:session-engine-subagent-tools-smoke": "node tests/session_engine_subagent_tools_smoke.js",
     "test:freejt7-app-bootstrap-smoke": "node tests/freejt7_app_bootstrap_smoke.js",
     "test:freejt7-own-ide-bootstrap-smoke": "node tests/freejt7_own_ide_bootstrap_smoke.js",
+    "test:control-panel-enqueue-cancel-smoke": "node tests/control_panel_enqueue_cancel_smoke.js",
+    "test:own-ide-panel-headless-e2e-smoke": "node tests/own_ide_panel_headless_e2e_smoke.js",
     "test:deb-package-smoke": "node tests/freejt7_deb_package_smoke.js",
+    "test:rpm-package-smoke": "node tests/freejt7_rpm_package_smoke.js",
     "test:clod-provider-smoke": "node tests/clod_provider_smoke.js",
     "test:agent-manifest-smoke": "node tests/agent_manifest_smoke.js",
     "test:global-settings-drift-smoke": "node tests/global_settings_drift_smoke.js",
@@ -407,13 +466,17 @@
     "test:router-review-smoke": "node tests/router_review_stage_smoke.js",
     "test:plugin-integration-smoke": "node tests/plugin_integration_manifest_smoke.js",
     "test:mcp-documents-tools-smoke": "node tests/mcp_documents_tools_smoke.js",
+    "test:mcp-security-smoke": "node tests/mcp_security_smoke.js",
+    "test:mt5-gate-smoke": "node tests/mt5_gate_smoke.js",
+    "test:package-win-smoke": "node tests/package_win_smoke.js",
     "test:session-engine-verification-smoke": "node tests/session_engine_verification_smoke.js",
     "test:installed-extension-smoke": "node tests/installed_extension_smoke.js",
     "test:local-agent-runtime-smoke": "node tests/local_agent_runtime_smoke.js",
     "test:router-functional-blocked-gate": "node tools/router-functional-blocked-gate.js",
     "postinstall": "node scripts/fix-copilot-sdk-install.js && node scripts/build-extension-bundle.js",
-    "package": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --allow-missing-repository",
-    "package:local": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --no-yarn --allow-missing-repository"
+    "package": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --allow-missing-repository --no-dependencies",
+    "package:local": "cd \"servidor mpc free jt7\" && npm install --production && cd .. && npm run build:bundle && npx @vscode/vsce package --no-yarn --allow-missing-repository --no-dependencies",
+    "package:win": "node scripts/freejt7-windows-package.js --dry-run"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.7.1",

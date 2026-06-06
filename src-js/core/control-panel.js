@@ -16,6 +16,7 @@ const { AuditBus } = require('./audit-bus');
 const { fetchProviderModels } = require('./api-provider-adapter');
 const { listProviders, normalizeProviderId } = require('./provider-registry');
 const { getRemoteBridge } = require('../runtime/remote-bridge');
+const { readOwnedIdeControlPlane, patchOwnedIdeControlPlane } = require('../../scripts/freejt7-owned-control-plane');
 const freeModelsCatalog = require('../free-models-catalog');
 
 const PANEL_PROVIDER_SELECTIONS_KEY = 'freejt7.panel.providerSelections';
@@ -102,15 +103,26 @@ function isKnownPanelModel(provider, model, catalog) {
   return normalizePanelCatalogModels(providerCatalog).some((entry) => entry.value === modelId);
 }
 
+function coerceStandaloneAgentRuntimeBackend(runtimeBackend, executionMode, standaloneMode) {
+  if (!standaloneMode || executionMode !== 'agent') {
+    return runtimeBackend;
+  }
+  if (!runtimeBackend || runtimeBackend === 'auto' || runtimeBackend === 'local') {
+    return 'freejt7-v2';
+  }
+  return runtimeBackend;
+}
+
 function sanitizePanelProviderConfig(config = {}, options = {}) {
   const standaloneMode = Boolean(options.standaloneMode);
   const catalog = options.catalog || getPanelCatalogSnapshot();
   const provider = normalizePanelProviderValue(config.provider);
   const executionMode = normalizePanelExecutionModeValue(config.executionMode, { standaloneMode });
-  let runtimeBackend = normalizePanelRuntimeBackendValue(config.runtimeBackend);
-  if (standaloneMode && runtimeBackend === 'local') {
-    runtimeBackend = 'auto';
-  }
+  let runtimeBackend = coerceStandaloneAgentRuntimeBackend(
+    normalizePanelRuntimeBackendValue(config.runtimeBackend),
+    executionMode,
+    standaloneMode,
+  );
 
   let model = String(config.model || '').trim();
   const defaultModel = String(
@@ -1236,7 +1248,11 @@ function createPanelHtml(webview, title, panelCatalog, panelOptions = {}) {
       provider: normalizeProviderValue(persistedProviderState.provider || 'openrouter'),
       model: String(persistedProviderState.model || ''),
       executionMode: 'agent',
-      runtimeBackend: String(persistedProviderState.runtimeBackend || 'auto').trim().toLowerCase() || 'auto',
+      runtimeBackend: coerceStandaloneAgentRuntimeBackend(
+        String(persistedProviderState.runtimeBackend || 'auto').trim().toLowerCase() || 'auto',
+        'agent',
+        standaloneMode,
+      ),
       policyProfile: String(persistedProviderState.policyProfile || 'coding').trim().toLowerCase() || 'coding',
       authProfile: String(persistedProviderState.authProfile || 'default').trim() || 'default',
       fallbackProviders: String(persistedProviderState.fallbackProviders || '').trim(),
@@ -2454,6 +2470,34 @@ function createControlPanel(context, output, options = {}) {
 
   engine.start();
 
+  function getOwnedIdeControlPlaneState() {
+    if (!standaloneMode) {
+      return null;
+    }
+    const snapshot = readOwnedIdeControlPlane({ allowMissing: true });
+    return snapshot?.config || null;
+  }
+
+  function getOwnedIdeProviderState() {
+    return getOwnedIdeControlPlaneState()?.provider || null;
+  }
+
+  function getOwnedIdeRuntimeState() {
+    return getOwnedIdeControlPlaneState()?.runtime || null;
+  }
+
+  function getOwnedIdeProductState() {
+    return getOwnedIdeControlPlaneState()?.product || null;
+  }
+
+  function getOwnedIdeShellState() {
+    return getOwnedIdeControlPlaneState()?.shell || null;
+  }
+
+  function getOwnedIdeUiState() {
+    return getOwnedIdeControlPlaneState()?.ide || null;
+  }
+
   function normalizeSelectionMap(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return {};
@@ -2466,26 +2510,44 @@ function createControlPanel(context, output, options = {}) {
   }
 
   async function getPersistedSelections() {
+    const ownedSelections = getOwnedIdeProviderState()?.providerSelections;
+    if (ownedSelections && typeof ownedSelections === 'object' && !Array.isArray(ownedSelections)) {
+      return normalizeSelectionMap(ownedSelections);
+    }
     return normalizeSelectionMap(await context.globalState?.get?.(PANEL_PROVIDER_SELECTIONS_KEY));
   }
 
   async function getPersistedExecutionMode() {
+    const ownedExecutionMode = String(getOwnedIdeRuntimeState()?.executionMode || '').trim().toLowerCase();
+    if (ownedExecutionMode === 'agent') {
+      return 'agent';
+    }
     return 'agent';
   }
 
   async function getPersistedRuntimeBackend() {
+    const ownedRuntimeBackend = String(getOwnedIdeRuntimeState()?.runtimeBackend || '').trim().toLowerCase();
+    if (ownedRuntimeBackend === 'auto' || ownedRuntimeBackend === 'freejt7' || ownedRuntimeBackend === 'freejt7-v2' || ownedRuntimeBackend === 'openclaw' || ownedRuntimeBackend === 'local' || ownedRuntimeBackend.startsWith('acp:')) {
+      return coerceStandaloneAgentRuntimeBackend(ownedRuntimeBackend || 'auto', 'agent', standaloneMode);
+    }
     const configured = String(getFreeJt7Configuration()?.get('panel.runtimeBackend', '') || '').trim().toLowerCase();
     if (configured === 'auto' || configured === 'freejt7' || configured === 'freejt7-v2' || configured === 'openclaw' || configured === 'local' || configured.startsWith('acp:')) {
-      return configured || 'auto';
+      return coerceStandaloneAgentRuntimeBackend(configured || 'auto', 'agent', standaloneMode);
     }
     const value = String(await context.globalState?.get?.(PANEL_RUNTIME_BACKEND_KEY) || '').trim().toLowerCase();
-    if (!value) return 'auto';
-    if (value === 'auto' || value === 'freejt7' || value === 'freejt7-v2' || value === 'openclaw' || value === 'local') return value;
+    if (!value) return coerceStandaloneAgentRuntimeBackend('auto', 'agent', standaloneMode);
+    if (value === 'auto' || value === 'freejt7' || value === 'freejt7-v2' || value === 'openclaw' || value === 'local') {
+      return coerceStandaloneAgentRuntimeBackend(value, 'agent', standaloneMode);
+    }
     if (value.startsWith('acp:')) return value;
-    return 'auto';
+    return coerceStandaloneAgentRuntimeBackend('auto', 'agent', standaloneMode);
   }
 
   async function getPersistedPolicyProfile() {
+    const ownedPolicyProfile = String(getOwnedIdeRuntimeState()?.policyProfile || '').trim().toLowerCase();
+    if (ownedPolicyProfile === 'messaging' || ownedPolicyProfile === 'minimal' || ownedPolicyProfile === 'coding') {
+      return ownedPolicyProfile || 'coding';
+    }
     const configured = String(getFreeJt7Configuration()?.get('panel.policyProfile', '') || '').trim().toLowerCase();
     if (configured === 'messaging' || configured === 'minimal' || configured === 'coding') return configured || 'coding';
     const value = String(await context.globalState?.get?.(PANEL_POLICY_PROFILE_KEY) || '').trim().toLowerCase();
@@ -2494,27 +2556,53 @@ function createControlPanel(context, output, options = {}) {
   }
 
   async function getPersistedAuthProfile() {
+    const ownedAuthProfile = String(getOwnedIdeProviderState()?.authProfile || '').trim();
+    if (ownedAuthProfile) return ownedAuthProfile;
     const configured = String(getFreeJt7Configuration()?.get('panel.authProfile', '') || '').trim();
     if (configured) return configured;
     return String(await context.globalState?.get?.(PANEL_AUTH_PROFILE_KEY) || 'default').trim() || 'default';
   }
 
   function getConfiguredOwnerMode() {
+    const ownedOwnerMode = String(getOwnedIdeUiState()?.ownerMode || '').trim().toLowerCase();
+    if (ownedOwnerMode === 'mixed' || ownedOwnerMode === 'agent') {
+      return ownedOwnerMode || 'agent';
+    }
     const configured = String(getFreeJt7Configuration()?.get('ide.ownerMode', '') || '').trim().toLowerCase();
     return configured === 'mixed' ? 'mixed' : 'agent';
   }
 
   function getConfiguredHostVisibility() {
+    const ownedHostVisibility = String(getOwnedIdeUiState()?.hostVisibility || '').trim().toLowerCase();
+    if (ownedHostVisibility === 'full' || ownedHostVisibility === 'minimal') {
+      return ownedHostVisibility || 'minimal';
+    }
     const configured = String(getFreeJt7Configuration()?.get('ide.hostVisibility', '') || '').trim().toLowerCase();
     return configured === 'full' ? 'full' : 'minimal';
   }
 
   function getConfiguredOpenOnStartup() {
+    const ownedOpenOnStartup = getOwnedIdeUiState()?.openOnStartup;
+    if (typeof ownedOpenOnStartup === 'boolean') {
+      return ownedOpenOnStartup;
+    }
     const configured = getFreeJt7Configuration()?.get('panel.openOnStartup', true);
     return configured !== false;
   }
 
   async function getPersistedFallbackProviders() {
+    const ownedFallbackProviders = getOwnedIdeProviderState()?.fallbackProviders;
+    if (Array.isArray(ownedFallbackProviders)) {
+      return ownedFallbackProviders
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          return {
+            provider: String(item.provider || '').trim().toLowerCase(),
+            model: String(item.model || '').trim(),
+          };
+        })
+        .filter((item) => item && item.provider);
+    }
     const value = await context.globalState?.get?.(PANEL_FALLBACKS_KEY);
     if (!Array.isArray(value)) return [];
     return value
@@ -2529,6 +2617,10 @@ function createControlPanel(context, output, options = {}) {
   }
 
   async function getPersistedActiveProvider() {
+    const ownedProvider = String(getOwnedIdeProviderState()?.activeProvider || '').trim();
+    if (ownedProvider) {
+      return normalizePanelProviderValue(ownedProvider);
+    }
     const configured = String(getFreeJt7Configuration()?.get('apiProvider', '') || '').trim();
     if (configured) {
       return normalizePanelProviderValue(configured);
@@ -2595,6 +2687,42 @@ function createControlPanel(context, output, options = {}) {
     await context.globalState?.update?.(PANEL_AUTH_PROFILE_KEY, authProfile);
     await context.globalState?.update?.(PANEL_FALLBACKS_KEY, fallbackProviders);
 
+    if (standaloneMode) {
+      patchOwnedIdeControlPlane({
+        product: {
+          productMode: 'agent-first',
+          configAuthority: 'control-plane',
+          runtimeAuthority: 'freejt7',
+          hostIntegration: 'secondary',
+        },
+        shell: {
+          experience: 'agent-first',
+          primarySurface: 'panel',
+          settingsAuthority: 'control-plane',
+          chatParticipantEnabled: false,
+          quickActionsEnabled: true,
+        },
+        ide: {
+          ownerMode: getConfiguredOwnerMode(),
+          hostVisibility: getConfiguredHostVisibility(),
+          openOnStartup: getConfiguredOpenOnStartup(),
+          panelEnabled: true,
+        },
+        runtime: {
+          executionMode: normalizedExecutionMode,
+          runtimeBackend,
+          policyProfile,
+        },
+        provider: {
+          activeProvider,
+          activeModel,
+          authProfile,
+          providerSelections: selections,
+          fallbackProviders,
+        },
+      });
+    }
+
     return {
       provider: activeProvider,
       model: activeModel,
@@ -2617,7 +2745,7 @@ function createControlPanel(context, output, options = {}) {
     const authProfile = await getPersistedAuthProfile();
     const fallbackProviders = await getPersistedFallbackProviders();
     const provider = await getPersistedActiveProvider();
-    const configuredModel = String(getFreeJt7Configuration()?.get('apiProviderModel', '') || '').trim();
+    const configuredModel = String(getOwnedIdeProviderState()?.activeModel || getFreeJt7Configuration()?.get('apiProviderModel', '') || '').trim();
     const normalizedProvider = provider === 'copilot' ? PANEL_DEFAULT_PROVIDER : provider;
     const model = configuredModel || selections[normalizedProvider] || selections[provider] || freeModelsCatalog.getDefaultModel(provider) || '';
     const sanitized = sanitizePanelProviderConfig({
@@ -2649,6 +2777,35 @@ function createControlPanel(context, output, options = {}) {
       await context.globalState?.update?.(PANEL_POLICY_PROFILE_KEY, sanitized.policyProfile);
       await context.globalState?.update?.(PANEL_AUTH_PROFILE_KEY, sanitized.authProfile);
       await context.globalState?.update?.(PANEL_ACTIVE_PROVIDER_KEY, sanitized.provider);
+      if (standaloneMode) {
+        patchOwnedIdeControlPlane({
+          product: {
+            productMode: 'agent-first',
+            configAuthority: 'control-plane',
+            runtimeAuthority: 'freejt7',
+            hostIntegration: 'secondary',
+          },
+          shell: {
+            experience: 'agent-first',
+            primarySurface: 'panel',
+            settingsAuthority: 'control-plane',
+            chatParticipantEnabled: false,
+            quickActionsEnabled: true,
+          },
+          runtime: {
+            executionMode: sanitized.executionMode,
+            runtimeBackend: sanitized.runtimeBackend,
+            policyProfile: sanitized.policyProfile,
+          },
+          provider: {
+            activeProvider: sanitized.provider,
+            activeModel: sanitized.model,
+            authProfile: sanitized.authProfile,
+            providerSelections: selections,
+            fallbackProviders: sanitized.fallbackProviders,
+          },
+        });
+      }
     }
 
     return sanitized;
@@ -2692,6 +2849,53 @@ function createControlPanel(context, output, options = {}) {
       version: '1.0.0',
       title: 'Free JT7 Panel Control Plane',
       properties: {
+        productMode: {
+          type: 'string',
+          enum: ['agent-first'],
+          default: 'agent-first',
+          readOnly: true,
+        },
+        configAuthority: {
+          type: 'string',
+          enum: ['control-plane'],
+          default: 'control-plane',
+          readOnly: true,
+        },
+        runtimeAuthority: {
+          type: 'string',
+          enum: ['freejt7', 'host-adapter'],
+          default: 'freejt7',
+          readOnly: true,
+        },
+        hostIntegration: {
+          type: 'string',
+          enum: ['secondary', 'legacy-adapter', 'hidden'],
+          default: 'secondary',
+          readOnly: true,
+        },
+        shellExperience: {
+          type: 'string',
+          enum: ['agent-first'],
+          default: 'agent-first',
+          readOnly: true,
+        },
+        primarySurface: {
+          type: 'string',
+          enum: ['panel', 'agent-shell', 'headless'],
+          default: 'panel',
+          readOnly: true,
+        },
+        settingsAuthority: {
+          type: 'string',
+          enum: ['control-plane'],
+          default: 'control-plane',
+          readOnly: true,
+        },
+        chatParticipantEnabled: {
+          type: 'boolean',
+          default: false,
+          readOnly: true,
+        },
         runtimeBackend: {
           type: 'string',
           enum: ['auto', 'freejt7-v2', 'freejt7', 'openclaw', 'local', 'acp:codex', 'acp:claude-code', 'acp:opencode'],
@@ -2723,6 +2927,8 @@ function createControlPanel(context, output, options = {}) {
     const bridgeSnapshot = remoteBridge && typeof remoteBridge.getSnapshot === 'function'
       ? remoteBridge.getSnapshot()
       : null;
+    const productState = getOwnedIdeProductState();
+    const shellState = getOwnedIdeShellState();
     return {
       ok: true,
       checkedAt: new Date().toISOString(),
@@ -2731,6 +2937,19 @@ function createControlPanel(context, output, options = {}) {
       engineRunning: Boolean(engineState.running),
       router: routerHealth,
       bridge: bridgeSnapshot,
+      authority: standaloneMode
+        ? {
+            schemaVersion: String(getOwnedIdeControlPlaneState()?.schemaVersion || 'unknown'),
+            productMode: String(productState?.productMode || 'agent-first'),
+            configAuthority: String(productState?.configAuthority || 'control-plane'),
+            runtimeAuthority: String(productState?.runtimeAuthority || 'freejt7'),
+            hostIntegration: String(productState?.hostIntegration || 'secondary'),
+            shellExperience: String(shellState?.experience || 'agent-first'),
+            primarySurface: String(shellState?.primarySurface || 'panel'),
+            settingsAuthority: String(shellState?.settingsAuthority || 'control-plane'),
+            chatParticipantEnabled: Boolean(shellState?.chatParticipantEnabled),
+          }
+        : null,
     };
   }
 

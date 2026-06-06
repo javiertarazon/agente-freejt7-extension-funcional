@@ -1,7 +1,7 @@
 {
   "name": "agente-freejt7-extension-funcional",
   "displayName": "Agente Free JT7 Extension",
-  "description": "Instala y valida Free JT7 en workspaces de VS Code usando panel propio, proveedores externos y gateway OpenClaw, con compatibilidad opcional para Copilot Chat.",
+  "description": "Host adapter de Free JT7 para VS Code: expone el panel/control-plane propios del producto y mantiene la compatibilidad host secundaria para Copilot Chat y rutas legacy.",
   "version": "4.2.11",
   "publisher": "javiertarazon",
   "license": "MIT",
@@ -81,15 +81,15 @@
       },
       {
         "command": "freejt7.routeTaskWithCopilot",
-        "title": "Free JT7: Ejecutar tarea del agente"
+        "title": "Free JT7: Ejecutar ruta de compatibilidad host"
       },
       {
         "command": "freejt7.routeTaskDirect",
-        "title": "Free JT7: Ejecutar tarea directa con proveedor activo"
+        "title": "Free JT7: Ejecutar compatibilidad host con proveedor activo"
       },
       {
         "command": "freejt7.openControlPanel",
-        "title": "Free JT7: Abrir Agente Free JT7"
+        "title": "Free JT7: Abrir panel principal del agente"
       },
       {
         "command": "freejt7.launchDesignAgent",
@@ -149,7 +149,7 @@
         "id": "freejt7.chat",
         "name": "free-jt7",
         "fullName": "Free JT7",
-        "description": "Planifica y ejecuta tareas de Free JT7 desde GitHub Copilot Chat en cualquier carpeta abierta.",
+        "description": "Ruta secundaria de compatibilidad para invocar Free JT7 desde GitHub Copilot Chat. La superficie principal del producto vive en el panel/control-plane propios.",
         "isSticky": true,
         "commands": [
           {

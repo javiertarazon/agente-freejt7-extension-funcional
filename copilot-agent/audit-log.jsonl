@@ -1,5 +1,8 @@
 ﻿
 {"ts": "2026-03-06T01:14:02Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-01T03:05:00Z", "action": "task-open", "detail": "20260501-panel-intake-corev2-chat-fix:corregir intake modal del panel, respuestas tecnicas del fallback core-v2 y lectura de rutas absolutas externas"}
+{"ts": "2026-05-01T03:05:01Z", "action": "skill-resolution", "detail": "20260501-panel-intake-corev2-chat-fix:skills aplicables leidas -> systematic-debugging, verification-before-completion"}
+{"ts": "2026-05-01T03:05:02Z", "action": "delegation-decision", "detail": "20260501-panel-intake-corev2-chat-fix:no-delegado porque el fallo cruza el mismo control path entre panel webview, prepareTask, heuristica de core-v2 y resolucion de rutas MCP/documentos"}
 {"ts": "2026-05-01T00:00:00Z", "action": "task-open", "detail": "20260501-own-ide-clean-reinstall-provider-verification-remote-branch:verificar runtime/providers live, desmontar own-ide limpio y publicar rama correlativa"}
 {"ts": "2026-05-01T00:00:01Z", "action": "skill-resolution", "detail": "20260501-own-ide-clean-reinstall-provider-verification-remote-branch:skills aplicables leidas -> verification-before-completion, free-jt7-global-runtime-audit"}
 {"ts": "2026-05-01T00:00:02Z", "action": "delegation-decision", "detail": "20260501-own-ide-clean-reinstall-provider-verification-remote-branch:no-delegado porque el trabajo cruza el mismo slice operativo entre bootstrap own-ide, providers/API y publicacion Git"}
@@ -35,6 +38,16 @@
 {"ts": "2026-04-24T13:30:00Z", "action": "task-open", "detail": "20260424-panel-openrouter-http200:diagnosticar y corregir falso error HTTP 200 de OpenRouter en el panel"}
 {"ts": "2026-04-24T13:30:01Z", "action": "delegation-decision", "detail": "20260424-panel-openrouter-http200:no-delegado porque el cambio es local al adaptador OpenRouter, el router del panel y un smoke corto del mismo flujo"}
 {"ts": "2026-04-24T13:31:00Z", "action": "implementation", "detail": "20260424-panel-openrouter-http200:adaptador endurecido para ignorar payload.error vacio/ambiguo y extraer contenido estructurado de chat completions"}
+{"ts": "2026-05-02T01:11:01Z", "action": "implementation", "detail": "20260501-corev2-skill-intent-context-fix:extension.runtime tolera el typo 'qiuero' para skill-creation; freejt7-agent-core-v2 da default seguro a inspect_path y separa technicalSummary del summary visible"}
+{"ts": "2026-05-02T01:11:01Z", "action": "verification", "detail": "20260501-own-ide-live-agent-first-prompt-verification:npm run package:local OK; npm run app:own-ide:setup OK con fallback manual; node tests/installed_extension_smoke.js OK; node temp_install_test/own_ide_prompt_probe.js OK con visibleTechnicalFallback=false y executionRoute=freejt7-agent-core-v2"}
+{"ts": "2026-05-02T01:11:01Z", "action": "task-close", "detail": "20260501-own-ide-live-agent-first-prompt-verification:succeeded live-own-ide-reinstall+prompt-probe-no-technical-fallback+agent-first-route-preserved"}
+{"ts": "2026-05-01T12:00:00Z", "action": "task-open", "detail": "20260501-own-ide-native-product-ownership:migrar own-ide de shell VSIX a IDE agent-first con control-plane nativo y empaquetado standalone coherente"}
+{"ts": "2026-05-01T12:00:01Z", "action": "skill-resolution", "detail": "20260501-own-ide-native-product-ownership:skills aplicables leidas -> using-superpowers, agent-orchestration, autonomous-agents, plan-writing, software-architecture"}
+{"ts": "2026-05-01T12:00:02Z", "action": "delegation-decision", "detail": "20260501-own-ide-native-product-ownership:no-delegado en el primer slice porque bootstrap, panel, runtime y empaquetado pertenecen al mismo contrato de ownership del IDE y conviene cambiar la fuente de verdad de forma consistente"}
+{"ts": "2026-05-02T01:35:00Z", "action": "implementation", "detail": "20260501-own-ide-native-product-ownership:primer slice app-owned listo -> nuevo control-plane de perfil `freejt7-owned-ide.json`, bootstrap que lo siembra, panel/runtime que lo leen con prioridad en standalone y builders deb/rpm que empaquetan el helper compartido"}
+{"ts": "2026-05-02T01:36:00Z", "action": "documentation", "detail": "20260501-own-ide-native-product-ownership:plan maestro creado en `own-ide-native-product-plan.md` con target de control-plane nativo, settings propios, providers, memoria, subagentes y empaquetado standalone"}
+{"ts": "2026-05-02T01:37:00Z", "action": "verification", "detail": "20260501-own-ide-native-product-ownership:npm run test:freejt7-app-bootstrap-smoke OK; get_errors OK en runtime/panel/bootstrap/control-plane; npm run build:bundle OK; npm run test:freejt7-own-ide-bootstrap-smoke OK"}
+{"ts": "2026-05-02T02:10:00Z", "action": "verification", "detail": "20260501-own-ide-native-product-ownership:npm run package:deb OK; artefacto generado en dist-deb/freejt7-desktop_4.2.11-1_amd64.deb y builder actualizado valida end-to-end el helper del control-plane app-owned"}
 {"ts": "2026-04-24T13:33:00Z", "action": "verification", "detail": "20260424-panel-openrouter-http200:ok node tests/openrouter_http200_smoke.js && node tests/panel_rate_limit_smoke.js && get_errors limpio"}
 {"ts": "2026-04-24T13:34:00Z", "action": "task-close", "detail": "20260424-panel-openrouter-http200:succeeded openrouter-http200-smoke+429-regression-smoke"}
 {"ts": "2026-03-06T01:14:10Z", "action": "install", "detail": "E:\\javie\\tmp-freejt7-install-test3"}
@@ -65,6 +78,9 @@
 {"ts": "2026-04-27T16:34:00Z", "action": "verification", "detail": "20260427-own-ide-panel-state-regression:estado persistido detectado en own-ide -> executionMode=agent, runtimeBackend=local, provider=clod con modelo heredado; panel visible pero sin logs de extension, hipotesis local: reabre en modo limitado/estado stale"}
 {"ts": "2026-04-27T16:38:00Z", "action": "implementation", "detail": "20260427-own-ide-panel-state-regression:control-panel ahora sanea estado persistido en standalone/own-ide, normaliza provider/model/runtimeBackend y crea una sesion inicial si no existe ninguna"}
 {"ts": "2026-04-27T16:39:30Z", "action": "verification", "detail": "20260427-own-ide-panel-state-regression:control_panel_state_regression_smoke OK + control_panel_ui_smoke OK + panel_execution_mode_smoke OK"}
+{"ts": "2026-05-02T03:10:00Z", "action": "task-open", "detail": "20260502-vnext-architecture-approval-docs:documento formal de arquitectura, backlog ejecutable Hito 1 y propuesta de corte limpio alineados a Free JT7 agent-first"}
+{"ts": "2026-05-02T03:10:01Z", "action": "skill-resolution", "detail": "20260502-vnext-architecture-approval-docs:skills aplicables leidas -> architecture, documentation, plan-writing"}
+{"ts": "2026-05-02T03:10:02Z", "action": "delegation-decision", "detail": "20260502-vnext-architecture-approval-docs:no-delegado porque la comparativa ampliada, la arquitectura formal, el backlog y el corte limpio comparten el mismo marco de decisiones y deben aterrizarse de forma coherente sobre el repo actual"}
 {"ts": "2026-04-27T16:41:20Z", "action": "verification", "detail": "20260427-own-ide-panel-state-regression:package:local OK + app:own-ide:setup OK + installed_extension_smoke OK; proceso own-ide ya activo, requiere reload/reopen para tomar runtime nuevo sin matar ventana del usuario"}
 {"ts": "2026-04-27T16:42:00Z", "action": "task-close", "detail": "20260427-own-ide-panel-state-regression:succeeded persisted-panel-state-healed+default-session-seeded+own-ide-reinstalled"}
 {"ts": "2026-04-27T17:10:00Z", "action": "task-open", "detail": "20260427-deep-audit-ui-runtime-autonomy-plan:auditoria integral de interfaz/runtime/providers/own-ide/autonomia con comparativa OpenClaw/OpenCode/Claurst"}
@@ -105,6 +121,10 @@
 {"ts": "2026-03-13T20:25:38Z", "action": "task-close", "detail": "20260313-cierre-bucle-tareas:succeeded"}
 {"ts": "2026-03-15T01:14:12Z", "action": "task-open", "detail": "20260314-wallpaper-fix-interactive:diagnostico y refresco de wallpaper en sesion interactiva"}
 {"ts": "2026-03-15T01:21:42Z", "action": "task-close", "detail": "20260314-wallpaper-fix-interactive:succeeded root-cause=html-saved-as-jpg"}
+{"ts": "2026-05-01T03:16:00Z", "action": "implementation", "detail": "20260501-panel-intake-corev2-chat-fix:freejt7-agent-core-v2 extiende la policy MCP nativa con rutas absolutas explicitas de mcp_call para no bloquear documentos externos ya solicitados por la accion"}
+{"ts": "2026-05-01T03:18:00Z", "action": "verification", "detail": "20260501-panel-intake-corev2-chat-fix:freejt7_agent_core_v2_smoke ok + control_panel_enqueue_cancel_smoke ok + get_errors src-js/core/freejt7-agent-core-v2.js clean"}
+{"ts": "2026-05-01T03:19:00Z", "action": "task-close", "detail": "20260501-panel-intake-corev2-chat-fix:succeeded panel-chat-intake-preserved+corev2-external-absolute-path-mcp-fixed"}
+{"ts": "2026-05-01T16:05:00Z", "action": "task-open", "detail": "20260501-corev2-skill-intent-context-fix:diagnostico y correccion minima del localContext/skill-routing para prompts de creacion de skill + skill GUI Zorin"}
 {"ts": "2026-03-15T01:27:00Z", "action": "task-reopen", "detail": "20260314-wallpaper-fix-interactive:visual-check-failed investigate-backgroundtype"}
 {"ts": "2026-03-15T01:35:00Z", "action": "task-close", "detail": "20260314-wallpaper-fix-interactive:succeeded wallpaper=wallpapers/motogp_wallpaper_3.jpg user-confirmed-visible"}
 {"ts": "2026-03-17T00:00:00Z", "action": "task-open", "detail": "20260317-model-routing-planner-executor:separar GPT-5.4 planner y modelos baratos de ejecucion"}
@@ -201,6 +221,17 @@
 {"ts": "2026-05-01T13:15:00Z", "action": "implementation", "detail": "20260501-own-ide-gap-closure-hardening:rpm builder usa fecha de changelog con LC_ALL=C para evitar warning locale-dependent en %changelog"}
 {"ts": "2026-05-01T13:19:00Z", "action": "verification", "detail": "20260501-own-ide-gap-closure-hardening:control_panel_enqueue_cancel_smoke ok + freejt7_own_ide_bootstrap_smoke ok + own_ide_panel_headless_e2e_smoke ok + package:deb ok + package:rpm ok"}
 {"ts": "2026-05-01T13:20:00Z", "action": "task-close", "detail": "20260501-own-ide-gap-closure-hardening:succeeded cancel-path+own-ide-headless-e2e+bootstrap-pin-checksum+deb-rpm-build"}
+{"ts": "2026-05-02T02:15:00Z", "action": "task-open", "detail": "20260502-own-ide-native-product-publication-pr:publicar working tree actual en rama nueva con commits, push y PR"}
+{"ts": "2026-05-02T02:15:01Z", "action": "skill-resolution", "detail": "20260502-own-ide-native-product-publication-pr:skills aplicables leidas -> make-repo-contribution, git-pushing, verification-before-completion"}
+{"ts": "2026-05-02T02:15:02Z", "action": "delegation-decision", "detail": "20260502-own-ide-native-product-publication-pr:no-delegado porque clasificacion del arbol, verificacion, staging y publicacion comparten el mismo slice tecnico y de trazabilidad"}
+{"ts": "2026-05-02T02:24:00Z", "action": "verification", "detail": "20260502-own-ide-native-product-publication-pr:build bundle ok + smokes focalizadas ok + package:deb/test:deb-package-smoke ok + package:rpm/test:rpm-package-smoke ok; scope publicable excluye dist-deb/**/runtime, binarios .deb/.rpm y outputs temporales del prompt probe"}
+{"ts": "2026-05-02T02:26:00Z", "action": "git-publish", "detail": "20260502-own-ide-native-product-publication-pr:branch release/v4.2.12-own-ide-native-product creada y publicada en origin con commits own-ide/core-v2/traceability"}
+{"ts": "2026-05-02T02:31:00Z", "action": "task-close", "detail": "20260501-corev2-skill-intent-context-fix:succeeded chat-context-routing+skill-creator-hardening+zorin-gui-skill+prompt-probe"}
+{"ts": "2026-05-02T02:35:00Z", "action": "pr-open", "detail": "20260502-own-ide-native-product-publication-pr:PR #3 abierta -> release: own-ide native-product and core-v2 hardening"}
+{"ts": "2026-05-02T02:36:00Z", "action": "task-close", "detail": "20260502-own-ide-native-product-publication-pr:succeeded branch+commits+push+pr-3"}
+{"ts": "2026-05-02T03:05:00Z", "action": "task-open", "detail": "20260502-own-ide-clean-reinstall-live-verification-git-sync:reinstalacion limpia de own-ide + validacion funcional real + auditoria/sincronizacion Git"}
+{"ts": "2026-05-02T03:05:01Z", "action": "skill-resolution", "detail": "20260502-own-ide-clean-reinstall-live-verification-git-sync:skills aplicables leidas -> verification-before-completion, free-jt7-global-runtime-audit, make-repo-contribution, git-pushing"}
+{"ts": "2026-05-02T03:05:02Z", "action": "delegation-decision", "detail": "20260502-own-ide-clean-reinstall-live-verification-git-sync:no-delegado porque la reinstalacion limpia, la verificacion del panel/agente y la reconciliacion Git comparten el mismo slice operativo y la misma evidencia final"}
 {"ts": "2026-04-30T23:48:00Z", "action": "task-open", "detail": "20260430-rpm-buildid-justification-tree-validation:confirmar origen de Missing build-id, justificarlo en el spec RPM y fijar regla de validacion de arbol sin artefactos dist-*"}
 {"ts": "2026-04-30T23:49:00Z", "action": "skill-resolution", "detail": "20260430-rpm-buildid-justification-tree-validation:skills aplicables leidas -> verification-before-completion, free-jt7-global-runtime-audit"}
 {"ts": "2026-04-30T23:53:00Z", "action": "verification", "detail": "20260430-rpm-buildid-justification-tree-validation:package:rpm fresco confirma warnings solo en runtime/vscodium/current/resources/app/node_modules/**; build OK"}
@@ -211,6 +242,14 @@
 {"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:21Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:21Z", "action": "sync-claude", "detail": "13 activas de 964"}
+{"ts": "2026-05-01T16:20:00Z", "action": "task-open", "detail": "20260501-own-ide-live-agent-first-prompt-verification:reinstalar VSIX activa y validar en own-ide el prompt real sin fallback tecnico visible"}
+{"ts": "2026-05-01T16:20:01Z", "action": "skill-resolution", "detail": "20260501-own-ide-live-agent-first-prompt-verification:skills aplicables leidas -> verification-before-completion, free-jt7-global-runtime-audit"}
+{"ts": "2026-05-01T16:20:02Z", "action": "delegation-decision", "detail": "20260501-own-ide-live-agent-first-prompt-verification:no-delegado porque la verificacion cruza el mismo slice operativo entre package:local, bootstrap own-ide, extension instalada y evidencia final del flujo real"}
+{"ts": "2026-05-01T16:40:00Z", "action": "task-open", "detail": "20260501-own-ide-agent-first-runtime-hardening:forzar own-ide agent-first con backend propio por defecto, dejar OpenClaw subordinado y eliminar bypass legacy a proveedor externo"}
+{"ts": "2026-05-01T16:40:01Z", "action": "skill-resolution", "detail": "20260501-own-ide-agent-first-runtime-hardening:skills aplicables leidas -> agent-orchestration, verification-before-completion"}
+{"ts": "2026-05-01T16:40:02Z", "action": "delegation-decision", "detail": "20260501-own-ide-agent-first-runtime-hardening:no-delegado porque el cambio cruza el mismo slice entre estado inicial del panel, planificacion de freejt7-agent-runtime y ruta legacy routeTaskWithGoal"}
+{"ts": "2026-05-01T17:04:00Z", "action": "task-complete", "detail": "20260501-own-ide-agent-first-runtime-hardening:cerrada con panel standalone saneado a freejt7-v2, planner externo agent-first en core-v2 y bypass legacy a proveedor eliminado"}
+{"ts": "2026-05-01T17:04:01Z", "action": "verification", "detail": "20260501-own-ide-agent-first-runtime-hardening:node tests/panel_execution_mode_smoke.js && node tests/provider_direct_mode_smoke.js && node tests/control_panel_state_regression_smoke.js && node tests/freejt7_agent_runtime_smoke.js -> OK"}
 {"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:22Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:22Z", "action": "sync-claude", "detail": "14 activas de 964"}
@@ -219,6 +258,17 @@
 {"ts": "2026-04-17T17:28:22Z", "action": "sync-claude", "detail": "15 activas de 964"}
 {"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-04-17T17:28:23Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-02T04:10:00Z", "action": "task-open", "detail": "20260502-h1-01-owned-control-plane-authority:ejecutar H1-01 endureciendo el control-plane app-owned como autoridad explicita de producto y shell"}
+{"ts": "2026-05-02T04:10:01Z", "action": "skill-resolution", "detail": "20260502-h1-01-owned-control-plane-authority:skills aplicables leidas -> software-architecture, verification-before-completion"}
+{"ts": "2026-05-02T04:10:02Z", "action": "delegation-decision", "detail": "20260502-h1-01-owned-control-plane-authority:no-delegado porque el cambio cruza el mismo contrato entre control-plane, bootstrap del perfil, panel y runtime de autoridad efectiva"}
+{"ts": "2026-05-02T04:14:00Z", "action": "implementation", "detail": "20260502-h1-01-owned-control-plane-authority:control-plane app-owned endurecido con bloques explicitos product/shell; bootstrap, panel y runtime alineados a esa autoridad"}
+{"ts": "2026-05-02T04:15:00Z", "action": "verification", "detail": "20260502-h1-01-owned-control-plane-authority:node tests/freejt7_app_bootstrap_smoke.js OK + node tests/freejt7_own_ide_bootstrap_smoke.js OK + get_errors en control-plane/bootstrap/panel/runtime OK"}
+{"ts": "2026-05-02T04:17:00Z", "action": "verification", "detail": "20260502-h1-01-owned-control-plane-authority:re-run final -> node tests/freejt7_app_bootstrap_smoke.js OK + node tests/freejt7_own_ide_bootstrap_smoke.js OK"}
+{"ts": "2026-05-02T04:18:00Z", "action": "task-close", "detail": "20260502-h1-01-owned-control-plane-authority:succeeded control-plane-product-shell-authority+bootstrap-seeding+panel-runtime-authority-summary"}
+{"ts": "2026-05-02T04:30:00Z", "action": "task-open", "detail": "20260502-h1-02-host-adapter-cut:ejecutar H1-02 para reducir el host a adaptador secundario mientras sigue en paralelo la validacion live own-ide"}
+{"ts": "2026-05-02T04:30:01Z", "action": "skill-resolution", "detail": "20260502-h1-02-host-adapter-cut:skills aplicables leidas -> software-architecture, agent-orchestration, verification-before-completion"}
+{"ts": "2026-05-02T04:30:02Z", "action": "delegation-decision", "detail": "20260502-h1-02-host-adapter-cut:delegacion parcial; se paraleliza la inspeccion/corroboracion del host con la auditoria live own-ide, pero la integracion final del slice queda en una sola mano para preservar compatibilidad"}
+{"ts": "2026-05-02T04:30:03Z", "action": "parallel-execution", "detail": "20260502-h1-02-host-adapter-cut + 20260502-own-ide-clean-reinstall-live-verification-git-sync:arranque paralelo solicitado por el usuario; H1-02 avanza en codigo mientras own-ide live se audita/reinstala/verifica"}
 {"ts": "2026-04-18T00:50:00Z", "action": "task-open", "detail": "20260418-free-model-catalog-sync:sincronizar catalogo visible de modelos gratis para openrouter hf y zai"}
 {"ts": "2026-04-18T01:00:00Z", "action": "task-close", "detail": "20260418-free-model-catalog-sync:succeeded unified-catalog-build-bundle-validated"}
 {"ts": "2026-04-18T00:20:00Z", "action": "task-open", "detail": "20260418-agent-compliance-hardening:endurecer intake, checklist, skill resolution y trazabilidad del agente"}
@@ -707,3 +757,25 @@
 {"ts": "2026-04-30T12:14:57Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-05-01T00:42:16Z", "action": "migrate", "detail": "espejo legado actualizado"}
 {"ts": "2026-05-01T02:11:57Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-01T03:06:14Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-01T03:10:15Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-01T05:05:58Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-01T05:07:00Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-01T09:03:53Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-01T11:51:27Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-01T11:51:50Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-01T17:03:54Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-01T19:39:10Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T02:19:15Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-02T02:20:14Z", "action": "migrate", "detail": "espejo legado actualizado"}
+{"ts": "2026-05-02T04:06:33Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T04:40:17Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T12:40:17Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T13:05:00Z", "action": "documentation", "detail": "20260502-vnext-architecture-approval-docs:creados docs/24-ARQUITECTURA-FORMAL-FREEJT7-VNEXT.md, docs/25-HITO1-BACKLOG-EJECUTABLE-POR-MODULOS.md y docs/26-PROPUESTA-CORTE-LIMPIO-MAPA-ARCHIVOS.md sobre el repo real"}
+{"ts": "2026-05-02T13:06:00Z", "action": "verification", "detail": "20260502-vnext-architecture-approval-docs:get_errors limpio en los tres documentos nuevos y secciones clave verificadas (arquitectura objetivo, secuencia ejecutable, clasificacion conservar/congelar/reemplazar)"}
+{"ts": "2026-05-02T13:07:00Z", "action": "task-close", "detail": "20260502-vnext-architecture-approval-docs:succeeded formal-architecture+executable-h1-backlog+clean-cut-file-map"}
+{"ts": "2026-05-02T15:50:44Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-02T16:29:52Z", "action": "doctor", "detail": "errors=0 warnings=0 strict=True"}
+{"ts": "2026-05-03T03:39:13Z", "action": "task-close", "detail": "hermes-integration-modules+H1-02-host-as-adapter+own-ide-clean-install: succeeded"}
+{"ts": "2026-05-03T12:24:11Z", "action": "task-close", "detail": "plan-progress-H1-02-Hermes-own-ide: succeeded"}
+{"ts": "2026-05-03T12:26:45Z", "action": "task-close", "detail": "Migracion own-ide a producto nativo agent-first: succeeded"}

@@ -67,6 +67,7 @@ const { createDefaultScheduler } = require('../runtime/agent-scheduler');
 const { MemoryOrchestrator }     = require('../runtime/memory-orchestrator');
 const { getRemoteBridge }        = require('../runtime/remote-bridge');
 const { getPluginRuntime }       = require('../runtime/plugin-runtime');
+const { readOwnedIdeControlPlane } = require('../../scripts/freejt7-owned-control-plane');
 
 const FALLBACK_FREE_MODELS = getFreeModelsCatalog();
 
@@ -116,6 +117,7 @@ const DEFAULT_ROUTER_SKILLS = [
 let activeCopilotRouterRun = null;
 let activeScheduler = null;
 let activeControlPanel = null;
+let activeOwnAgentRuntime = null;
 const NOOP_OUTPUT = { append() {}, appendLine() {} };
 
 function loadFreeModelsCatalog() {
@@ -378,6 +380,47 @@ function normalizeResolvedSkills(skills) {
     }));
 }
 
+function isExplicitSkillCreationGoal(goal) {
+  const text = String(goal || '').trim();
+  if (!text) {
+    return false;
+  }
+  return /\bskill\b/i.test(text)
+    && /(?:\bq(?:uiero|iero|iuero)\b|\bnecesit(?:o|a)\b|\bcrear\b|\bcrea\b|\bcreame\b|\bgenera\b|\bhaz\b|\bhacer\b|\bmake\b|\bscaffold\b|\bnueva\b|\bnuevo\b|\bSKILL\.md\b)/i.test(text);
+}
+
+function prioritizeResolvedSkillsForGoal(goal, skills) {
+  const resolved = normalizeResolvedSkills(skills);
+  if (!isExplicitSkillCreationGoal(goal)) {
+    return resolved;
+  }
+
+  const preferred = [
+    {
+      id: 'skill-creator',
+      category: 'general',
+      score: 100,
+      gh_path: '.github/skills/skill-creator/SKILL.md',
+    },
+    {
+      id: 'make-skill-template',
+      category: 'general',
+      score: 99,
+      gh_path: '.github/skills/make-skill-template/SKILL.md',
+    },
+  ];
+
+  const seen = new Set();
+  return [...preferred, ...resolved].filter((item) => {
+    const id = String(item?.id || '').trim();
+    if (!id || seen.has(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+}
+
 function formatResolvedSkills(skills) {
   return normalizeResolvedSkills(skills).map((item) => item.id).join(", ");
 }
@@ -404,7 +447,7 @@ async function runSkillsManagerJson(context, output, managerArgs) {
 async function resolveSkillsForGoal(context, output, goal) {
   try {
     const items = await runSkillsManagerJson(context, output, ["skill-resolve", "--query", goal, "--top", "3", "--json"]);
-    const normalized = normalizeResolvedSkills(items);
+    const normalized = prioritizeResolvedSkillsForGoal(goal, items);
     output.appendLine(`[freejt7-router] skills=${formatResolvedSkills(normalized)}`);
     return normalized;
   } catch (error) {
@@ -494,6 +537,18 @@ async function collectMandatoryIntake(baseGoal) {
   };
 }
 
+function deriveImplicitPanelIntake(baseGoal) {
+  const goal = String(baseGoal || '').trim();
+  if (!goal) {
+    return null;
+  }
+  return {
+    deliverable: goal,
+    constraints: 'Cambios minimos, compatibles hacia atras y sin sacar preguntas del flujo del chat del panel.',
+    verification: 'Validacion ligera con evidencia breve en chat o trazabilidad.',
+  };
+}
+
 function buildAuditedRouterGoal(baseGoal, intake, skills) {
   const resolvedSkills = normalizeResolvedSkills(skills);
   return [
@@ -553,10 +608,13 @@ async function preparePanelTask(context, output, taskInput = {}, meta = {}) {
   if (!goal) {
     return taskInput;
   }
-  const intake = normalizePanelTaskIntake(taskInput.intake, goal) || await collectMandatoryIntake(goal);
+  const intake = normalizePanelTaskIntake(taskInput.intake, goal) || await deriveImplicitPanelIntake(goal);
   if (!intake) {
     output.appendLine('[freejt7-panel] task cancelada: intake obligatorio no completado.');
     return null;
+  }
+  if (!normalizePanelTaskIntake(taskInput.intake, goal)) {
+    output.appendLine('[freejt7-panel] intake implicito aplicado para mantener el flujo dentro del chat del panel.');
   }
   let selectedSkills = DEFAULT_ROUTER_SKILLS;
   let runId = '';
@@ -1075,28 +1133,63 @@ function getDefaultModel(provider) {
 
 function getEffectiveAgentAuthorityConfig() {
   const config = vscode.workspace.getConfiguration("freejt7");
-  const configuredProvider = String(config.get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim();
-  const provider = configuredProvider || DEFAULT_EXTERNAL_PROVIDER;
-  const configuredRuntimeBackend = String(config.get("panel.runtimeBackend") || 'auto').trim().toLowerCase() || 'auto';
-  const policyProfile = String(config.get("panel.policyProfile") || 'coding').trim().toLowerCase() || 'coding';
-  const authProfile = String(config.get("panel.authProfile") || 'default').trim() || 'default';
-  const ownerMode = String(config.get("ide.ownerMode") || 'agent').trim().toLowerCase() || 'agent';
-  const hostVisibility = String(config.get("ide.hostVisibility") || 'minimal').trim().toLowerCase() || 'minimal';
-  const openOnStartup = Boolean(config.get("panel.openOnStartup", true));
-  const panelEnabled = Boolean(config.get("panel.enabled", true));
   const standaloneMode = Boolean(isStandaloneOwnIdeMode());
+  const ownedControlPlane = standaloneMode ? readOwnedIdeControlPlane({ allowMissing: true }) : null;
+  const ownedConfig = ownedControlPlane?.config || null;
+  const ownedProduct = ownedConfig?.product || {};
+  const ownedShell = ownedConfig?.shell || {};
+  const ownedProvider = ownedConfig?.provider || {};
+  const ownedRuntime = ownedConfig?.runtime || {};
+  const ownedIde = ownedConfig?.ide || {};
+  const configuredProvider = String(ownedProvider.activeProvider || config.get("apiProvider") || DEFAULT_EXTERNAL_PROVIDER).trim();
+  const provider = configuredProvider || DEFAULT_EXTERNAL_PROVIDER;
+  const configuredRuntimeBackend = String(ownedRuntime.runtimeBackend || config.get("panel.runtimeBackend") || 'auto').trim().toLowerCase() || 'auto';
+  const policyProfile = String(ownedRuntime.policyProfile || config.get("panel.policyProfile") || 'coding').trim().toLowerCase() || 'coding';
+  const authProfile = String(ownedProvider.authProfile || config.get("panel.authProfile") || 'default').trim() || 'default';
+  const ownerMode = String(ownedIde.ownerMode || config.get("ide.ownerMode") || 'agent').trim().toLowerCase() || 'agent';
+  const hostVisibility = String(ownedIde.hostVisibility || config.get("ide.hostVisibility") || 'minimal').trim().toLowerCase() || 'minimal';
+  const openOnStartup = typeof ownedIde.openOnStartup === 'boolean'
+    ? ownedIde.openOnStartup
+    : Boolean(config.get("panel.openOnStartup", true));
+  const panelEnabled = typeof ownedIde.panelEnabled === 'boolean'
+    ? ownedIde.panelEnabled
+    : Boolean(config.get("panel.enabled", true));
+  const policyMode = String(ownedRuntime.policyMode || config.get("panel.policy.mode") || 'mixed').trim().toLowerCase() || 'mixed';
+  const workerPoolSize = Number(ownedRuntime.workerPoolSize || config.get("panel.workerPool.size") || 3) || 3;
+  const productMode = String(ownedProduct.productMode || 'agent-first').trim().toLowerCase() || 'agent-first';
+  const configAuthority = String(ownedProduct.configAuthority || 'control-plane').trim().toLowerCase() || 'control-plane';
+  const runtimeAuthority = String(ownedProduct.runtimeAuthority || 'freejt7').trim().toLowerCase() || 'freejt7';
+  const hostIntegration = String(ownedProduct.hostIntegration || 'secondary').trim().toLowerCase() || 'secondary';
+  const shellExperience = String(ownedShell.experience || 'agent-first').trim().toLowerCase() || 'agent-first';
+  const primarySurface = String(ownedShell.primarySurface || 'panel').trim().toLowerCase() || 'panel';
+  const settingsAuthority = String(ownedShell.settingsAuthority || 'control-plane').trim().toLowerCase() || 'control-plane';
+  const chatParticipantEnabled = typeof ownedShell.chatParticipantEnabled === 'boolean'
+    ? ownedShell.chatParticipantEnabled
+    : Boolean(config.get("panel.chatParticipant.enabled", false));
+  const hostAdapterMode = hostIntegration === 'hidden' ? 'hidden-host-adapter' : 'secondary-host-adapter';
 
   if (provider === "copilot" && isStandaloneOwnIdeMode()) {
     return {
       provider: DEFAULT_EXTERNAL_PROVIDER,
       model: getDefaultModel(DEFAULT_EXTERNAL_PROVIDER) || DEFAULT_EXTERNAL_MODEL,
       runtimeBackend: configuredRuntimeBackend,
+      policyMode,
+      workerPoolSize,
       policyProfile,
       authProfile,
       ownerMode,
       hostVisibility,
       openOnStartup,
       panelEnabled,
+      productMode,
+      configAuthority,
+      runtimeAuthority,
+      hostIntegration,
+      shellExperience,
+      primarySurface,
+      settingsAuthority,
+      chatParticipantEnabled,
+      hostAdapterMode,
       standaloneMode,
     };
   }
@@ -1105,27 +1198,66 @@ function getEffectiveAgentAuthorityConfig() {
       provider,
       model: "",
       runtimeBackend: configuredRuntimeBackend,
+      policyMode,
+      workerPoolSize,
       policyProfile,
       authProfile,
       ownerMode,
       hostVisibility,
       openOnStartup,
       panelEnabled,
+      productMode,
+      configAuthority,
+      runtimeAuthority,
+      hostIntegration,
+      shellExperience,
+      primarySurface,
+      settingsAuthority,
+      chatParticipantEnabled,
+      hostAdapterMode,
       standaloneMode,
     };
   }
-  const configuredModel = String(config.get("apiProviderModel") || "").trim();
+  const configuredModel = String(ownedProvider.activeModel || config.get("apiProviderModel") || "").trim();
   return {
     provider,
     model: configuredModel || getDefaultModel(provider) || DEFAULT_EXTERNAL_MODEL,
     runtimeBackend: configuredRuntimeBackend,
+    policyMode,
+    workerPoolSize,
     policyProfile,
     authProfile,
     ownerMode,
     hostVisibility,
     openOnStartup,
     panelEnabled,
+    productMode,
+    configAuthority,
+    runtimeAuthority,
+    hostIntegration,
+    shellExperience,
+    primarySurface,
+    settingsAuthority,
+    chatParticipantEnabled,
+    hostAdapterMode,
     standaloneMode,
+  };
+}
+
+function getHostAdapterSurface(authority = null) {
+  const resolvedAuthority = authority || getEffectiveAgentAuthorityConfig();
+  const hostIntegration = String(resolvedAuthority.hostIntegration || 'secondary').trim().toLowerCase() || 'secondary';
+  return {
+    authority: resolvedAuthority,
+    panelEnabled: Boolean(resolvedAuthority.panelEnabled) && hostIntegration !== 'hidden',
+    openOnStartup: Boolean(resolvedAuthority.openOnStartup),
+    chatParticipantEnabled: Boolean(resolvedAuthority.chatParticipantEnabled) && hostIntegration !== 'hidden',
+    hostIntegration,
+    hostAdapterMode: String(resolvedAuthority.hostAdapterMode || 'secondary-host-adapter').trim().toLowerCase() || 'secondary-host-adapter',
+    primarySurface: String(resolvedAuthority.primarySurface || 'panel').trim().toLowerCase() || 'panel',
+    settingsAuthority: String(resolvedAuthority.settingsAuthority || 'control-plane').trim().toLowerCase() || 'control-plane',
+    policyMode: String(resolvedAuthority.policyMode || 'mixed').trim().toLowerCase() || 'mixed',
+    workerPoolSize: Number(resolvedAuthority.workerPoolSize || 3) || 3,
   };
 }
 
@@ -1313,7 +1445,7 @@ function formatProviderStatusBarTooltip(provider, model) {
   if (provider === "copilot") {
     return "Free JT7\nProveedor activo: Copilot (legacy)\nModelo: integrado\nRuta heredada secundaria; el flujo principal own-ide usa proveedores externos.";
   }
-  return `Free JT7\nProveedor activo: ${provider}\nModelo activo: ${model || "default"}\nOwner mode: ${authority.ownerMode}\nHost visibility: ${authority.hostVisibility}\nClick para cambiar proveedor o modelo.`;
+  return `Free JT7\nProveedor activo: ${provider}\nModelo activo: ${model || "default"}\nOwner mode: ${authority.ownerMode}\nHost visibility: ${authority.hostVisibility}\nProduct mode: ${authority.productMode}\nPrimary surface: ${authority.primarySurface}\nSettings authority: ${authority.settingsAuthority}\nClick para cambiar proveedor o modelo.`;
 }
 
 function updateProviderStatusBar(providerStatusBar) {
@@ -1327,17 +1459,19 @@ function updateProviderStatusBar(providerStatusBar) {
 
 function shouldAutoOpenControlPanel(panelConfig, options = {}) {
   const standaloneMode = Boolean(options.standaloneMode);
-  const authority = typeof panelConfig?.get === 'function'
+  const authority = options.authority || (typeof panelConfig?.get === 'function'
     ? {
         panelEnabled: Boolean(panelConfig.get("panel.enabled", true)),
         openOnStartup: Boolean(panelConfig.get("panel.openOnStartup", true)),
         ownerMode: String(panelConfig.get("ide.ownerMode", "agent") || "agent").trim().toLowerCase(),
+        hostIntegration: String(panelConfig.get("product.hostIntegration", "secondary") || "secondary").trim().toLowerCase(),
       }
-    : getEffectiveAgentAuthorityConfig();
+    : getEffectiveAgentAuthorityConfig());
   const panelEnabled = Boolean(authority.panelEnabled);
   const openOnStartup = Boolean(authority.openOnStartup);
   const ownerMode = String(authority.ownerMode || 'agent').trim().toLowerCase();
-  if (!panelEnabled || !openOnStartup) {
+  const hostIntegration = String(authority.hostIntegration || 'secondary').trim().toLowerCase();
+  if (!panelEnabled || !openOnStartup || hostIntegration === 'hidden') {
     return false;
   }
   return standaloneMode || ownerMode === 'agent';
@@ -1573,17 +1707,61 @@ async function routeTaskWithGoal(context, output, goal) {
   // BYPASS: si hay proveedor externo configurado, usar _callProvider en lugar de runCopilotRouter (vscode.lm)
   const { provider: effectiveProvider, model: effectiveModel } = getEffectiveProviderConfig();
   if (effectiveProvider !== "copilot") {
-    output.appendLine(`[freejt7-router] Usando proveedor externo: ${effectiveProvider} / ${effectiveModel} (sin consumir quota Copilot)`);
+    output.appendLine(`[freejt7-router] Ejecutando agent-first con backend propio: ${effectiveProvider} / ${effectiveModel || 'default'}`);
     try {
       const workspacePathForProvider = getPrimaryWorkspacePath() || context.extensionPath;
-      const result = await _callProvider(
-        conversationRequest || finalGoal,
-        { provider: effectiveProvider, model: effectiveModel },
-        context.secrets,
-        { workspacePath: workspacePathForProvider },
-      );
+      const fallbackProviders = await resolveProviderFallbackChain(context, {
+        provider: effectiveProvider,
+        model: effectiveModel,
+        authProfile: 'default',
+        workspacePath: workspacePathForProvider,
+      });
+      const agentTask = {
+        goal: finalGoal,
+        conversationRequest,
+        provider: effectiveProvider,
+        model: effectiveModel,
+        runtimeBackend: 'freejt7-v2',
+        authProfile: 'default',
+        policyProfile: 'coding',
+        fallbackProviders,
+        runId: String(preparedTask?.runId || '').trim(),
+        selectedSkills: Array.isArray(preparedTask?.selectedSkills) ? preparedTask.selectedSkills : DEFAULT_ROUTER_SKILLS,
+        intake: preparedTask?.intake || null,
+      };
+      const serializedGoal = conversationRequest
+        ? serializeConversationRequest({
+            ...conversationRequest,
+            messages: Array.isArray(conversationRequest.messages) && conversationRequest.messages.length > 0
+              ? conversationRequest.messages
+              : [{ role: 'user', content: finalGoal }],
+            text: finalGoal,
+          })
+        : finalGoal;
+      const result = activeOwnAgentRuntime && typeof activeOwnAgentRuntime.executeTask === 'function'
+        ? await activeOwnAgentRuntime.executeTask(agentTask, {
+            workspacePath: workspacePathForProvider,
+            secretStorage: context.secrets,
+          })
+        : await runFreeJt7AgentCoreV2Task(context, output, {
+            ...agentTask,
+            goal: serializedGoal,
+            workspacePath: workspacePathForProvider,
+            secretStorage: context.secrets,
+          });
+      if (preparedTask?.runId) {
+        const summary = String(result?.final?.summary || result?.run?.summary || 'Free JT7 agent-first completado.');
+        const closeOk = await closeTrackedTask(context, output, preparedTask.runId, summary);
+        if (!closeOk) {
+          output.appendLine(`[freejt7-router] warning: task-close no pudo cerrar ${preparedTask.runId} en verde.`);
+        }
+      }
       return result;
     } catch (err) {
+      if (preparedTask?.runId) {
+        const message = String(err?.message || err);
+        await closeTrackedTask(context, output, preparedTask.runId, message).catch(() => {});
+      }
       output.appendLine(`[freejt7-router] Error con proveedor externo: ${String(err?.message || err)}`);
       throw err;
     }
@@ -1648,11 +1826,11 @@ async function routeTaskWithCopilot(context, output) {
   const usesExternalProvider = provider !== "copilot";
   const goal = await vscode.window.showInputBox({
     prompt: usesExternalProvider
-      ? `Objetivo para ejecutar Free JT7 con ${provider}${model ? ` / ${model}` : ""}`
-      : "Objetivo para el router Copilot de Free JT7",
+      ? `Objetivo para ejecutar Free JT7 desde la capa host secundaria con ${provider}${model ? ` / ${model}` : ""}`
+      : "Objetivo para la ruta host secundaria de compatibilidad Copilot",
     placeHolder: usesExternalProvider
-      ? "Ej: analiza el bug y ejecútalo con el proveedor externo activo"
-      : "Ej: analiza el bug, planifica y aplica la solucion con validacion",
+      ? "Ej: analiza el bug y ejecútalo desde la capa host con el proveedor activo"
+      : "Ej: usa la compatibilidad host para revisar una tarea puntual sin salir del IDE",
     ignoreFocusOut: true,
   });
   if (!goal) {
@@ -2395,14 +2573,18 @@ async function ensureMcpDependencies(extensionPath, output) {
 }
 
 function activate(context) {
+  let ownAgentRuntime = null;
   let providerStatusBar;
   const output = vscode.window.createOutputChannel("Free JT7");
+  const authority = getEffectiveAgentAuthorityConfig();
+  const hostSurface = getHostAdapterSurface(authority);
   const chatDiagnostics = getChatDiagnostics();
   if (!chatDiagnostics.ok) {
     for (const issue of chatDiagnostics.issues) {
       output.appendLine(`[freejt7] ${issue}`);
     }
   }
+  output.appendLine(`[freejt7-host] adapter=${hostSurface.hostAdapterMode} integration=${hostSurface.hostIntegration} primarySurface=${hostSurface.primarySurface} settingsAuthority=${hostSurface.settingsAuthority}`);
   // FIX #4: Check Python disponible
   const pyCmd = pythonCommand(context.extensionPath);
   if (!isWorkingPython(pyCmd.bin, pyCmd.args)) {
@@ -2464,10 +2646,10 @@ function activate(context) {
   } catch (_) { /* non-fatal — scheduler must never crash extension startup */ }
 
   const panelConfig = vscode.workspace.getConfiguration("freejt7");
-  const panelEnabled = panelConfig.get("panel.enabled", true);
+  const panelEnabled = hostSurface.panelEnabled;
   if (panelEnabled) {
     try {
-      const ownAgentRuntime = createFreeJt7AgentRuntime({
+      ownAgentRuntime = createFreeJt7AgentRuntime({
         context,
         output,
         runtimeRoot: operationalRoot,
@@ -2519,8 +2701,8 @@ function activate(context) {
 
       activeControlPanel = createControlPanel(context, output, {
         workspacePath: operationalRoot,
-        workerCount: Number(panelConfig.get("panel.workerPool.size", 3) || 3),
-        policyMode: String(panelConfig.get("panel.policy.mode", "mixed") || "mixed"),
+        workerCount: hostSurface.workerPoolSize,
+        policyMode: hostSurface.policyMode,
         remoteBridge: getRemoteBridge({ rootDir: operationalRoot }),
         agentRuntime: ownAgentRuntime,
         prepareTask: async (taskInput, meta) => preparePanelTask(context, output, taskInput, meta),
@@ -2577,6 +2759,8 @@ function activate(context) {
       output.appendLine(`[freejt7-panel] init error: ${String(error?.message || error)}`);
     }
   }
+
+  activeOwnAgentRuntime = ownAgentRuntime;
 
   const subscriptions = [
     vscode.commands.registerCommand("freejt7.installWorkspace", () => installWorkspace(context, output)),
@@ -2780,7 +2964,7 @@ function activate(context) {
     }));
   }
 
-  const chatParticipantEnabled = panelConfig.get("panel.chatParticipant.enabled", true);
+  const chatParticipantEnabled = hostSurface.chatParticipantEnabled;
   if (chatParticipantEnabled && vscode.chat?.createChatParticipant) {
     const participant = vscode.chat.createChatParticipant("freejt7.chat", (request, chatContext, stream, token) => (
       handleChatRequest(context, output, request, chatContext, stream, token)
@@ -2799,7 +2983,7 @@ function activate(context) {
         <body style="margin:0;padding:12px;font-family:Segoe UI,sans-serif;color:var(--vscode-foreground);background:var(--vscode-editor-background);">
           <div style="display:flex;flex-direction:column;gap:8px;">
             <div style="font-weight:600;">Agente Free JT7</div>
-            <div style="opacity:.8;">Si la superficie principal del agente no se abrió sola, usa este acceso directo.</div>
+            <div style="opacity:.8;">Acceso de compatibilidad del host. La superficie principal del producto sigue viviendo en el panel/control-plane propios.</div>
             <a href="command:freejt7.openControlPanel" style="color:var(--vscode-textLink-foreground);text-decoration:none;">Abrir agente Free JT7</a>
           </div>
         </body>
@@ -2812,7 +2996,7 @@ function activate(context) {
     vscode.window.registerWebviewViewProvider('freejt7.controlPanelView', sidebarProvider)
   );
 
-  if (shouldAutoOpenControlPanel(panelConfig, { standaloneMode: isStandaloneOwnIdeMode() })) {
+  if (shouldAutoOpenControlPanel(null, { standaloneMode: isStandaloneOwnIdeMode(), authority })) {
     setTimeout(() => {
       revealFreeJt7ControlPanel(activeControlPanel, output).catch((error) => {
         output.appendLine(`[freejt7-panel] auto-open error: ${String(error?.message || error)}`);
@@ -2832,6 +3016,7 @@ function deactivate() {
     activeControlPanel.dispose();
     activeControlPanel = null;
   }
+  activeOwnAgentRuntime = null;
   getRemoteBridge().stop();
 }
 
@@ -2844,6 +3029,7 @@ module.exports = {
   findOpenClawBinary,
   getGlobalVsCodeSettingsRepairState,
   getEffectiveAgentAuthorityConfig,
+  getHostAdapterSurface,
   resolveProviderFallbackChain,
   shouldAutoOpenControlPanel,
   shouldPreferLocalExecution,
@@ -2851,5 +3037,8 @@ module.exports = {
   shouldUseProviderDirectFallback,
   __testing: {
     createControlPanel,
+    deriveImplicitPanelIntake,
+    isExplicitSkillCreationGoal,
+    prioritizeResolvedSkillsForGoal,
   },
 };

@@ -1209,6 +1209,208 @@
             "evidenceCount": 3,
             "warnings": []
           }
+        },
+        {
+          "id": "ecfa25f2-485b-492e-bd61-82a5c565d01a",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-28T23:26:48.001Z",
+          "payload": {
+            "taskId": "task-4fc45900-6",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "c726b87a-0a0e-446e-9255-bc3f59e0f573",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-28T23:26:48.202Z",
+          "payload": {
+            "taskId": "task-4fc45900-6",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "bea9e51d-35c6-41a1-88e2-b656ef48e16c",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-28T23:28:03.689Z",
+          "payload": {
+            "taskId": "task-4fc45900-6",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "41b785c7-7d65-4bc7-a1ee-28ea1bd6f5ac",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-28T23:28:03.704Z",
+          "payload": {
+            "taskId": "task-4fc45900-6",
+            "verificationStatus": "verified",
+            "evidenceCount": 1,
+            "warnings": []
+          }
+        },
+        {
+          "id": "aec43d1e-bb67-4998-b2b4-189821b59353",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-28T23:29:26.838Z",
+          "payload": {
+            "taskId": "task-de1ebb22-8",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "6cd1e202-e599-42a8-b3f2-5fd3b20480f1",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-28T23:29:27.069Z",
+          "payload": {
+            "taskId": "task-de1ebb22-8",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "1a40e711-6916-43e9-ac1b-b9230da2d1ae",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-28T23:30:31.765Z",
+          "payload": {
+            "taskId": "task-de1ebb22-8",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "d68f971d-e0ce-4cfb-8c95-b0ee714cf1aa",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-28T23:30:31.779Z",
+          "payload": {
+            "taskId": "task-de1ebb22-8",
+            "verificationStatus": "verified",
+            "evidenceCount": 1,
+            "warnings": []
+          }
+        },
+        {
+          "id": "718d4d4e-896e-419c-b58f-5eb1863828bc",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-28T23:34:49.779Z",
+          "payload": {
+            "taskId": "task-7251622b-9",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "76cb7731-bd82-40e1-9eac-e41094037bc4",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-28T23:34:49.948Z",
+          "payload": {
+            "taskId": "task-7251622b-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "b25dccd6-8fbd-43d2-9570-ec8e1c4b5d17",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-28T23:36:50.078Z",
+          "payload": {
+            "taskId": "task-7251622b-9",
+            "retries": 1,
+            "error": "Tiempo de ejecucion excedido (120000ms)."
+          }
+        },
+        {
+          "id": "40b7df2d-2922-48ce-82f7-82ed368e87d6",
+          "type": "panel:task.retry.enqueued",
+          "createdAt": "2026-04-29T00:03:18.309Z",
+          "payload": {
+            "taskId": "task-7251622b-9",
+            "retries": 1
+          }
+        },
+        {
+          "id": "9dea85a9-af2c-4d73-8525-5bc1cd46806c",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T00:03:18.498Z",
+          "payload": {
+            "taskId": "task-7251622b-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "469692d7-9d2d-40cc-aaae-d1e487a36208",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-29T00:05:18.595Z",
+          "payload": {
+            "taskId": "task-7251622b-9",
+            "retries": 2,
+            "error": "Tiempo de ejecucion excedido (120000ms)."
+          }
+        },
+        {
+          "id": "aa59e901-6378-42d4-a395-28a029d94b60",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T00:17:22.024Z",
+          "payload": {
+            "taskId": "task-aec63d11-9",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "01ce299e-9ba5-4a71-a73a-de474538efd8",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T00:17:22.237Z",
+          "payload": {
+            "taskId": "task-aec63d11-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "58dc80e2-e1e7-4bf1-ba35-585c4591c3a0",
+          "type": "panel:task.retry.scheduled",
+          "createdAt": "2026-04-29T00:17:55.496Z",
+          "payload": {
+            "taskId": "task-aec63d11-9",
+            "retries": 1,
+            "maxRetries": 2,
+            "error": "Free JT7 router fallback exhausted: Free JT7 (openrouter/OpenClaw agent): ⚠️ Agent couldn't generate a response. Please try again."
+          }
+        },
+        {
+          "id": "17e3d5a1-8d8a-46d1-adb0-0f5be0619797",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T00:17:55.640Z",
+          "payload": {
+            "taskId": "task-aec63d11-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "e35ddce5-0caf-47db-bb94-4079786ef654",
+          "type": "panel:task.retry.scheduled",
+          "createdAt": "2026-04-29T00:18:28.061Z",
+          "payload": {
+            "taskId": "task-aec63d11-9",
+            "retries": 2,
+            "maxRetries": 2,
+            "error": "Free JT7 router fallback exhausted: Free JT7 (openrouter/OpenClaw agent): ⚠️ Agent couldn't generate a response. Please try again."
+          }
+        },
+        {
+          "id": "526355a5-8305-4505-bf72-5ffab9bad842",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T00:18:28.224Z",
+          "payload": {
+            "taskId": "task-aec63d11-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "256f2ece-6e5f-49f5-b4a0-b869f86c9bd0",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-29T00:18:57.553Z",
+          "payload": {
+            "taskId": "task-aec63d11-9",
+            "retries": 3,
+            "error": "Free JT7 router fallback exhausted: Free JT7 (openrouter/OpenClaw agent): ⚠️ Agent couldn't generate a response. Please try again."
+          }
         }
       ],
       "reviewHistory": [],
@@ -1222,7 +1424,7 @@
         "platform": "linux",
         "hostFingerprint": "dedec4935de535b0"
       },
-      "lastSeenAt": "2026-04-27T16:13:31.128Z",
+      "lastSeenAt": "2026-04-29T00:18:57.554Z",
       "status": "active"
     },
     "20260426T043730Z-9d317403": {
@@ -2961,6 +3163,1142 @@
       },
       "lastSeenAt": "2026-04-28T13:55:46.112Z",
       "status": "active"
+    },
+    "panel-1da3423d": {
+      "sessionId": "panel-1da3423d",
+      "createdAt": "2026-04-29T11:44:11.232Z",
+      "events": [
+        {
+          "id": "8a3c115e-2aad-49e6-baf5-6ad228009895",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T12:50:18.975Z",
+          "payload": {
+            "taskId": "task-5a0e33e8-5",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "ebe6501f-9155-4389-b760-0df5f43cff6f",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T12:50:18.979Z",
+          "payload": {
+            "taskId": "task-5a0e33e8-5",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "797b28d4-e2ea-49a4-91d9-4efc2748763c",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T12:57:55.006Z",
+          "payload": {
+            "taskId": "task-4246b312-8",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "06a9bf9f-c595-458e-9e04-4e266fbbb46e",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T12:57:55.125Z",
+          "payload": {
+            "taskId": "task-4246b312-8",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "625d06af-5f68-47bb-bb3d-1f0e4b6b303a",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-29T12:59:55.185Z",
+          "payload": {
+            "taskId": "task-4246b312-8",
+            "retries": 1,
+            "error": "Tiempo de ejecucion excedido (120000ms)."
+          }
+        },
+        {
+          "id": "f71265e2-534e-410e-8dcd-876a92fb6b6e",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T13:01:06.281Z",
+          "payload": {
+            "taskId": "task-423d90e3-a",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "04b11973-4c76-458e-891e-85e8b0fc3160",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T13:01:06.390Z",
+          "payload": {
+            "taskId": "task-423d90e3-a",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "b50e8df5-db5b-40b1-a4a9-897c66664905",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-29T13:03:06.458Z",
+          "payload": {
+            "taskId": "task-423d90e3-a",
+            "retries": 1,
+            "error": "Tiempo de ejecucion excedido (120000ms)."
+          }
+        },
+        {
+          "id": "854eba79-62e5-4b80-835c-b770e881f676",
+          "type": "panel:task.retry.enqueued",
+          "createdAt": "2026-04-29T13:12:51.777Z",
+          "payload": {
+            "taskId": "task-423d90e3-a",
+            "retries": 1
+          }
+        },
+        {
+          "id": "b0c4a23b-77d2-4f08-a177-020665fbf565",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T13:12:51.983Z",
+          "payload": {
+            "taskId": "task-423d90e3-a",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "3c1dbaeb-18d1-4a19-8420-725ac1d7c8cb",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T13:13:39.456Z",
+          "payload": {
+            "taskId": "task-423d90e3-a",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "9127f8be-6eac-4a5f-b8bf-b094c8be046c",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T13:13:39.463Z",
+          "payload": {
+            "taskId": "task-423d90e3-a",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "221a78d3-79ea-40af-80db-05910d28e027",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T13:22:12.370Z",
+          "payload": {
+            "taskId": "task-15bec781-6",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "0329f17b-0e60-4c31-b518-2f73f86ea5d7",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T13:22:12.477Z",
+          "payload": {
+            "taskId": "task-15bec781-6",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "06c65264-fdc5-4f2f-b25b-8143abecb2cb",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T13:23:33.395Z",
+          "payload": {
+            "taskId": "task-15bec781-6",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "9722db27-7ede-418d-b731-4f9d01c9497b",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T13:23:33.401Z",
+          "payload": {
+            "taskId": "task-15bec781-6",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "1b918dad-d61c-488f-a870-867c7a43585f",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T13:28:27.484Z",
+          "payload": {
+            "taskId": "task-b2ff686c-0",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "7b04aa4e-9c71-4b63-992c-cf8f200b7dcd",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T13:28:27.563Z",
+          "payload": {
+            "taskId": "task-b2ff686c-0",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "fe3d8645-5e10-4ccc-87c6-b5445e603dcb",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T13:29:10.721Z",
+          "payload": {
+            "taskId": "task-b2ff686c-0",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "e9aa9c85-6149-4f27-8db3-6866f04743ad",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T13:29:10.727Z",
+          "payload": {
+            "taskId": "task-b2ff686c-0",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "b3a50418-c276-407a-a69a-19d2f97849c1",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T13:32:48.578Z",
+          "payload": {
+            "taskId": "task-af468e10-e",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "89e45161-2906-4af4-a9a6-5dd5530cbc87",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T13:32:48.650Z",
+          "payload": {
+            "taskId": "task-af468e10-e",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "65897d1e-29bc-4669-aef7-195559c3434b",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T13:33:34.100Z",
+          "payload": {
+            "taskId": "task-af468e10-e",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "af0a2557-bdd3-4bcc-967b-d4271c9e1efc",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T13:33:34.107Z",
+          "payload": {
+            "taskId": "task-af468e10-e",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "981b9422-8974-494a-a590-729516c8e064",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T13:38:12.563Z",
+          "payload": {
+            "taskId": "task-873dce90-a",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "11eda1af-6fbf-4770-87d0-75f110b396b4",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T13:38:12.691Z",
+          "payload": {
+            "taskId": "task-873dce90-a",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "f4e1a839-14e5-4f87-9dea-c49cc7f6213c",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T13:38:58.562Z",
+          "payload": {
+            "taskId": "task-873dce90-a",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "2a012b00-d031-422d-b26b-e0dd9c4d9b12",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T13:38:58.567Z",
+          "payload": {
+            "taskId": "task-873dce90-a",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "a35cd808-7b20-451d-82d9-9489c6fdee7c",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T13:41:20.786Z",
+          "payload": {
+            "taskId": "task-91ca2c2f-7",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "eb876011-2b1c-401f-9cf8-218548b7acd9",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T13:41:21.010Z",
+          "payload": {
+            "taskId": "task-91ca2c2f-7",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "428c0f33-c208-4874-b90f-b28ec8cbbf3a",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T13:42:05.556Z",
+          "payload": {
+            "taskId": "task-91ca2c2f-7",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "d457db64-7adc-4b53-bb22-9744f480f4fb",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T13:42:05.564Z",
+          "payload": {
+            "taskId": "task-91ca2c2f-7",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "df5b4b1b-b514-4539-ae22-dccadb428f25",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T18:47:02.639Z",
+          "payload": {
+            "taskId": "task-a037ece0-5",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "d2f3295b-cc6f-474a-a7e4-c2e6041b6896",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T18:47:02.751Z",
+          "payload": {
+            "taskId": "task-a037ece0-5",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "a4345928-1bd9-46c7-97ad-5b1e9596a424",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T18:47:03.343Z",
+          "payload": {
+            "taskId": "task-a037ece0-5",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "151e8cea-d48e-4429-bf2d-52d25b92227f",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T18:47:03.353Z",
+          "payload": {
+            "taskId": "task-a037ece0-5",
+            "verificationStatus": "verified",
+            "evidenceCount": 10,
+            "warnings": []
+          }
+        },
+        {
+          "id": "bec4c4e6-dcc6-4f62-9b29-32945a02eb7c",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T18:48:04.519Z",
+          "payload": {
+            "taskId": "task-af0f3b89-6",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "903da331-7700-4d7f-a671-972dbdc5805e",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T18:48:04.744Z",
+          "payload": {
+            "taskId": "task-af0f3b89-6",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "6878fef0-e4e6-46d8-a0e2-4864b80de0a6",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T18:48:04.952Z",
+          "payload": {
+            "taskId": "task-af0f3b89-6",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "e584c838-da13-4955-8a73-09bed5d3e6b7",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T18:48:04.962Z",
+          "payload": {
+            "taskId": "task-af0f3b89-6",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "341317b8-c9c9-42f3-aa61-b8d11ff3e5ed",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T18:48:56.596Z",
+          "payload": {
+            "taskId": "task-fc328f95-d",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "9243564e-2f8b-41de-9116-ddd7a2bbb91c",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T18:48:56.811Z",
+          "payload": {
+            "taskId": "task-fc328f95-d",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "9da0aa50-c345-426c-9554-80ab499ec1a0",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T18:48:57.021Z",
+          "payload": {
+            "taskId": "task-fc328f95-d",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "8d4b166f-c3ea-48bb-ac50-95944ed952ab",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T18:48:57.030Z",
+          "payload": {
+            "taskId": "task-fc328f95-d",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "282d6344-b999-4c1b-bae6-2c68f40f0962",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T22:35:49.432Z",
+          "payload": {
+            "taskId": "task-54a66ce9-2",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "f964dbad-b243-4655-b9b5-e681858e5e62",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T22:35:49.598Z",
+          "payload": {
+            "taskId": "task-54a66ce9-2",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "cb1f80cc-bccc-4a7c-ad79-1c9e9b736b03",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T22:35:49.938Z",
+          "payload": {
+            "taskId": "task-54a66ce9-2",
+            "provider": "freejt7-agent",
+            "model": "freejt7-runtime"
+          }
+        },
+        {
+          "id": "015862be-70e9-4b03-99e1-63b5e74c767f",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T22:35:49.943Z",
+          "payload": {
+            "taskId": "task-54a66ce9-2",
+            "verificationStatus": "verified",
+            "evidenceCount": 10,
+            "warnings": []
+          }
+        },
+        {
+          "id": "535492ee-0458-4a6a-810e-cdc751494d2e",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-29T23:32:02.409Z",
+          "payload": {
+            "taskId": "task-273cbdb2-9",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "44b56427-6adc-45f1-a36a-83a002d9b444",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-29T23:32:02.660Z",
+          "payload": {
+            "taskId": "task-273cbdb2-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "60a6a4e4-8cad-4a63-97b7-b66b2f69f32d",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-29T23:32:03.718Z",
+          "payload": {
+            "taskId": "task-273cbdb2-9",
+            "provider": "local",
+            "model": "freejt7-local-tools"
+          }
+        },
+        {
+          "id": "28571a99-0452-43fb-bdd4-0c7dd0cd7975",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-29T23:32:03.734Z",
+          "payload": {
+            "taskId": "task-273cbdb2-9",
+            "verificationStatus": "verified",
+            "evidenceCount": 10,
+            "warnings": []
+          }
+        },
+        {
+          "id": "c150ce33-7c3c-4376-b45d-d6723269de3b",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-30T01:00:46.923Z",
+          "payload": {
+            "taskId": "task-06725f03-e",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "21d8ee4f-c850-43a5-a4fd-08f7d3d869e9",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T01:00:47.214Z",
+          "payload": {
+            "taskId": "task-06725f03-e",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "fe700c78-28da-48aa-8bc8-50664ad3a663",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-30T01:00:47.468Z",
+          "payload": {
+            "taskId": "task-06725f03-e",
+            "provider": "local",
+            "model": "freejt7-local-tools"
+          }
+        },
+        {
+          "id": "b954a5ad-8f03-4f46-8803-1b6f3b6d4cc0",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-30T01:00:47.484Z",
+          "payload": {
+            "taskId": "task-06725f03-e",
+            "verificationStatus": "verified",
+            "evidenceCount": 10,
+            "warnings": []
+          }
+        },
+        {
+          "id": "799ed4ba-f901-4e49-a618-2326468c3f0e",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-30T01:23:21.928Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "dd208666-8d3d-470d-87d9-73ce1e445d12",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T01:23:22.223Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "d1b0e352-9f83-494e-b8e2-c0fe813e6fd8",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-30T01:23:22.403Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "retries": 1,
+            "error": "Free JT7 router fallback exhausted: Free JT7: No hay API Key para \"nvidia\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."
+          }
+        },
+        {
+          "id": "98df186e-c59a-48a0-aa55-91f3483b6e10",
+          "type": "panel:task.retry.enqueued",
+          "createdAt": "2026-04-30T01:24:19.137Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "retries": 1
+          }
+        },
+        {
+          "id": "f54f9129-fe58-45ec-adb9-2ce3b1a418a5",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T01:24:19.474Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "4989e0a6-3426-49f5-9101-34005cfe807c",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-30T01:24:19.703Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "retries": 2,
+            "error": "Free JT7 router fallback exhausted: Free JT7: No hay API Key para \"nvidia\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."
+          }
+        },
+        {
+          "id": "9be46349-bac4-4ec3-809d-c3b33cc6e646",
+          "type": "panel:task.retry.enqueued",
+          "createdAt": "2026-04-30T01:24:26.377Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "retries": 2
+          }
+        },
+        {
+          "id": "7ee7ab7b-cc2b-45dc-8829-966476d53c35",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T01:24:26.637Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "765676cb-67d1-457d-8519-6bab0e2b5cd6",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-30T01:24:26.991Z",
+          "payload": {
+            "taskId": "task-a9368a97-f",
+            "retries": 3,
+            "error": "Free JT7 router fallback exhausted: Free JT7: No hay API Key para \"nvidia\". Usa el comando \"Free JT7: Configurar API Key de Proveedor\"."
+          }
+        },
+        {
+          "id": "f624b7f8-d493-4b88-984c-8920d6d91cd8",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-30T01:29:17.553Z",
+          "payload": {
+            "taskId": "task-798715bb-a",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "782ca66d-f16d-4feb-bc81-053262076dbf",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T01:29:17.903Z",
+          "payload": {
+            "taskId": "task-798715bb-a",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "dd2e409d-1d47-407b-bdbc-0a810597922b",
+          "type": "panel:task.failed",
+          "createdAt": "2026-04-30T01:30:11.173Z",
+          "payload": {
+            "taskId": "task-798715bb-a",
+            "retries": 1,
+            "error": "Free JT7 router fallback exhausted: buildSubordinateBackendDescriptor is not defined"
+          }
+        },
+        {
+          "id": "d3fd33ef-0ed4-4aff-9754-4694772676a5",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-30T01:34:04.632Z",
+          "payload": {
+            "taskId": "task-913a667d-4",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "b8eba3c2-9da4-413e-b118-b716709e6a05",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T01:34:04.945Z",
+          "payload": {
+            "taskId": "task-913a667d-4",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "220f8882-9ddd-42bb-922e-6e2622c743b8",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-30T01:34:38.242Z",
+          "payload": {
+            "taskId": "task-913a667d-4",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "5f105adf-6722-4195-855d-12aadb44514d",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-30T01:34:38.258Z",
+          "payload": {
+            "taskId": "task-913a667d-4",
+            "verificationStatus": "verified",
+            "evidenceCount": 7,
+            "warnings": []
+          }
+        },
+        {
+          "id": "e9029054-7d28-4a01-81f8-4d27321e6593",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-30T12:21:20.657Z",
+          "payload": {
+            "taskId": "task-7e76e9b9-0",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "10db67df-b9c4-4c2f-87f5-6078ca02bb1a",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T12:21:20.968Z",
+          "payload": {
+            "taskId": "task-7e76e9b9-0",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "25b1ce96-c8b0-4f88-a2b6-072f2f689224",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-30T12:21:50.957Z",
+          "payload": {
+            "taskId": "task-7e76e9b9-0",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "a4585c85-2875-402b-b487-8624aba08e6f",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-30T12:21:50.964Z",
+          "payload": {
+            "taskId": "task-7e76e9b9-0",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "eb2ec7d7-7b24-4834-a25a-cc1598f27e87",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-30T12:24:42.574Z",
+          "payload": {
+            "taskId": "task-de14c190-9",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "c9606d87-959b-4c29-8b61-808fd9937295",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T12:24:42.852Z",
+          "payload": {
+            "taskId": "task-de14c190-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "a63ae3e4-f4b0-487f-917f-cb32ce0b5137",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-30T12:25:14.312Z",
+          "payload": {
+            "taskId": "task-de14c190-9",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "d1f44b7e-7be7-4b9f-8643-edd28b90e980",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-30T12:25:14.325Z",
+          "payload": {
+            "taskId": "task-de14c190-9",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        }
+      ],
+      "reviewHistory": [],
+      "metadata": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "systemIdentity": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "lastSeenAt": "2026-04-30T12:25:14.325Z",
+      "status": "active"
+    },
+    "panel-b29b71f2": {
+      "sessionId": "panel-b29b71f2",
+      "createdAt": "2026-04-30T23:28:39.628Z",
+      "events": [
+        {
+          "id": "c9b2daa7-9768-46e4-a3b7-ebb74e330cf0",
+          "type": "panel:session.created",
+          "createdAt": "2026-04-30T23:28:39.630Z",
+          "payload": {
+            "title": "Sesión mejoa de ide"
+          }
+        },
+        {
+          "id": "b46ad760-d439-485b-b5fd-f962c3b6b17b",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-04-30T23:29:00.903Z",
+          "payload": {
+            "taskId": "task-be9c1b73-b",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "0e13ff19-d3c4-4b67-a41c-d28654e13efe",
+          "type": "panel:task.started",
+          "createdAt": "2026-04-30T23:29:01.264Z",
+          "payload": {
+            "taskId": "task-be9c1b73-b",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "e8f374da-e68e-4b47-aa10-cf059b93996c",
+          "type": "panel:task.completed",
+          "createdAt": "2026-04-30T23:29:11.301Z",
+          "payload": {
+            "taskId": "task-be9c1b73-b",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "f9d52742-21ef-49aa-a1c7-8bd885960826",
+          "type": "panel:task.verified",
+          "createdAt": "2026-04-30T23:29:11.313Z",
+          "payload": {
+            "taskId": "task-be9c1b73-b",
+            "verificationStatus": "verified",
+            "evidenceCount": 3,
+            "warnings": []
+          }
+        },
+        {
+          "id": "d652eeb7-7109-4dfe-82b0-704f989baffa",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-01T02:27:52.057Z",
+          "payload": {
+            "taskId": "task-ae8f7f6f-d",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "886c6463-51db-4d4a-8d5c-b29e3f3a013b",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-01T02:27:52.420Z",
+          "payload": {
+            "taskId": "task-ae8f7f6f-d",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "04ab3ba8-c14d-4451-947e-7218dd823604",
+          "type": "panel:task.completed",
+          "createdAt": "2026-05-01T02:28:01.846Z",
+          "payload": {
+            "taskId": "task-ae8f7f6f-d",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "62495260-93ef-430a-b16e-68c50351e438",
+          "type": "panel:task.verified",
+          "createdAt": "2026-05-01T02:28:01.867Z",
+          "payload": {
+            "taskId": "task-ae8f7f6f-d",
+            "verificationStatus": "verified",
+            "evidenceCount": 3,
+            "warnings": []
+          }
+        },
+        {
+          "id": "70f74bc9-a940-4434-91ac-45fa1ec12088",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-01T02:30:15.713Z",
+          "payload": {
+            "taskId": "task-475248ec-9",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "2277e787-a5df-41c2-8b5b-9c00c51795d2",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-01T02:30:16.044Z",
+          "payload": {
+            "taskId": "task-475248ec-9",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "2c8d8570-6824-4649-9922-1ca8b797b395",
+          "type": "panel:task.completed",
+          "createdAt": "2026-05-01T02:30:43.422Z",
+          "payload": {
+            "taskId": "task-475248ec-9",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "228b600e-52a0-44cc-b83f-7b4ac964a39c",
+          "type": "panel:task.verified",
+          "createdAt": "2026-05-01T02:30:43.441Z",
+          "payload": {
+            "taskId": "task-475248ec-9",
+            "verificationStatus": "verified",
+            "evidenceCount": 8,
+            "warnings": []
+          }
+        },
+        {
+          "id": "3013161a-9a66-44ea-9414-9d4a6a8c6b25",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-01T02:33:53.500Z",
+          "payload": {
+            "taskId": "task-8b3d39e7-a",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "d6bf3e7a-bc0a-4f94-9ebd-ff64b6d7d862",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-01T02:33:53.811Z",
+          "payload": {
+            "taskId": "task-8b3d39e7-a",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "68d557ae-a216-4218-8dc4-4227e7b88f19",
+          "type": "panel:task.completed",
+          "createdAt": "2026-05-01T02:34:19.378Z",
+          "payload": {
+            "taskId": "task-8b3d39e7-a",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "a8d7a173-5b0d-44ee-8010-61285fe8b345",
+          "type": "panel:task.verified",
+          "createdAt": "2026-05-01T02:34:19.396Z",
+          "payload": {
+            "taskId": "task-8b3d39e7-a",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        },
+        {
+          "id": "5bb33bea-d552-4391-82a2-8cfc0de39165",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-01T11:41:56.127Z",
+          "payload": {
+            "taskId": "task-eaee6146-1",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "f385d2e4-b75b-478a-bc88-bb6ef1c60522",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-01T11:41:56.430Z",
+          "payload": {
+            "taskId": "task-eaee6146-1",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "bb510e97-28a8-4459-9d18-ec6b8382578b",
+          "type": "panel:task.completed",
+          "createdAt": "2026-05-01T11:42:30.595Z",
+          "payload": {
+            "taskId": "task-eaee6146-1",
+            "provider": "ddeksee",
+            "model": "deepseek-reasoner"
+          }
+        },
+        {
+          "id": "936dfbc5-ba8b-454f-a2b2-ab5784eab5f5",
+          "type": "panel:task.verified",
+          "createdAt": "2026-05-01T11:42:30.602Z",
+          "payload": {
+            "taskId": "task-eaee6146-1",
+            "verificationStatus": "verified",
+            "evidenceCount": 4,
+            "warnings": []
+          }
+        }
+      ],
+      "reviewHistory": [],
+      "metadata": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "systemIdentity": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "lastSeenAt": "2026-05-01T11:42:30.602Z",
+      "status": "active"
+    },
+    "panel-6ac419f8": {
+      "sessionId": "panel-6ac419f8",
+      "createdAt": "2026-05-02T04:09:38.194Z",
+      "events": [
+        {
+          "id": "651ded31-2ac3-4edc-ac5b-84b3ca0a7e13",
+          "type": "panel:session.created",
+          "createdAt": "2026-05-02T04:09:38.199Z",
+          "payload": {
+            "title": "Prueba dirigida own-ide"
+          }
+        },
+        {
+          "id": "ae1826fa-71a9-4686-92fa-f1ceec5cb2a1",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-02T04:09:38.257Z",
+          "payload": {
+            "taskId": "task-d4b8e4bd-a",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "791f182a-8fd9-4b0f-84eb-098457769e07",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-02T04:09:38.370Z",
+          "payload": {
+            "taskId": "task-d4b8e4bd-a",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "94bf8365-03c2-42e4-8d8a-110b7e01945b",
+          "type": "panel:task.failed",
+          "createdAt": "2026-05-02T04:09:39.795Z",
+          "payload": {
+            "taskId": "task-d4b8e4bd-a",
+            "retries": 1,
+            "error": "Free JT7 router fallback exhausted: Free JT7 (openrouter): error HTTP 400. deepseek-reasoner is not a valid model ID"
+          }
+        }
+      ],
+      "reviewHistory": [],
+      "metadata": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "systemIdentity": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "lastSeenAt": "2026-05-02T04:09:39.795Z",
+      "status": "active"
+    },
+    "panel-aaa828e9": {
+      "sessionId": "panel-aaa828e9",
+      "createdAt": "2026-05-02T04:11:11.563Z",
+      "events": [
+        {
+          "id": "4cca26f2-af38-48a4-9d2f-b6b9224fcf30",
+          "type": "panel:session.created",
+          "createdAt": "2026-05-02T04:11:11.566Z",
+          "payload": {
+            "title": "Prueba dirigida own-ide"
+          }
+        },
+        {
+          "id": "8bc165ce-9b92-4f5b-84ed-7ed3ce08731a",
+          "type": "panel:task.enqueued",
+          "createdAt": "2026-05-02T04:11:11.637Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "risk": "medium"
+          }
+        },
+        {
+          "id": "e0e47c52-02ee-427e-a86a-71cb2951e0e1",
+          "type": "panel:task.started",
+          "createdAt": "2026-05-02T04:11:11.721Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "workerId": 1
+          }
+        },
+        {
+          "id": "993c29cb-a124-4226-b666-4dbc7e2df0a9",
+          "type": "panel:task.completed",
+          "createdAt": "2026-05-02T04:11:18.499Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "provider": "openrouter",
+            "model": "openai/gpt-oss-20b:free"
+          }
+        },
+        {
+          "id": "b18f95e7-27f1-474c-9631-72e4cb079add",
+          "type": "panel:task.verified",
+          "createdAt": "2026-05-02T04:11:18.511Z",
+          "payload": {
+            "taskId": "task-aa530712-2",
+            "verificationStatus": "verified",
+            "evidenceCount": 2,
+            "warnings": []
+          }
+        }
+      ],
+      "reviewHistory": [],
+      "metadata": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "systemIdentity": {
+        "hostId": "javier28-Aspire-E5-475",
+        "platform": "linux",
+        "hostFingerprint": "dedec4935de535b0"
+      },
+      "lastSeenAt": "2026-05-02T04:11:18.511Z",
+      "status": "active"
     }
   },
   "queue": [],
@@ -3075,5 +4413,5 @@
       "createdAt": "2026-04-26T04:39:38.262Z"
     }
   ],
-  "updatedAt": "2026-04-28T13:55:46.112Z"
+  "updatedAt": "2026-05-02T23:59:57.530Z"
 }

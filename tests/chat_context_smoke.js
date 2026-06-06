@@ -10,6 +10,7 @@ const path = require('path');
 
 const {
   buildConversationRequest,
+  buildLocalContextSource,
   extractExistingPaths,
   serializeConversationRequest,
 } = require('../src-js/core/chat-context');
@@ -71,6 +72,26 @@ function main() {
   assert.ok(request.systemPrompt.includes('Tools/operaciones locales: filesystem.read, shell.verify'), 'debe incluir operaciones locales');
   assert.ok(request.systemPrompt.includes('Acciones candidatas del runtime: read:README.md, verify:npm run build'), 'debe incluir acciones planeadas');
   assert.ok(request.systemPrompt.includes('Destino operativo preferido: openclaw-agent-runtime'), 'debe incluir destino operativo');
+
+  const unrelatedSource = buildLocalContextSource(
+    'qiero una skill para instalar programas en linux zorin sin terminal',
+    [
+      { role: 'user', content: `Analiza esta carpeta anterior: ${projectRoot}` },
+      { role: 'assistant', content: 'Revisare esa carpeta.' },
+    ],
+    { workspacePath: projectRoot },
+  );
+  assert.equal(unrelatedSource.includes(projectRoot), false, 'no debe reinyectar rutas heredadas si la solicitud actual no es una continuacion explicita');
+
+  const continuationSource = buildLocalContextSource(
+    'continua con esa carpeta',
+    [
+      { role: 'user', content: `Analiza esta carpeta anterior: ${projectRoot}` },
+      { role: 'assistant', content: 'Revisare esa carpeta.' },
+    ],
+    { workspacePath: projectRoot },
+  );
+  assert.ok(continuationSource.includes(projectRoot), 'debe reutilizar la ruta reciente cuando el usuario pide continuar');
 
   const serialized = serializeConversationRequest(request);
   assert.ok(serialized.includes('Historial conversacional previo'), 'debe serializar el historial');

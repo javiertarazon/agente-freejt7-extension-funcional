@@ -426,22 +426,45 @@ function createFreeJt7AgentRuntime(options = {}) {
           reason: 'goal-resoluble-localmente',
         }, goal, taskContext);
       }
+      const nativeMcpRequirements = inferNativeMcpTools(
+        goal,
+        normalizeMcpServers(getMcpServers(taskContext, { provider, model, runtimeBackend: 'openclaw' })),
+      );
+      if (nativeMcpRequirements.length > 0) {
+        const fallbackOrder = [];
+        if (localCapable) {
+          fallbackOrder.push('local-agent');
+        }
+        if (typeof runProviderDirectFallbackTask === 'function') {
+          fallbackOrder.push('provider-direct');
+        }
+        return finalizePlan({
+          primaryRoute: 'openclaw-agent',
+          runtimeBackend: 'openclaw',
+          provider,
+          model,
+          localCapable,
+          deterministicLocal: false,
+          fallbackOrder,
+          reason: 'provider-externo-native-mcp',
+        }, goal, taskContext);
+      }
       const fallbackOrder = [];
+      if (typeof runOpenClawAgentTask === 'function') {
+        fallbackOrder.push('openclaw-agent');
+      }
       if (localCapable) {
         fallbackOrder.push('local-agent');
       }
-      if (typeof runProviderDirectFallbackTask === 'function') {
-        fallbackOrder.push('provider-direct');
-      }
       return finalizePlan({
-        primaryRoute: 'openclaw-agent',
-        runtimeBackend: 'openclaw',
+        primaryRoute: 'freejt7-agent-core-v2',
+        runtimeBackend: 'freejt7-v2',
         provider,
         model,
         localCapable,
         deterministicLocal: false,
         fallbackOrder,
-        reason: 'provider-externo-agent',
+        reason: 'provider-externo-agent-first',
       }, goal, taskContext);
     }
 
